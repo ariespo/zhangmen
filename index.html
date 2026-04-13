@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="云璃仙宗 - 一款以修仙宗门管理为主题的文字交互游戏">
+  <title>云璃仙宗 · 掌门之道</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --jade-deep: #1a3a3a;
+      --jade-mid: #2d5a5a;
+      --jade-light: #4a8a8a;
+      --jade-glow: #6ecfcf;
+      --jade-pale: #a8e6e6;
+      --cloud-white: #e8f4f0;
+      --mist-purple: #8b7ec8;
+      --mist-purple-deep: #6b5ea8;
+      --lotus-pink: #d4728c;
+      --lotus-soft: #e8a0b4;
+      --gold-spirit: #c8a86e;
+      --gold-bright: #e6c88a;
+      --ink-dark: #0d1f1f;
+      --ink-mid: #132b2b;
+      --glass-bg: rgba(26, 58, 58, 0.55);
+      --glass-border: rgba(110, 207, 207, 0.15);
+      --glass-shine: rgba(168, 230, 230, 0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Serif SC', serif;
+      background: var(--ink-dark);
+      color: var(--cloud-white);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* === BACKGROUND SCENE === */
+    #bg-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+    }
+
+    /* === MAIN CONTAINER === */
+    #app {
+      position: relative;
+      z-index: 1;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* === TOP BAR === */
+    #top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 28px;
+      background: linear-gradient(180deg, rgba(13, 31, 31, 0.9) 0%, rgba(13, 31, 31, 0.4) 100%);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      flex-shrink: 0;
+      min-height: 64px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 38px; height: 38px;
+      position: relative;
+    }
+
+    .logo-icon svg {
+      width: 100%; height: 100%;
+    }
+
+    .logo-text {
+      font-family: 'ZCOOL XiaoWei', serif;
+      font-size: 22px;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, var(--jade-pale), var(--jade-glow), var(--mist-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: none;
+    }
+
+    .resource-bar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+
+    .resource-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      font-size: 13px;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+    }
+
+    .resource-item:hover {
+      background: rgba(26, 58, 58, 0.75);
+      border-color: rgba(110, 207, 207, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .resource-icon {
+      width: 18px; height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .resource-icon svg {
+      width: 100%; height: 100%;
+    }
+
+    .resource-value {
+      font-weight: 600;
+      color: var(--jade-glow);
+      font-size: 13px;
+    }
+
+    .resource-label {
+      color: rgba(168, 230, 230, 0.6);
+      font-size: 11px;
+    }
+
+    /* === SillyTavern Enhancer Styles === */
+    /* Styles loaded from external file */
+  </style>
+  <link rel="stylesheet" href="./sillytavern/st-styles.css">
+</head>
+<body>
+  <!-- SillyTavern Enhancer Container -->
+  <div class="st-button-container"></div>
+      </div>
+
+      <div class="player-info" onclick="openModal('player')">
+        <div>
+          <div class="player-name">清虚子</div>
+          <div class="player-realm">元婴中期</div>
+        </div>
+        <div class="player-avatar">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4" stroke="#a8e6e6" stroke-width="1.5"/><path d="M4 22 C4 16 8 14 12 14 C16 14 20 16 20 22" stroke="#a8e6e6" stroke-width="1.5"/></svg>
+        </div>
+      </div>
+    </header>
+
+    <div id="main-content">
+      <!-- SIDE NAV -->
+      <nav id="side-nav">
+        <button class="nav-btn active" data-page="home" onclick="switchPage('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12L12 4l9 8"/><path d="M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9"/></svg>
+          <span>总览</span>
+        </button>
+        <button class="nav-btn" data-page="story" onclick="switchPage('story')" style="position:relative">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3C7 3 3 6 3 10c0 3 2 5.5 5 7l-1 4 4-2c.3 0 .7.03 1 .03 5 0 9-3 9-7s-4-9-9-9z"/></svg>
+          <span>天机</span>
+          <div class="notif-dot"></div>
+        </button>
+        <button class="nav-btn" data-page="members" onclick="switchPage('members')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v2"/><circle cx="17" cy="9" r="2.5"/><path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/></svg>
+          <span>弟子</span>
+        </button>
+        <button class="nav-btn" data-page="sectinfo" onclick="switchPage('sectinfo')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span>宗门</span>
+        </button>
+        <button class="nav-btn" data-page="diplomacy" onclick="switchPage('diplomacy')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M2 12h20"/><ellipse cx="12" cy="12" rx="4" ry="9"/></svg>
+          <span>外交</span>
+        </button>
+        <button class="nav-btn" data-page="library" onclick="switchPage('library')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19V5a2 2 0 012-2h12a2 2 0 012 2v14"/><path d="M4 19h16"/><path d="M8 3v16"/><path d="M12 7h4"/><path d="M12 11h4"/></svg>
+          <span>藏经</span>
+        </button>
+        <button class="nav-btn" data-page="treasury" onclick="switchPage('treasury')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M7 8V6a5 5 0 0110 0v2"/><circle cx="12" cy="15" r="2"/></svg>
+          <span>宝库</span>
+        </button>
+      </nav>
+
+      <!-- CENTER AREA -->
+      <div id="center-area">
+        <!-- HOME -->
+        <div id="home-page" class="page-content active-page">
+          <div class="home-header">
+            <h1>云璃仙宗</h1>
+            <div class="subtitle">天道酬勤 · 万法归宗</div>
+          </div>
+
+          <div class="sect-overview">
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <div class="stat-card-icon bg-jade" style="color:var(--jade-glow)">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2v16M6 6l4-4 4 4M3 10h14"/></svg>
+                </div>
+                <span class="stat-card-title">宗门实力</span>
+              </div>
+              <div class="stat-card-value text-jade">甲等中宗</div>
+              <div class="stat-card-change positive">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2z"/></svg>
+                声望上升中
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <div class="stat-card-icon bg-purple" style="color:var(--mist-purple)">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>
+                </div>
+                <span class="stat-card-title">灵脉充盈</span>
+              </div>
+              <div class="stat-card-value text-purple">78%</div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" style="width:78%;background:linear-gradient(90deg,var(--mist-purple-deep),var(--mist-purple))"></div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <div class="stat-card-icon bg-gold" style="color:var(--gold-spirit)">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2l2.5 5H18l-4 3.5 1.5 5.5L10 13l-5.5 3 1.5-5.5L2 7h5.5z"/></svg>
+                </div>
+                <span class="stat-card-title">防御阵法</span>
+              </div>
+              <div class="stat-card-value text-gold">九曜阵</div>
+              <div class="stat-card-change positive">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2z"/></svg>
+                运转稳定
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <div class="stat-card-icon bg-pink" style="color:var(--lotus-pink)">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3C6 3 3 6 3 10s3 7 7 7 7-3 7-7"/><path d="M14 3l3 3-3 3"/></svg>
+                </div>
+                <span class="stat-card-title">弟子修炼</span>
+              </div>
+              <div class="stat-card-value text-pink">32 / 47</div>
+              <div class="stat-card-change" style="color:rgba(168,230,230,0.5)">
+                正在闭关修炼
+              </div>
+            </div>
+          </div>
+
+          <div class="module-grid">
+            <div class="module-card large" onclick="switchPage('story')">
+              <div class="module-icon-wrap bg-jade">
+                <div class="module-icon-glow" style="background:var(--jade-glow)"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--jade-glow)" stroke-width="1.5"><path d="M12 3C7 3 3 6 3 10c0 3 2 5.5 5 7l-1 4 4-2c.3 0 .7.03 1 .03 5 0 9-3 9-7s-4-9-9-9z"/></svg>
+              </div>
+              <div class="module-badge" style="background:rgba(212,114,140,0.15);color:var(--lotus-pink)">有新事件</div>
+              <h3 class="text-jade">天机台</h3>
+              <p>天降异象，玄云覆顶。一位自称苍梧山散修的神秘访客正在山门外求见，声称携有一份关乎云璃仙宗命运的密信...</p>
+              <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap">
+                <span style="padding:3px 10px;border-radius:8px;font-size:11px;background:rgba(110,207,207,0.1);color:var(--jade-glow)">主线剧情</span>
+                <span style="padding:3px 10px;border-radius:8px;font-size:11px;background:rgba(139,126,200,0.1);color:var(--mist-purple)">待决策</span>
+              </div>
+            </div>
+            <div class="module-card" onclick="switchPage('members')">
+              <div class="module-icon-wrap bg-purple">
+                <div class="module-icon-glow" style="background:var(--mist-purple)"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--mist-purple)" stroke-width="1.5"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v2"/><circle cx="17" cy="9" r="2.5"/><path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/></svg>
+              </div>
+              <h3 class="text-purple">弟子堂</h3>
+              <p>管理宗门弟子，分配职务，调配修炼资源</p>
+            </div>
+            <div class="module-card" onclick="switchPage('library')">
+              <div class="module-icon-wrap bg-gold">
+                <div class="module-icon-glow" style="background:var(--gold-spirit)"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-spirit)" stroke-width="1.5"><path d="M4 19V5a2 2 0 012-2h12a2 2 0 012 2v14"/><path d="M4 19h16"/><path d="M8 3v16"/><path d="M12 7h4"/><path d="M12 11h4"/></svg>
+              </div>
+              <h3 class="text-gold">藏经阁</h3>
+              <p>功法典籍、秘术传承，供弟子参悟研习</p>
+            </div>
+            <div class="module-card" onclick="switchPage('treasury')">
+              <div class="module-icon-wrap bg-pink">
+                <div class="module-icon-glow" style="background:var(--lotus-pink)"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--lotus-pink)" stroke-width="1.5"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M7 8V6a5 5 0 0110 0v2"/><circle cx="12" cy="15" r="2"/></svg>
+              </div>
+              <h3 class="text-pink">万宝阁</h3>
+              <p>法器、丹药、灵材，宗门宝物尽在此处</p>
+            </div>
+            <div class="module-card" onclick="switchPage('sectinfo')">
+              <div class="module-icon-wrap" style="background:rgba(110,207,207,0.08)">
+                <div class="module-icon-glow" style="background:var(--jade-light)"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--jade-light)" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              </div>
+              <h3 style="color:var(--jade-light)">宗门志</h3>
+              <p>山门风貌、历代传承、宗规戒律一览</p>
+            </div>
+            <div class="module-card" onclick="switchPage('diplomacy')">
+              <div class="module-icon-wrap" style="background:rgba(200,168,110,0.08)">
+                <div class="module-icon-glow" style="background:var(--gold-bright)"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-bright)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M2 12h20"/><ellipse cx="12" cy="12" rx="4" ry="9"/></svg>
+              </div>
+              <h3 style="color:var(--gold-bright)">合纵阁</h3>
+              <p>邦交结盟、情报刺探、天下大势</p>
+            </div>
+          </div>
+
+          <div class="events-section">
+            <div class="section-title">近日要事</div>
+            <div class="event-list">
+              <div class="event-item" onclick="switchPage('story')">
+                <div class="event-dot urgent"></div>
+                <div class="event-text">苍梧山散修求见，携密信一封，称事关宗门存亡</div>
+                <div class="event-time">刚刚</div>
+              </div>
+              <div class="event-item" onclick="switchPage('members')">
+                <div class="event-dot normal"></div>
+                <div class="event-text">弟子「沈幽兰」突破筑基期，请求掌门赐下筑基丹</div>
+                <div class="event-time">一炷香前</div>
+              </div>
+              <div class="event-item" onclick="switchPage('diplomacy')">
+                <div class="event-dot info"></div>
+                <div class="event-text">天剑宗送来拜帖，邀请参加三月后的论剑大会</div>
+                <div class="event-time">半日前</div>
+              </div>
+              <div class="event-item" onclick="switchPage('treasury')">
+                <div class="event-dot normal"></div>
+                <div class="event-text">炼器峰新铸「碧落剑」一柄，品质上佳，待入库</div>
+                <div class="event-time">一日前</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STORY PAGE (天机台) -->
+        <div id="story-page" class="page-content" style="display:none;padding:24px;height:100%;overflow:hidden">
+          <div class="story-container">
+            <div class="story-text-area" id="story-text-area">
+              <div class="story-paragraph narrator" style="animation-delay:0s">
+                【天机台 · 第一章 · 玄云密信】
+              </div>
+              <div class="story-paragraph" style="animation-delay:0.15s">
+                晨曦初露，云璃峰上雾气氤氲。你正于悟道殿中参悟《太虚真解》，忽闻门外传来一阵急促的脚步声。
+              </div>
+              <div class="story-paragraph" style="animation-delay:0.3s">
+                守山弟子叶青匆匆入内，单膝跪地，抱拳道："禀掌门，山门外来了一位散修，自称苍梧山洛风前辈的弟子，名唤周沉舟。此人修为不俗，约在金丹后期，身上隐有剑意流转。他说携有一封密信，事关重大，非见掌门不可。"
+              </div>
+              <div class="story-paragraph" style="animation-delay:0.45s">
+                你缓缓睁开双眼，掐指一算。苍梧山......洛风......此人三十年前曾与你有过一面之缘，是个性情古怪却颇有本事的剑修。他为何在此时遣弟子送信？
+              </div>
+              <div class="story-paragraph narrator" style="animation-delay:0.6s">
+                你望向窗外翻涌的云海，沉吟片刻——
+              </div>
+            </div>
+
+            <div class="story-choices" id="story-choices">
+              <button class="story-choice-btn" onclick="selectChoice(this, 1)">
+                <div class="choice-marker">壹</div>
+                <span>令叶青将此人请至偏殿奉茶，你亲自前去接见，以示郑重</span>
+              </button>
+              <button class="story-choice-btn" onclick="selectChoice(this, 2)">
+                <div class="choice-marker">贰</div>
+                <span>先让执法堂暗中查探此人底细，确认身份后再做定夺</span>
+              </button>
+              <button class="story-choice-btn" onclick="selectChoice(this, 3)">
+                <div class="choice-marker">叁</div>
+                <span>只取密信来看，不必见人——非常之时，需防有诈</span>
+              </button>
+              <button class="story-choice-btn" onclick="selectChoice(this, 4)">
+                <div class="choice-marker">肆</div>
+                <span>召集长老议事，此事需众人商议后再做回复</span>
+              </button>
+            </div>
+
+            <div class="story-input-area">
+              <input type="text" class="story-input" id="story-custom-input" placeholder="以掌门之意，自行决断..." />
+              <button class="story-send-btn" onclick="sendCustomInput()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MEMBERS PAGE -->
+        <div id="members-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+            <h2 style="font-size:18px;letter-spacing:3px">弟子堂</h2>
+            <div style="display:flex;gap:8px">
+              <input type="text" placeholder="搜索弟子..." style="padding:6px 14px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;color:var(--cloud-white);font-size:12px;font-family:'Noto Serif SC',serif;outline:none;width:160px">
+              <button class="action-btn-sm" style="padding:6px 14px">筛选</button>
+            </div>
+          </div>
+          <table class="members-table">
+            <thead>
+              <tr>
+                <th>姓名</th>
+                <th>境界</th>
+                <th>职务</th>
+                <th>状态</th>
+                <th>天赋</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="members-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- SECT INFO PAGE -->
+        <div id="sectinfo-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
+          <h2 style="font-size:18px;letter-spacing:3px;margin-bottom:18px">宗门志</h2>
+          <div class="sect-info-grid">
+            <div class="info-block">
+              <h4>宗门名号</h4>
+              <div class="info-value text-jade">云璃仙宗</div>
+            </div>
+            <div class="info-block">
+              <h4>宗门等级</h4>
+              <div class="info-value text-gold">甲等中宗</div>
+            </div>
+            <div class="info-block">
+              <h4>建宗年份</h4>
+              <div class="info-value">天元历 一千二百三十七年</div>
+            </div>
+            <div class="info-block">
+              <h4>现任掌门</h4>
+              <div class="info-value text-purple">清虚子（元婴中期）</div>
+            </div>
+            <div class="info-block full-width">
+              <h4>宗门简史</h4>
+              <div class="info-value" style="font-size:13px;line-height:2;color:rgba(232,244,240,0.7)">
+                云璃仙宗始建于天元历一千二百三十七年，由初代掌门玄璃真人于云璃峰开山立派。宗门坐拥三脉灵山、一处上品灵泉，历经数百年风雨，传承至今已有八代掌门。宗门以「太虚真解」为根本功法，擅长御剑与阵法之术。鼎盛时期曾位列九大仙宗之一，后因百年前的「天魔之乱」元气大伤，至今仍在恢复之中。当代掌门清虚子执掌门户已有三十载，励精图治，宗门正逐步重回昔日荣光。
+              </div>
+            </div>
+            <div class="info-block">
+              <h4>山门灵脉</h4>
+              <div class="info-value">
+                <div style="margin-bottom:6px">云璃主脉 — 上品
+                  <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:82%;background:var(--jade-glow)"></div></div>
+                </div>
+                <div style="margin-bottom:6px">青萝副脉 — 中品
+                  <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:63%;background:var(--mist-purple)"></div></div>
+                </div>
+                <div>玄石偏脉 — 中品
+                  <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:45%;background:var(--gold-spirit)"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="info-block">
+              <h4>宗规戒律</h4>
+              <div class="info-value" style="font-size:13px;line-height:2;color:rgba(232,244,240,0.7)">
+                一、不得擅离山门<br>
+                二、不得以大欺小<br>
+                三、不得泄露宗门秘法<br>
+                四、不得与魔修勾结<br>
+                五、遵从掌门号令
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DIPLOMACY PAGE -->
+        <div id="diplomacy-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
+          <h2 style="font-size:18px;letter-spacing:3px;margin-bottom:18px">合纵阁 · 天下势</h2>
+          <div class="faction-list" id="faction-list"></div>
+        </div>
+
+        <!-- LIBRARY PAGE -->
+        <div id="library-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+            <h2 style="font-size:18px;letter-spacing:3px">藏经阁</h2>
+            <div style="display:flex;gap:6px">
+              <button class="action-btn-sm skill-filter active-filter" onclick="filterSkills('all',this)">全部</button>
+              <button class="action-btn-sm skill-filter" onclick="filterSkills('攻击',this)">攻伐</button>
+              <button class="action-btn-sm skill-filter" onclick="filterSkills('防御',this)">防御</button>
+              <button class="action-btn-sm skill-filter" onclick="filterSkills('辅助',this)">辅助</button>
+              <button class="action-btn-sm skill-filter" onclick="filterSkills('炼丹',this)">炼丹</button>
+            </div>
+          </div>
+          <div class="skill-grid" id="skill-grid"></div>
+        </div>
+
+        <!-- TREASURY PAGE -->
+        <div id="treasury-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
+          <h2 style="font-size:18px;letter-spacing:3px;margin-bottom:14px">万宝阁</h2>
+          <div class="treasury-tabs">
+            <button class="treasury-tab active" onclick="switchTreasury('weapon',this)">法器</button>
+            <button class="treasury-tab" onclick="switchTreasury('armor',this)">护具</button>
+            <button class="treasury-tab" onclick="switchTreasury('pill',this)">丹药</button>
+            <button class="treasury-tab" onclick="switchTreasury('material',this)">灵材</button>
+          </div>
+          <div class="item-grid" id="item-grid"></div>
+        </div>
+
+        <!-- PLAYER PAGE -->
+        <div id="player-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
+          <h2 style="font-size:18px;letter-spacing:3px;margin-bottom:18px">掌门修行录</h2>
+          <div class="profile-top">
+            <div class="profile-avatar-lg">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#a8e6e6" stroke-width="1.2"><circle cx="12" cy="9" r="4.5"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/><path d="M12 2v2M7 4l1 1.5M17 4l-1 1.5" stroke-width="1"/></svg>
+            </div>
+            <div class="profile-details">
+              <h3>清虚子</h3>
+              <div class="profile-title">云璃仙宗 · 第八代掌门</div>
+              <div class="profile-stats">
+                <div class="profile-stat">
+                  <div class="stat-val text-jade">元婴</div>
+                  <div class="stat-lbl">当前境界</div>
+                </div>
+                <div class="profile-stat">
+                  <div class="stat-val text-purple">892</div>
+                  <div class="stat-lbl">道行年数</div>
+                </div>
+                <div class="profile-stat">
+                  <div class="stat-val text-gold">剑道</div>
+                  <div class="stat-lbl">主修</div>
+                </div>
+                <div class="profile-stat">
+                  <div class="stat-val text-pink">阵法</div>
+                  <div class="stat-lbl">副修</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="sect-info-grid" style="margin-top:16px">
+            <div class="info-block">
+              <h4>修炼功法</h4>
+              <div class="info-value" style="font-size:13px;line-height:2">
+                <div>太虚真解（第九层） <span class="text-jade" style="font-size:11px">— 宗门根本</span></div>
+                <div>天罡剑诀（大成） <span class="text-gold" style="font-size:11px">— 攻伐</span></div>
+                <div>玄天阵录（小成） <span class="text-purple" style="font-size:11px">— 阵法</span></div>
+              </div>
+            </div>
+            <div class="info-block">
+              <h4>随身法器</h4>
+              <div class="info-value" style="font-size:13px;line-height:2">
+                <div>霜华剑 <span class="text-jade" style="font-size:11px">— 上品灵器</span></div>
+                <div>玄龟甲 <span class="text-purple" style="font-size:11px">— 中品灵器</span></div>
+                <div>传音玉符 <span style="font-size:11px;color:rgba(168,230,230,0.5)">— 下品灵器</span></div>
+              </div>
+            </div>
+            <div class="info-block full-width">
+              <h4>掌门日志</h4>
+              <div class="info-value" style="font-size:13px;line-height:2;color:rgba(232,244,240,0.7)">
+                执掌云璃三十载，虽殚精竭虑，奈何百年前天魔之乱的创伤太深。所幸近年来收得几名天赋出众的弟子，宗门渐有起色。近来天象异变，各方势力蠢蠢欲动，须得更加警醒。那苍梧山来人之事，也许正是转机......又或许，是风暴的前兆。
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+    <div class="modal-container" id="modal-container">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button class="modal-close" onclick="closeModal()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    // ====== BACKGROUND CANVAS ======
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Cloud layers
+    class CloudLayer {
+      constructor(y, speed, opacity, scale) {
+        this.x = Math.random() * canvas.width;
+        this.y = y;
+        this.speed = speed;
+        this.opacity = opacity;
+        this.scale = scale;
+        this.width = 200 + Math.random() * 300;
+        this.height = 40 + Math.random() * 60;
+      }
+
+      update() {
+        this.x += this.speed;
+        if (this.x > canvas.width + this.width) this.x = -this.width;
+      }
+
+      draw(c) {
+        c.save();
+        c.globalAlpha = this.opacity;
+        c.fillStyle = `rgba(110, 180, 180, ${this.opacity * 0.3})`;
+        c.beginPath();
+        const cx = this.x + this.width / 2;
+        const cy = this.y;
+        c.ellipse(cx, cy, this.width * this.scale / 2, this.height * this.scale / 2, 0, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
+    }
+
+    // Jade-like light particles
+    class LightParticle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = canvas.height + 20;
+        this.size = 1 + Math.random() * 2.5;
+        this.speedY = -(0.15 + Math.random() * 0.4);
+        this.speedX = (Math.random() - 0.5) * 0.3;
+        this.opacity = 0;
+        this.maxOpacity = 0.2 + Math.random() * 0.4;
+        this.life = 0;
+        this.maxLife = 400 + Math.random() * 600;
+        const hues = [170, 180, 250, 310];
+        this.hue = hues[Math.floor(Math.random() * hues.length)];
+      }
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.life++;
+        const ratio = this.life / this.maxLife;
+        if (ratio < 0.2) this.opacity = this.maxOpacity * (ratio / 0.2);
+        else if (ratio > 0.7) this.opacity = this.maxOpacity * (1 - (ratio - 0.7) / 0.3);
+        else this.opacity = this.maxOpacity;
+        if (this.life >= this.maxLife) this.reset();
+      }
+      draw(c) {
+        c.save();
+        c.globalAlpha = this.opacity;
+        c.fillStyle = `hsla(${this.hue}, 60%, 70%, 1)`;
+        c.shadowColor = `hsla(${this.hue}, 60%, 70%, 0.5)`;
+        c.shadowBlur = 6;
+        c.beginPath();
+        c.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
+    }
+
+    const clouds = [];
+    for (let i = 0; i < 8; i++) {
+      clouds.push(new CloudLayer(
+        50 + Math.random() * (canvas.height * 0.6),
+        0.05 + Math.random() * 0.15,
+        0.03 + Math.random() * 0.06,
+        0.6 + Math.random() * 0.8
+      ));
+    }
+
+    const particles = [];
+    for (let i = 0; i < 40; i++) {
+      const p = new LightParticle();
+      p.life = Math.random() * p.maxLife;
+      p.y = Math.random() * canvas.height;
+      particles.push(p);
+    }
+
+    function drawBackground() {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#0a1a1a');
+      grad.addColorStop(0.3, '#0d2222');
+      grad.addColorStop(0.6, '#0f2828');
+      grad.addColorStop(1, '#0a1818');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Mountain silhouettes
+      ctx.save();
+      ctx.globalAlpha = 0.06;
+      ctx.fillStyle = '#4a8a8a';
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height * 0.7);
+      ctx.lineTo(canvas.width * 0.15, canvas.height * 0.35);
+      ctx.lineTo(canvas.width * 0.3, canvas.height * 0.55);
+      ctx.lineTo(canvas.width * 0.45, canvas.height * 0.25);
+      ctx.lineTo(canvas.width * 0.6, canvas.height * 0.5);
+      ctx.lineTo(canvas.width * 0.75, canvas.height * 0.3);
+      ctx.lineTo(canvas.width * 0.9, canvas.height * 0.45);
+      ctx.lineTo(canvas.width, canvas.height * 0.38);
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.lineTo(0, canvas.height);
+      ctx.fill();
+      ctx.restore();
+
+      clouds.forEach(c => { c.update(); c.draw(ctx); });
+      particles.forEach(p => { p.update(); p.draw(ctx); });
+    }
+
+    function animateBackground() {
+      drawBackground();
+      requestAnimationFrame(animateBackground);
+    }
+    animateBackground();
+
+    // ====== PAGE SWITCHING ======
+    let currentPage = 'home';
+
+    function switchPage(page) {
+      document.querySelectorAll('.page-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+      const pageEl = document.getElementById(page + '-page');
+      if (pageEl) {
+        pageEl.style.display = '';
+        pageEl.style.animation = 'fadeInUp 0.4s ease forwards';
+      }
+
+      const navBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+      if (navBtn) navBtn.classList.add('active');
+
+      currentPage = page;
+      closeModal();
+    }
+
+    // ====== MODAL ======
+    function openModal(type) {
+      const overlay = document.getElementById('modal-overlay');
+      const title = document.getElementById('modal-title');
+      const body = document.getElementById('modal-body');
+
+      if (type === 'player') {
+        switchPage('player');
+        return;
+      }
+
+      overlay.classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('active');
+    }
+
+    function closeModalOutside(e) {
+      if (e.target === document.getElementById('modal-overlay')) closeModal();
+    }
+
+    // ====== STORY INTERACTION ======
+    function selectChoice(btn, idx) {
+      const text = btn.querySelector('span').textContent;
+      const area = document.getElementById('story-text-area');
+      const choiceDiv = document.createElement('div');
+      choiceDiv.className = 'story-paragraph';
+      choiceDiv.style.color = 'var(--jade-glow)';
+      choiceDiv.style.borderLeft = '2px solid var(--jade-glow)';
+      choiceDiv.style.paddingLeft = '12px';
+      choiceDiv.style.textIndent = '0';
+      choiceDiv.textContent = `掌门决断：${text}`;
+      area.appendChild(choiceDiv);
+
+      // Simulate response
+      setTimeout(() => {
+        const responses = [
+          '你整了整衣冠，迈步走向偏殿。推门而入，只见一名身着灰色布衣的中年修士正负手而立，剑眉星目间透着一股沉稳之气。见你到来，他微微欠身，从袖中取出一枚玉简，双手递上。',
+          '你召来执法堂首座周明远，低声吩咐几句。周明远领命而去，半个时辰后回报：此人确为苍梧山门下，身上并无邪气，但其来路上似有人暗中跟踪。',
+          '叶青将密信取来。你打开玉简，神识探入，顿时面色微变——信中所述之事，远比想象中更为严峻。',
+          '长老们齐聚议事堂。你将来人之事道出，众人议论纷纷。大长老沈万钧捻须道："苍梧山与我宗素无往来，此番突然遣人送信，恐非寻常。"'
+        ];
+        const resp = document.createElement('div');
+        resp.className = 'story-paragraph';
+        resp.textContent = responses[idx - 1] || responses[0];
+        area.appendChild(resp);
+        area.scrollTop = area.scrollHeight;
+
+        // New choices
+        setTimeout(() => {
+          updateChoices([
+            '仔细查看玉简中的全部内容',
+            '询问来人更多细节',
+            '先按兵不动，暗中加强山门防御',
+            '传讯天剑宗盟友，通报此事'
+          ]);
+        }, 300);
+      }, 600);
+
+      area.scrollTop = area.scrollHeight;
+    }
+
+    function updateChoices(choices) {
+      const markers = ['壹', '贰', '叁', '肆', '伍', '陆'];
+      const container = document.getElementById('story-choices');
+      container.innerHTML = '';
+      choices.forEach((text, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'story-choice-btn';
+        btn.innerHTML = `<div class="choice-marker">${markers[i]}</div><span>${text}</span>`;
+        btn.onclick = () => selectChoice(btn, i + 1);
+        container.appendChild(btn);
+      });
+    }
+
+    function sendCustomInput() {
+      const input = document.getElementById('story-custom-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const area = document.getElementById('story-text-area');
+      const p = document.createElement('div');
+      p.className = 'story-paragraph';
+      p.style.color = 'var(--jade-glow)';
+      p.style.borderLeft = '2px solid var(--jade-glow)';
+      p.style.paddingLeft = '12px';
+      p.style.textIndent = '0';
+      p.textContent = `掌门自决：${text}`;
+      area.appendChild(p);
+
+      input.value = '';
+
+      setTimeout(() => {
+        const resp = document.createElement('div');
+        resp.className = 'story-paragraph';
+        resp.textContent = '你的决断如同一颗石子投入静湖，涟漪渐次扩散。四周的灵气似乎因你的心意而微微波动，天机台上的卦象也随之轻转。这一步棋，是福是祸，尚未可知......';
+        area.appendChild(resp);
+        area.scrollTop = area.scrollHeight;
+      }, 500);
+    }
+
+    document.getElementById('story-custom-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') sendCustomInput();
+    });
+
+    // ====== MEMBERS DATA ======
+    const membersData = [
+      { name: '沈万钧', realm: '元婴后期', role: '大长老', status: '坐镇', talent: '上上', color: 'jade' },
+      { name: '周明远', realm: '元婴初期', role: '执法首座', status: '巡查', talent: '上', color: 'purple' },
+      { name: '苏瑶', realm: '金丹后期', role: '丹峰长老', status: '炼丹', talent: '上上', color: 'pink' },
+      { name: '林淮安', realm: '金丹中期', role: '藏经长老', status: '研习', talent: '上', color: 'gold' },
+      { name: '叶青', realm: '筑基后期', role: '内门弟子', status: '守山', talent: '中上', color: 'jade' },
+      { name: '沈幽兰', realm: '筑基初期', role: '内门弟子', status: '闭关', talent: '上上', color: 'purple' },
+      { name: '赵长风', realm: '金丹初期', role: '客卿', status: '游历', talent: '中上', color: 'gold' },
+      { name: '白芷', realm: '筑基后期', role: '内门弟子', status: '修炼', talent: '上', color: 'pink' },
+      { name: '秦川', realm: '筑基中期', role: '外门弟子', status: '任务', talent: '中', color: 'jade' },
+      { name: '柳如烟', realm: '筑基中期', role: '内门弟子', status: '修炼', talent: '中上', color: 'purple' }
+    ];
+
+    function renderMembers() {
+      const tbody = document.getElementById('members-tbody');
+      tbody.innerHTML = '';
+      membersData.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <div class="member-name-cell">
+              <div class="member-avatar-sm bg-${m.color}" style="color:var(--${m.color === 'jade' ? 'jade-glow' : m.color === 'purple' ? 'mist-purple' : m.color === 'pink' ? 'lotus-pink' : 'gold-spirit'})">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 18c0-3 3-5 6-5s6 2 6 5"/></svg>
+              </div>
+              ${m.name}
+            </div>
+          </td>
+          <td><span class="realm-badge bg-${m.color}" style="color:var(--${m.color === 'jade' ? 'jade-glow' : m.color === 'purple' ? 'mist-purple' : m.color === 'pink' ? 'lotus-pink' : 'gold-spirit'})">${m.realm}</span></td>
+          <td><span class="role-badge" style="background:rgba(110,207,207,0.06);color:rgba(168,230,230,0.7)">${m.role}</span></td>
+          <td style="color:${m.status === '闭关' ? 'var(--mist-purple)' : m.status === '巡查' ? 'var(--jade-glow)' : m.status === '炼丹' ? 'var(--lotus-pink)' : 'rgba(168,230,230,0.6)'}">${m.status}</td>
+          <td style="color:var(--gold-spirit)">${m.talent}</td>
+          <td>
+            <button class="action-btn-sm" onclick="openMemberDetail('${m.name}')">详情</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    renderMembers();
+
+    function openMemberDetail(name) {
+      const m = membersData.find(x => x.name === name);
+      if (!m) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:20px;height:20px"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg> ${m.name}`;
+      document.getElementById('modal-body').innerHTML = `
+        <div class="sect-info-grid">
+          <div class="info-block"><h4>境界</h4><div class="info-value">${m.realm}</div></div>
+          <div class="info-block"><h4>职务</h4><div class="info-value">${m.role}</div></div>
+          <div class="info-block"><h4>当前状态</h4><div class="info-value">${m.status}</div></div>
+          <div class="info-block"><h4>天赋资质</h4><div class="info-value text-gold">${m.talent}</div></div>
+          <div class="info-block full-width">
+            <h4>已修功法</h4>
+            <div class="info-value" style="font-size:13px;line-height:2">太虚真解（第三层）、基础剑术（大成）</div>
+          </div>
+          <div class="info-block full-width">
+            <h4>佩戴装备</h4>
+            <div class="info-value" style="font-size:13px;line-height:2">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span style="padding:4px 12px;background:rgba(110,207,207,0.1);border:1px solid var(--glass-border);border-radius:8px;font-size:12px">青锋剑 · 下品灵器</span>
+                <span style="padding:4px 12px;background:rgba(139,126,200,0.1);border:1px solid var(--glass-border);border-radius:8px;font-size:12px">护体符 · 法器</span>
+                <button class="action-btn-sm" style="margin-left:auto">重新分配</button>
+              </div>
+            </div>
+          </div>
+          <div class="info-block full-width" style="display:flex;gap:8px;justify-content:flex-end;background:transparent;border:none;padding:8px 0 0 0">
+            <button class="action-btn-sm" style="padding:8px 20px;background:rgba(139,126,200,0.12);border-color:rgba(139,126,200,0.3);color:var(--mist-purple)">调整职务</button>
+            <button class="action-btn-sm" style="padding:8px 20px;background:rgba(110,207,207,0.12);border-color:rgba(110,207,207,0.3);color:var(--jade-glow)">安排修炼</button>
+          </div>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    // ====== DIPLOMACY DATA ======
+    const factions = [
+      { name: '天剑宗', relation: '盟友', value: 82, desc: '百年盟约，互为犄角之势', color: 'jade', leader: '剑尊·凌霄子' },
+      { name: '万象门', relation: '友好', value: 65, desc: '近年来往密切，有意深化合作', color: 'purple', leader: '门主·玄机老人' },
+      { name: '血影谷', relation: '敌对', value: 15, desc: '魔修势力，多次侵犯边境', color: 'pink', leader: '谷主·血罗' },
+      { name: '碧落宫', relation: '中立', value: 50, desc: '女修门派，鲜少涉及外界纷争', color: 'gold', leader: '宫主·明月仙子' },
+      { name: '太玄学府', relation: '友好', value: 70, desc: '学术交流频繁，弟子互有往来', color: 'jade', leader: '府主·青阳居士' },
+      { name: '九幽教', relation: '警惕', value: 30, desc: '行事诡秘，近来动向不明', color: 'pink', leader: '教主·幽冥真人' }
+    ];
+
+    function renderFactions() {
+      const list = document.getElementById('faction-list');
+      list.innerHTML = '';
+      factions.forEach(f => {
+        const relColor = f.value >= 60 ? 'var(--jade-glow)' : f.value >= 40 ? 'var(--gold-spirit)' : 'var(--lotus-pink)';
+        const relBg = f.value >= 60 ? 'rgba(110,207,207,0.12)' : f.value >= 40 ? 'rgba(200,168,110,0.12)' : 'rgba(212,114,140,0.12)';
+        const card = document.createElement('div');
+        card.className = 'faction-card';
+        card.innerHTML = `
+          <div class="faction-header">
+            <div class="faction-name">
+              <svg viewBox="0 0 20 20" fill="none" stroke="${relColor}" stroke-width="1.2" style="width:16px;height:16px"><polygon points="10,2 17,7 14,16 6,16 3,7"/></svg>
+              ${f.name}
+            </div>
+            <span class="relation-badge" style="background:${relBg};color:${relColor}">${f.relation}</span>
+          </div>
+          <div style="font-size:12px;color:rgba(168,230,230,0.5);margin-bottom:4px">掌权者：${f.leader}</div>
+          <div style="font-size:12px;color:rgba(168,230,230,0.6)">${f.desc}</div>
+          <div class="relation-bar">
+            <div class="relation-fill" style="width:${f.value}%;background:${relColor}"></div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+    renderFactions();
+
+    // ====== LIBRARY / SKILLS ======
+    const skills = [
+      { name: '太虚真解', type: '攻击', rank: '天阶', desc: '宗门根本功法，可贯通天地灵气，攻守兼备', color: 'jade', rankBg: 'rgba(110,207,207,0.15)', rankColor: 'var(--jade-glow)' },
+      { name: '天罡剑诀', type: '攻击', rank: '地阶上品', desc: '上古剑法，凝聚天罡之力，一剑可破万法', color: 'gold', rankBg: 'rgba(200,168,110,0.15)', rankColor: 'var(--gold-spirit)' },
+      { name: '玄天阵录', type: '辅助', rank: '地阶', desc: '阵法宝典，囊括数十种攻防大阵的布置之法', color: 'purple', rankBg: 'rgba(139,126,200,0.15)', rankColor: 'var(--mist-purple)' },
+      { name: '碧波心经', type: '辅助', rank: '地阶', desc: '水属性功法，可凝神静气，疗伤恢复', color: 'jade', rankBg: 'rgba(110,207,207,0.15)', rankColor: 'var(--jade-glow)' },
+      { name: '紫霄神雷诀', type: '攻击', rank: '地阶上品', desc: '雷法秘术，引天雷入体，威力惊人', color: 'purple', rankBg: 'rgba(139,126,200,0.15)', rankColor: 'var(--mist-purple)' },
+      { name: '九转还丹术', type: '炼丹', rank: '地阶', desc: '高阶丹方集录，含筑基丹、金丹丹方等', color: 'pink', rankBg: 'rgba(212,114,140,0.12)', rankColor: 'var(--lotus-pink)' },
+      { name: '金刚不坏体', type: '防御', rank: '玄阶上品', desc: '体修功法，可大幅提升肉身防御力', color: 'gold', rankBg: 'rgba(200,168,110,0.15)', rankColor: 'var(--gold-spirit)' },
+      { name: '基础剑术', type: '攻击', rank: '黄阶', desc: '入门剑法，简单实用，外门弟子必修', color: 'jade', rankBg: 'rgba(110,207,207,0.08)', rankColor: 'rgba(168,230,230,0.6)' },
+      { name: '灵药辨识经', type: '炼丹', rank: '黄阶', desc: '记载千余种灵药特性，炼丹入门必读', color: 'pink', rankBg: 'rgba(212,114,140,0.08)', rankColor: 'rgba(232,160,180,0.7)' }
+    ];
+
+    function renderSkills(filter) {
+      const grid = document.getElementById('skill-grid');
+      grid.innerHTML = '';
+      const filtered = filter === 'all' ? skills : skills.filter(s => s.type === filter);
+      filtered.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'skill-card';
+        card.dataset.type = s.type;
+        card.innerHTML = `
+          <span class="skill-rank" style="background:${s.rankBg};color:${s.rankColor}">${s.rank}</span>
+          <h4>${s.name}</h4>
+          <div class="skill-type">${s.type}</div>
+          <div class="skill-desc">${s.desc}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+    renderSkills('all');
+
+    function filterSkills(type, btn) {
+      document.querySelectorAll('.skill-filter').forEach(b => b.classList.remove('active-filter'));
+      if (btn) btn.classList.add('active-filter');
+      renderSkills(type);
+    }
+
+    // Style active filter
+    const styleActiveFilter = document.createElement('style');
+    styleActiveFilter.textContent = `.active-filter { background: rgba(110,207,207,0.12) !important; color: var(--jade-glow) !important; border-color: rgba(110,207,207,0.3) !important; }`;
+    document.head.appendChild(styleActiveFilter);
+
+    // ====== TREASURY ======
+    const treasuryData = {
+      weapon: [
+        { name: '霜华剑', rarity: '上品灵器', owner: '清虚子', color: 'jade' },
+        { name: '碧落剑', rarity: '上品灵器', owner: '未分配', color: 'jade' },
+        { name: '紫电鞭', rarity: '中品灵器', owner: '苏瑶', color: 'purple' },
+        { name: '玄铁枪', rarity: '中品灵器', owner: '未分配', color: 'gold' },
+        { name: '青锋剑', rarity: '下品灵器', owner: '叶青', color: 'jade' },
+        { name: '破阵锤', rarity: '下品灵器', owner: '未分配', color: 'pink' },
+        { name: '流云扇', rarity: '中品灵器', owner: '柳如烟', color: 'purple' },
+        { name: '噬魂刃', rarity: '上品灵器', owner: '周明远', color: 'pink' },
+      ],
+      armor: [
+        { name: '玄龟甲', rarity: '中品灵器', owner: '清虚子', color: 'jade' },
+        { name: '冰蚕衣', rarity: '上品灵器', owner: '未分配', color: 'purple' },
+        { name: '金丝软甲', rarity: '中品灵器', owner: '沈万钧', color: 'gold' },
+        { name: '护体符', rarity: '法器', owner: '沈幽兰', color: 'pink' }
+      ],
+      pill: [
+        { name: '筑基丹', rarity: '四品', owner: '库存×3', color: 'jade' },
+        { name: '回灵丹', rarity: '五品', owner: '库存×12', color: 'purple' },
+        { name: '凝神丹', rarity: '五品', owner: '库存×8', color: 'gold' },
+        { name: '续命丹', rarity: '三品', owner: '库存×1', color: 'pink' },
+        { name: '培元丹', rarity: '六品', owner: '库存×20', color: 'jade' },
+        { name: '化毒丹', rarity: '五品', owner: '库存×5', color: 'purple' }
+      ],
+      material: [
+        { name: '万年寒铁', rarity: '珍稀', owner: '库存×2', color: 'jade' },
+        { name: '九阳玄石', rarity: '珍稀', owner: '库存×1', color: 'gold' },
+        { name: '千年灵芝', rarity: '稀有', owner: '库存×4', color: 'purple' },
+        { name: '血玉髓', rarity: '珍稀', owner: '库存×1', color: 'pink' },
+        { name: '星辰砂', rarity: '稀有', owner: '库存×6', color: 'gold' },
+        { name: '蛟龙筋', rarity: '珍稀', owner: '库存×2', color: 'jade' }
+      ]
+    };
+
+    const itemSvgs = {
+      weapon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14.5 3.5l6 6-11 11-6-6z"/><path d="M9.5 14.5l-5 5"/><path d="M18 2l4 4"/></svg>',
+      armor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 3L4 7v5c0 5 3.5 9.5 8 10.5 4.5-1 8-5.5 8-10.5V7l-8-4z"/></svg>',
+      pill: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="7"/><path d="M5.5 12h13"/><path d="M12 5.5c-2 2-2 5 0 6.5s2 4.5 0 6.5"/></svg>',
+      material: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><polygon points="12,2 20,8 20,16 12,22 4,16 4,8"/><path d="M12 2v20M4 8l16 8M20 8l-16 8"/></svg>'
+    };
+
+    let currentTreasury = 'weapon';
+
+    function renderTreasury(type) {
+      const grid = document.getElementById('item-grid');
+      grid.innerHTML = '';
+      const items = treasuryData[type] || [];
+      items.forEach(item => {
+        const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
+        const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.12)' : item.color === 'purple' ? 'rgba(139,126,200,0.12)' : item.color === 'pink' ? 'rgba(212,114,140,0.12)' : 'rgba(200,168,110,0.12)';
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.innerHTML = `
+          <div class="item-icon-lg" style="background:${bgVar};color:${colorVar}">
+            ${itemSvgs[type]}
+          </div>
+          <h5>${item.name}</h5>
+          <div class="item-rarity" style="background:${bgVar};color:${colorVar}">${item.rarity}</div>
+          <div class="item-owner">${item.owner}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+    renderTreasury('weapon');
+
+    function switchTreasury(type, btn) {
+      document.querySelectorAll('.treasury-tab').forEach(t => t.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      currentTreasury = type;
+      renderTreasury(type);
+    }
+
+    // ====== KEYBOARD SHORTCUT ======
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ====== SCROLL-TRIGGERED ANIMATIONS ======
+    const pages = document.querySelectorAll('.page-content');
+    pages.forEach(page => {
+      page.addEventListener('scroll', () => {
+        const cards = page.querySelectorAll('.stat-card, .module-card, .event-item, .faction-card, .skill-card, .item-card');
+        cards.forEach(card => {
+          const rect = card.getBoundingClientRect();
+          if (rect.top < window.innerHeight * 0.9) {
+            card.style.opacity = '1';
+            card.style.transform = card.style.transform || '';
+          }
+        });
+      });
+    });
+  </script>
+  <!-- SillyTavern Enhancer Module -->
+  <script type="module" src="./sillytavern/st-integration.js"></script>
+</body>
+</html>

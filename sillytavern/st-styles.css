@@ -1,0 +1,370 @@
+/**
+ * SillyTavern Web Enhancer - 样式文件
+ * 云璃仙宗主题 - 翡翠仙侠风格
+ */
+
+/* ===== 按钮 ===== */
+.st-btn {
+  background: var(--glass-bg, rgba(26, 58, 58, 0.55));
+  border: 1px solid var(--glass-border, rgba(110, 207, 207, 0.15));
+  color: var(--jade-pale, #a8e6e6);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.st-btn:hover {
+  background: rgba(110, 207, 207, 0.15);
+  border-color: rgba(110, 207, 207, 0.3);
+  color: var(--jade-glow, #6ecfcf);
+}
+
+.st-badge {
+  background: linear-gradient(135deg, #d4728c, #8b7ec8);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+/* ===== 模态框 ===== */
+.st-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.st-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.st-modal {
+  background: linear-gradient(180deg, #1a3a3a 0%, #0d1f1f 100%);
+  border: 1px solid rgba(110, 207, 207, 0.15);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 85vh;
+  overflow: hidden;
+  color: #e8f4f0;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.st-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(110, 207, 207, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(110, 207, 207, 0.05);
+}
+
+.st-modal-title {
+  font-family: 'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, #a8e6e6, #6ecfcf);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.st-modal-close {
+  background: none;
+  border: none;
+  color: #a8e6e6;
+  font-size: 24px;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.st-modal-close:hover {
+  background: rgba(212, 114, 140, 0.2);
+  color: #d4728c;
+}
+
+.st-modal-body {
+  padding: 24px;
+  max-height: calc(85vh - 80px);
+  overflow-y: auto;
+}
+
+/* ===== 标签页 ===== */
+.st-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(110, 207, 207, 0.15);
+  padding-bottom: 12px;
+}
+
+.st-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(168, 230, 230, 0.6);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.st-tab:hover {
+  color: #a8e6e6;
+}
+
+.st-tab.active {
+  background: rgba(110, 207, 207, 0.12);
+  border-color: rgba(110, 207, 207, 0.3);
+  color: #6ecfcf;
+}
+
+/* ===== 表单元素 ===== */
+.st-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(110, 207, 207, 0.15);
+  border-radius: 8px;
+  color: #e8f4f0;
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 12px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.st-input:focus {
+  border-color: #6ecfcf;
+  background: rgba(110, 207, 207, 0.05);
+}
+
+.st-label {
+  display: block;
+  font-size: 13px;
+  color: #a8e6e6;
+  margin-bottom: 6px;
+}
+
+/* ===== 按钮变体 ===== */
+.st-btn-primary {
+  background: linear-gradient(135deg, rgba(110, 207, 207, 0.2), rgba(110, 207, 207, 0.1));
+  border: 1px solid rgba(110, 207, 207, 0.3);
+  color: #6ecfcf;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.st-btn-primary:hover {
+  background: linear-gradient(135deg, rgba(110, 207, 207, 0.3), rgba(110, 207, 207, 0.15));
+}
+
+.st-btn-secondary {
+  background: rgba(139, 126, 200, 0.15);
+  border: 1px solid rgba(139, 126, 200, 0.3);
+  color: #8b7ec8;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.st-btn-secondary:hover {
+  background: rgba(139, 126, 200, 0.25);
+}
+
+.st-btn-danger {
+  background: rgba(212, 114, 140, 0.15);
+  border: 1px solid rgba(212, 114, 140, 0.3);
+  color: #d4728c;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.st-btn-danger:hover {
+  background: rgba(212, 114, 140, 0.25);
+}
+
+/* ===== 列表 ===== */
+.st-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.st-item {
+  background: rgba(26, 58, 58, 0.55);
+  border: 1px solid rgba(110, 207, 207, 0.15);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.st-item:hover {
+  background: rgba(110, 207, 207, 0.08);
+  border-color: rgba(110, 207, 207, 0.2);
+}
+
+.st-item.active {
+  background: rgba(110, 207, 207, 0.12);
+  border-color: #6ecfcf;
+}
+
+.st-item-name {
+  font-weight: 500;
+  color: #e8f4f0;
+}
+
+.st-item-meta {
+  font-size: 12px;
+  color: rgba(168, 230, 230, 0.5);
+}
+
+/* ===== 条目卡片 ===== */
+.st-entry {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(110, 207, 207, 0.15);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.st-entry-keys {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.st-tag {
+  background: rgba(110, 207, 207, 0.15);
+  color: #6ecfcf;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  border: 1px solid rgba(110, 207, 207, 0.2);
+}
+
+.st-tag.purple {
+  background: rgba(139, 126, 200, 0.15);
+  color: #8b7ec8;
+  border-color: rgba(139, 126, 200, 0.2);
+}
+
+.st-tag.pink {
+  background: rgba(212, 114, 140, 0.15);
+  color: #d4728c;
+  border-color: rgba(212, 114, 140, 0.2);
+}
+
+.st-entry-content {
+  color: rgba(168, 230, 230, 0.7);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ===== 复选框 ===== */
+.st-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #6ecfcf;
+  cursor: pointer;
+}
+
+/* ===== 工具栏 ===== */
+.st-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* ===== 分栏布局 ===== */
+.st-split {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+  height: 100%;
+}
+
+.st-sidebar {
+  border-right: 1px solid rgba(110, 207, 207, 0.15);
+  padding-right: 20px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.st-main {
+  padding-left: 4px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* ===== 表单组 ===== */
+.st-form-group {
+  margin-bottom: 20px;
+}
+
+.st-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  .st-split {
+    grid-template-columns: 1fr;
+  }
+
+  .st-sidebar {
+    border-right: none;
+    border-bottom: 1px solid rgba(110, 207, 207, 0.15);
+    padding-right: 0;
+    padding-bottom: 20px;
+    max-height: 200px;
+  }
+
+  .st-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+}
