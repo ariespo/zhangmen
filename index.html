@@ -29,7 +29,7 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
+    html, body {
       font-family: 'Noto Serif SC', serif;
       background: var(--ink-dark);
       color: var(--cloud-white);
@@ -38,7 +38,7 @@
       width: 100vw;
     }
 
-    /* === BACKGROUND SCENE === */
+    /* === BACKGROUND === */
     #bg-canvas {
       position: fixed;
       top: 0; left: 0;
@@ -46,7 +46,7 @@
       z-index: 0;
     }
 
-    /* === MAIN CONTAINER === */
+    /* === APP CONTAINER === */
     #app {
       position: relative;
       z-index: 1;
@@ -61,80 +61,74 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 28px;
-      background: linear-gradient(180deg, rgba(13, 31, 31, 0.9) 0%, rgba(13, 31, 31, 0.4) 100%);
+      padding: 12px 24px;
+      background: linear-gradient(180deg, rgba(13, 31, 31, 0.95) 0%, rgba(13, 31, 31, 0.6) 100%);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--glass-border);
       flex-shrink: 0;
-      min-height: 64px;
+      height: 64px;
     }
 
     .logo-area {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .logo-icon {
-      width: 38px; height: 38px;
-      position: relative;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
     }
 
     .logo-icon svg {
-      width: 100%; height: 100%;
+      width: 36px;
+      height: 36px;
+      display: block;
     }
 
     .logo-text {
       font-family: 'ZCOOL XiaoWei', serif;
-      font-size: 22px;
-      letter-spacing: 4px;
+      font-size: 20px;
+      letter-spacing: 3px;
       background: linear-gradient(135deg, var(--jade-pale), var(--jade-glow), var(--mist-purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-shadow: none;
     }
 
     .resource-bar {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       align-items: center;
-      flex-wrap: nowrap;
     }
 
     .resource-item {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 14px;
+      padding: 6px 12px;
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      font-size: 13px;
+      border-radius: 16px;
+      font-size: 12px;
       white-space: nowrap;
-      transition: all 0.3s ease;
-    }
-
-    .resource-item:hover {
-      background: rgba(26, 58, 58, 0.75);
-      border-color: rgba(110, 207, 207, 0.3);
-      transform: translateY(-1px);
     }
 
     .resource-icon {
-      width: 18px; height: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
     }
 
     .resource-icon svg {
-      width: 100%; height: 100%;
+      width: 16px;
+      height: 16px;
+      display: block;
     }
 
     .resource-value {
       font-weight: 600;
       color: var(--jade-glow);
-      font-size: 13px;
     }
 
     .resource-label {
@@ -142,16 +136,1007 @@
       font-size: 11px;
     }
 
-    /* === SillyTavern Enhancer Styles === */
-    /* Styles loaded from external file */
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+
+    .player-info:hover {
+      background: rgba(110, 207, 207, 0.1);
+    }
+
+    .player-name {
+      font-size: 14px;
+      color: var(--jade-pale);
+      text-align: right;
+    }
+
+    .player-realm {
+      font-size: 11px;
+      color: var(--gold-spirit);
+      text-align: right;
+    }
+
+    .player-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(110, 207, 207, 0.15);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .player-avatar svg {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+
+    /* === MAIN CONTENT === */
+    #main-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* === SIDE NAV === */
+    #side-nav {
+      width: 72px;
+      background: rgba(13, 31, 31, 0.7);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 0;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 4px;
+      background: transparent;
+      border: none;
+      color: rgba(168, 230, 230, 0.6);
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      font-family: inherit;
+    }
+
+    .nav-btn:hover {
+      color: var(--jade-pale);
+      background: rgba(110, 207, 207, 0.1);
+    }
+
+    .nav-btn.active {
+      color: var(--jade-glow);
+      background: rgba(110, 207, 207, 0.15);
+    }
+
+    .nav-btn svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+
+    .nav-btn span {
+      font-size: 11px;
+    }
+
+    .notif-dot {
+      position: absolute;
+      top: 6px;
+      right: 16px;
+      width: 6px;
+      height: 6px;
+      background: var(--lotus-pink);
+      border-radius: 50%;
+    }
+
+    /* === CENTER AREA === */
+    #center-area {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .page-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 24px;
+      display: none;
+    }
+
+    .page-content.active-page {
+      display: block;
+    }
+
+    /* === HOME PAGE === */
+    .home-header {
+      margin-bottom: 24px;
+    }
+
+    .home-header h1 {
+      font-family: 'ZCOOL XiaoWei', serif;
+      font-size: 32px;
+      background: linear-gradient(135deg, var(--jade-pale), var(--jade-glow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .home-header .subtitle {
+      color: rgba(168, 230, 230, 0.6);
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .sect-overview {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(110, 207, 207, 0.3);
+    }
+
+    .stat-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stat-card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stat-card-icon svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .stat-card-title {
+      font-size: 12px;
+      color: rgba(168, 230, 230, 0.7);
+    }
+
+    .stat-card-value {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .text-jade { color: var(--jade-glow); }
+    .text-purple { color: var(--mist-purple); }
+    .text-gold { color: var(--gold-spirit); }
+    .text-pink { color: var(--lotus-pink); }
+
+    .bg-jade { background: rgba(110, 207, 207, 0.15); }
+    .bg-purple { background: rgba(139, 126, 200, 0.15); }
+    .bg-gold { background: rgba(200, 168, 110, 0.15); }
+    .bg-pink { background: rgba(212, 114, 140, 0.15); }
+
+    .stat-card-change {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stat-card-change.positive {
+      color: var(--jade-glow);
+    }
+
+    .progress-bar-wrap {
+      height: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s;
+    }
+
+    /* === MODULE GRID === */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .module-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(110, 207, 207, 0.3);
+      background: rgba(26, 58, 58, 0.7);
+    }
+
+    .module-card.large {
+      grid-column: span 2;
+      grid-row: span 2;
+    }
+
+    .module-icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .module-icon-wrap svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+      position: relative;
+      z-index: 1;
+    }
+
+    .module-icon-glow {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      filter: blur(12px);
+      opacity: 0.5;
+    }
+
+    .module-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+
+    .module-card h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .module-card p {
+      font-size: 13px;
+      color: rgba(168, 230, 230, 0.7);
+      line-height: 1.6;
+    }
+
+    /* === EVENTS === */
+    .events-section {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      color: var(--jade-pale);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .event-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .event-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .event-item:hover {
+      background: rgba(110, 207, 207, 0.1);
+    }
+
+    .event-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .event-dot.urgent { background: var(--lotus-pink); }
+    .event-dot.normal { background: var(--jade-glow); }
+    .event-dot.info { background: var(--gold-spirit); }
+
+    .event-text {
+      flex: 1;
+      font-size: 13px;
+      color: rgba(232, 244, 240, 0.9);
+    }
+
+    .event-time {
+      font-size: 11px;
+      color: rgba(168, 230, 230, 0.5);
+      flex-shrink: 0;
+    }
+
+    /* === STORY PAGE === */
+    .story-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      gap: 16px;
+    }
+
+    .story-text-area {
+      flex: 1;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-y: auto;
+      line-height: 1.8;
+    }
+
+    .story-paragraph {
+      margin-bottom: 14px;
+      text-indent: 2em;
+      animation: fadeIn 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .story-paragraph.narrator {
+      text-indent: 0;
+      color: var(--gold-spirit);
+      font-weight: 500;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .story-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .story-choice-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      color: var(--cloud-white);
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: left;
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    .story-choice-btn:hover {
+      background: rgba(110, 207, 207, 0.15);
+      border-color: rgba(110, 207, 207, 0.4);
+    }
+
+    .choice-marker {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(110, 207, 207, 0.2);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--jade-glow);
+      flex-shrink: 0;
+    }
+
+    .story-input-area {
+      display: flex;
+      gap: 10px;
+    }
+
+    .story-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      color: var(--cloud-white);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .story-input::placeholder {
+      color: rgba(168, 230, 230, 0.4);
+    }
+
+    .story-send-btn {
+      width: 42px;
+      height: 42px;
+      background: rgba(110, 207, 207, 0.2);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      color: var(--jade-glow);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .story-send-btn:hover {
+      background: rgba(110, 207, 207, 0.3);
+    }
+
+    .story-send-btn svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    /* === MEMBERS PAGE === */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .page-header h2 {
+      font-size: 18px;
+      letter-spacing: 2px;
+    }
+
+    .search-box {
+      padding: 8px 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--cloud-white);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      width: 180px;
+    }
+
+    .search-box::placeholder {
+      color: rgba(168, 230, 230, 0.4);
+    }
+
+    .action-btn-sm {
+      padding: 6px 14px;
+      background: rgba(110, 207, 207, 0.1);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: var(--jade-pale);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .action-btn-sm:hover {
+      background: rgba(110, 207, 207, 0.2);
+    }
+
+    .data-table {
+      width: 100%;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .data-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .data-table th {
+      padding: 12px 16px;
+      text-align: left;
+      background: rgba(0, 0, 0, 0.2);
+      color: rgba(168, 230, 230, 0.7);
+      font-weight: 500;
+      font-size: 12px;
+    }
+
+    .data-table td {
+      padding: 12px 16px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .member-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .member-avatar-sm {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .member-avatar-sm svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    .realm-badge, .role-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      display: inline-block;
+    }
+
+    /* === SECT INFO PAGE === */
+    .sect-info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .info-block {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .info-block.full-width {
+      grid-column: span 2;
+    }
+
+    .info-block h4 {
+      font-size: 12px;
+      color: rgba(168, 230, 230, 0.6);
+      margin-bottom: 8px;
+      font-weight: 400;
+    }
+
+    .info-value {
+      font-size: 15px;
+      color: var(--jade-pale);
+    }
+
+    /* === DIPLOMACY PAGE === */
+    .faction-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .faction-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .faction-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(110, 207, 207, 0.3);
+    }
+
+    .faction-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .faction-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .faction-name svg {
+      width: 14px;
+      height: 14px;
+      display: block;
+    }
+
+    .relation-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+
+    .relation-bar {
+      height: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .relation-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s;
+    }
+
+    /* === LIBRARY PAGE === */
+    .skill-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .skill-filter {
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      color: rgba(168, 230, 230, 0.7);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .skill-filter:hover, .skill-filter.active {
+      background: rgba(110, 207, 207, 0.15);
+      border-color: rgba(110, 207, 207, 0.4);
+      color: var(--jade-glow);
+    }
+
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .skill-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .skill-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(110, 207, 207, 0.3);
+    }
+
+    .skill-rank {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 10px;
+    }
+
+    .skill-card h4 {
+      font-size: 15px;
+      margin-bottom: 6px;
+      margin-top: 4px;
+    }
+
+    .skill-type {
+      font-size: 11px;
+      color: rgba(168, 230, 230, 0.5);
+      margin-bottom: 10px;
+    }
+
+    .skill-desc {
+      font-size: 12px;
+      color: rgba(168, 230, 230, 0.7);
+      line-height: 1.6;
+    }
+
+    /* === TREASURY PAGE === */
+    .treasury-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .treasury-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: rgba(168, 230, 230, 0.7);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .treasury-tab:hover, .treasury-tab.active {
+      background: rgba(110, 207, 207, 0.15);
+      border-color: rgba(110, 207, 207, 0.4);
+      color: var(--jade-glow);
+    }
+
+    .item-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .item-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .item-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(110, 207, 207, 0.3);
+    }
+
+    .item-icon-lg {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+    }
+
+    .item-icon-lg svg {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+
+    .item-card h5 {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .item-rarity {
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 10px;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+
+    .item-owner {
+      font-size: 11px;
+      color: rgba(168, 230, 230, 0.5);
+    }
+
+    /* === MODAL === */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-container {
+      background: var(--ink-mid);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 520px;
+      max-height: 80vh;
+      overflow: hidden;
+      transform: scale(0.95);
+      transition: transform 0.3s;
+    }
+
+    .modal-overlay.active .modal-container {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .modal-header h2 {
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-header h2 svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: rgba(168, 230, 230, 0.6);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      padding: 0;
+    }
+
+    .modal-close:hover {
+      background: rgba(212, 114, 140, 0.15);
+      border-color: rgba(212, 114, 140, 0.4);
+      color: var(--lotus-pink);
+    }
+
+    .modal-close svg {
+      width: 14px;
+      height: 14px;
+      display: block;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      max-height: calc(80vh - 60px);
+    }
+
+    /* === SCROLLBAR === */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(110, 207, 207, 0.3);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(110, 207, 207, 0.5);
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 1200px) {
+      .sect-overview {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .module-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .module-card.large {
+        grid-column: span 2;
+        grid-row: span 1;
+      }
+      .skill-grid, .item-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      #side-nav {
+        width: 60px;
+      }
+      .sect-overview {
+        grid-template-columns: 1fr;
+      }
+      .module-grid, .faction-list {
+        grid-template-columns: 1fr;
+      }
+      .module-card.large {
+        grid-column: span 1;
+      }
+      .skill-grid, .item-grid, .sect-info-grid {
+        grid-template-columns: 1fr;
+      }
+      .info-block.full-width {
+        grid-column: span 1;
+      }
+    }
   </style>
-  <link rel="stylesheet" href="./sillytavern/st-styles.css">
 </head>
 <body>
-  <!-- SillyTavern Enhancer Container -->
-  <div class="st-button-container"></div>
+  <canvas id="bg-canvas"></canvas>
 
   <div id="app">
+    <!-- TOP BAR -->
     <header id="top-bar">
       <div class="logo-area">
         <div class="logo-icon">
@@ -167,7 +1152,9 @@
       <div class="resource-bar">
         <div class="resource-item">
           <div class="resource-icon">
-            <svg viewBox="0 0 20 20" fill="none" stroke="#6ecfcf" stroke-width="1.5"><path d="M10 2L12 8H18L13 12L15 18L10 14L5 18L7 12L2 8H8L10 2Z"/></svg>
+            <svg viewBox="0 0 20 20" fill="none" stroke="#6ecfcf" stroke-width="1.5">
+              <path d="M10 2L12 8H18L13 12L15 18L10 14L5 18L7 12L2 8H8L10 2Z"/>
+            </svg>
           </div>
           <div>
             <div class="resource-value">12,580</div>
@@ -176,7 +1163,10 @@
         </div>
         <div class="resource-item">
           <div class="resource-icon">
-            <svg viewBox="0 0 20 20" fill="none" stroke="#8b7ec8" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 3V10L14 14"/></svg>
+            <svg viewBox="0 0 20 20" fill="none" stroke="#8b7ec8" stroke-width="1.5">
+              <circle cx="10" cy="10" r="7"/>
+              <path d="M10 3V10L14 14"/>
+            </svg>
           </div>
           <div>
             <div class="resource-value">1,240</div>
@@ -185,7 +1175,9 @@
         </div>
         <div class="resource-item">
           <div class="resource-icon">
-            <svg viewBox="0 0 20 20" fill="none" stroke="#d4728c" stroke-width="1.5"><path d="M10 2C6 2 3 5 3 9C3 12 5 14 7 15L6 19L10 17C10 17 10 17 10 17C14 17 17 14 17 10C17 6 14 2 10 2Z"/></svg>
+            <svg viewBox="0 0 20 20" fill="none" stroke="#d4728c" stroke-width="1.5">
+              <path d="M10 2C6 2 3 5 3 9C3 12 5 14 7 15L6 19L10 17C10 17 10 17 10 17C14 17 17 14 17 10C17 6 14 2 10 2Z"/>
+            </svg>
           </div>
           <div>
             <div class="resource-value">47</div>
@@ -194,7 +1186,9 @@
         </div>
         <div class="resource-item">
           <div class="resource-icon">
-            <svg viewBox="0 0 20 20" fill="none" stroke="#c8a86e" stroke-width="1.5"><path d="M10 2L12 7H17L13 11L15 16L10 13L5 16L7 11L3 7H8L10 2Z"/></svg>
+            <svg viewBox="0 0 20 20" fill="none" stroke="#c8a86e" stroke-width="1.5">
+              <path d="M10 2L12 7H17L13 11L15 16L10 13L5 16L7 11L3 7H8L10 2Z"/>
+            </svg>
           </div>
           <div>
             <div class="resource-value">845</div>
@@ -209,48 +1203,80 @@
           <div class="player-realm">元婴中期</div>
         </div>
         <div class="player-avatar">
-          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4" stroke="#a8e6e6" stroke-width="1.5"/><path d="M4 22 C4 16 8 14 12 14 C16 14 20 16 20 22" stroke="#a8e6e6" stroke-width="1.5"/></svg>
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="9" r="4" stroke="#a8e6e6" stroke-width="1.5"/>
+            <path d="M4 22 C4 16 8 14 12 14 C16 14 20 16 20 22" stroke="#a8e6e6" stroke-width="1.5"/>
+          </svg>
         </div>
       </div>
     </header>
 
+    <!-- MAIN CONTENT -->
     <div id="main-content">
       <!-- SIDE NAV -->
       <nav id="side-nav">
         <button class="nav-btn active" data-page="home" onclick="switchPage('home')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12L12 4l9 8"/><path d="M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 12L12 4l9 8"/>
+            <path d="M5 10v9a1 1 0 001 1h3v-5h6v5h3a1 1 0 001-1v-9"/>
+          </svg>
           <span>总览</span>
         </button>
         <button class="nav-btn" data-page="story" onclick="switchPage('story')" style="position:relative">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3C7 3 3 6 3 10c0 3 2 5.5 5 7l-1 4 4-2c.3 0 .7.03 1 .03 5 0 9-3 9-7s-4-9-9-9z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 3C7 3 3 6 3 10c0 3 2 5.5 5 7l-1 4 4-2c.3 0 .7.03 1 .03 5 0 9-3 9-7s-4-9-9-9z"/>
+          </svg>
           <span>天机</span>
           <div class="notif-dot"></div>
         </button>
         <button class="nav-btn" data-page="members" onclick="switchPage('members')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v2"/><circle cx="17" cy="9" r="2.5"/><path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="9" cy="7" r="3"/>
+            <path d="M3 21v-2c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v2"/>
+            <circle cx="17" cy="9" r="2.5"/>
+            <path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/>
+          </svg>
           <span>弟子</span>
         </button>
         <button class="nav-btn" data-page="sectinfo" onclick="switchPage('sectinfo')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
           <span>宗门</span>
         </button>
         <button class="nav-btn" data-page="diplomacy" onclick="switchPage('diplomacy')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M2 12h20"/><ellipse cx="12" cy="12" rx="4" ry="9"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M2 12h20"/>
+            <ellipse cx="12" cy="12" rx="4" ry="9"/>
+          </svg>
           <span>外交</span>
         </button>
         <button class="nav-btn" data-page="library" onclick="switchPage('library')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19V5a2 2 0 012-2h12a2 2 0 012 2v14"/><path d="M4 19h16"/><path d="M8 3v16"/><path d="M12 7h4"/><path d="M12 11h4"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 19V5a2 2 0 012-2h12a2 2 0 012 2v14"/>
+            <path d="M4 19h16"/>
+            <path d="M8 3v16"/>
+            <path d="M12 7h4"/>
+            <path d="M12 11h4"/>
+          </svg>
           <span>藏经</span>
         </button>
         <button class="nav-btn" data-page="treasury" onclick="switchPage('treasury')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M7 8V6a5 5 0 0110 0v2"/><circle cx="12" cy="15" r="2"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="8" width="18" height="13" rx="2"/>
+            <path d="M7 8V6a5 5 0 0110 0v2"/>
+            <circle cx="12" cy="15" r="2"/>
+          </svg>
           <span>宝库</span>
         </button>
       </nav>
 
       <!-- CENTER AREA -->
       <div id="center-area">
-        <!-- HOME -->
+        <!-- HOME PAGE -->
         <div id="home-page" class="page-content active-page">
           <div class="home-header">
             <h1>云璃仙宗</h1>
@@ -261,20 +1287,27 @@
             <div class="stat-card">
               <div class="stat-card-header">
                 <div class="stat-card-icon bg-jade" style="color:var(--jade-glow)">
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2v16M6 6l4-4 4 4M3 10h14"/></svg>
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M10 2v16M6 6l4-4 4 4M3 10h14"/>
+                  </svg>
                 </div>
                 <span class="stat-card-title">宗门实力</span>
               </div>
               <div class="stat-card-value text-jade">甲等中宗</div>
               <div class="stat-card-change positive">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2z"/></svg>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                  <path d="M6 2l4 5H2z"/>
+                </svg>
                 声望上升中
               </div>
             </div>
             <div class="stat-card">
               <div class="stat-card-header">
                 <div class="stat-card-icon bg-purple" style="color:var(--mist-purple)">
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="10" cy="10" r="7"/>
+                    <path d="M10 6v4l3 2"/>
+                  </svg>
                 </div>
                 <span class="stat-card-title">灵脉充盈</span>
               </div>
@@ -286,20 +1319,27 @@
             <div class="stat-card">
               <div class="stat-card-header">
                 <div class="stat-card-icon bg-gold" style="color:var(--gold-spirit)">
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2l2.5 5H18l-4 3.5 1.5 5.5L10 13l-5.5 3 1.5-5.5L2 7h5.5z"/></svg>
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M10 2l2.5 5H18l-4 3.5 1.5 5.5L10 13l-5.5 3 1.5-5.5L2 7h5.5z"/>
+                  </svg>
                 </div>
                 <span class="stat-card-title">防御阵法</span>
               </div>
               <div class="stat-card-value text-gold">九曜阵</div>
               <div class="stat-card-change positive">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M6 2l4 5H2z"/></svg>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                  <path d="M6 2l4 5H2z"/>
+                </svg>
                 运转稳定
               </div>
             </div>
             <div class="stat-card">
               <div class="stat-card-header">
                 <div class="stat-card-icon bg-pink" style="color:var(--lotus-pink)">
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3C6 3 3 6 3 10s3 7 7 7 7-3 7-7"/><path d="M14 3l3 3-3 3"/></svg>
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M10 3C6 3 3 6 3 10s3 7 7 7 7-3 7-7"/>
+                    <path d="M14 3l3 3-3 3"/>
+                  </svg>
                 </div>
                 <span class="stat-card-title">弟子修炼</span>
               </div>
@@ -314,7 +1354,9 @@
             <div class="module-card large" onclick="switchPage('story')">
               <div class="module-icon-wrap bg-jade">
                 <div class="module-icon-glow" style="background:var(--jade-glow)"></div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--jade-glow)" stroke-width="1.5"><path d="M12 3C7 3 3 6 3 10c0 3 2 5.5 5 7l-1 4 4-2c.3 0 .7.03 1 .03 5 0 9-3 9-7s-4-9-9-9z"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--jade-glow)" stroke-width="1.5">
+                  <path d="M12 3C7 3 3 6 3 10c0 3 2 5.5 5 7l-1 4 4-2c.3 0 .7.03 1 .03 5 0 9-3 9-7s-4-9-9-9z"/>
+                </svg>
               </div>
               <div class="module-badge" style="background:rgba(212,114,140,0.15);color:var(--lotus-pink)">有新事件</div>
               <h3 class="text-jade">天机台</h3>
@@ -327,7 +1369,12 @@
             <div class="module-card" onclick="switchPage('members')">
               <div class="module-icon-wrap bg-purple">
                 <div class="module-icon-glow" style="background:var(--mist-purple)"></div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--mist-purple)" stroke-width="1.5"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v2"/><circle cx="17" cy="9" r="2.5"/><path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--mist-purple)" stroke-width="1.5">
+                  <circle cx="9" cy="7" r="3"/>
+                  <path d="M3 21v-2c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v2"/>
+                  <circle cx="17" cy="9" r="2.5"/>
+                  <path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/>
+                </svg>
               </div>
               <h3 class="text-purple">弟子堂</h3>
               <p>管理宗门弟子，分配职务，调配修炼资源</p>
@@ -335,7 +1382,13 @@
             <div class="module-card" onclick="switchPage('library')">
               <div class="module-icon-wrap bg-gold">
                 <div class="module-icon-glow" style="background:var(--gold-spirit)"></div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-spirit)" stroke-width="1.5"><path d="M4 19V5a2 2 0 012-2h12a2 2 0 012 2v14"/><path d="M4 19h16"/><path d="M8 3v16"/><path d="M12 7h4"/><path d="M12 11h4"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-spirit)" stroke-width="1.5">
+                  <path d="M4 19V5a2 2 0 012-2h12a2 2 0 012 2v14"/>
+                  <path d="M4 19h16"/>
+                  <path d="M8 3v16"/>
+                  <path d="M12 7h4"/>
+                  <path d="M12 11h4"/>
+                </svg>
               </div>
               <h3 class="text-gold">藏经阁</h3>
               <p>功法典籍、秘术传承，供弟子参悟研习</p>
@@ -343,7 +1396,11 @@
             <div class="module-card" onclick="switchPage('treasury')">
               <div class="module-icon-wrap bg-pink">
                 <div class="module-icon-glow" style="background:var(--lotus-pink)"></div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--lotus-pink)" stroke-width="1.5"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M7 8V6a5 5 0 0110 0v2"/><circle cx="12" cy="15" r="2"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--lotus-pink)" stroke-width="1.5">
+                  <rect x="3" y="8" width="18" height="13" rx="2"/>
+                  <path d="M7 8V6a5 5 0 0110 0v2"/>
+                  <circle cx="12" cy="15" r="2"/>
+                </svg>
               </div>
               <h3 class="text-pink">万宝阁</h3>
               <p>法器、丹药、灵材，宗门宝物尽在此处</p>
@@ -351,7 +1408,11 @@
             <div class="module-card" onclick="switchPage('sectinfo')">
               <div class="module-icon-wrap" style="background:rgba(110,207,207,0.08)">
                 <div class="module-icon-glow" style="background:var(--jade-light)"></div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--jade-light)" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--jade-light)" stroke-width="1.5">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  <path d="M2 17l10 5 10-5"/>
+                  <path d="M2 12l10 5 10-5"/>
+                </svg>
               </div>
               <h3 style="color:var(--jade-light)">宗门志</h3>
               <p>山门风貌、历代传承、宗规戒律一览</p>
@@ -359,7 +1420,11 @@
             <div class="module-card" onclick="switchPage('diplomacy')">
               <div class="module-icon-wrap" style="background:rgba(200,168,110,0.08)">
                 <div class="module-icon-glow" style="background:var(--gold-bright)"></div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-bright)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M2 12h20"/><ellipse cx="12" cy="12" rx="4" ry="9"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-bright)" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M2 12h20"/>
+                  <ellipse cx="12" cy="12" rx="4" ry="9"/>
+                </svg>
               </div>
               <h3 style="color:var(--gold-bright)">合纵阁</h3>
               <p>邦交结盟、情报刺探、天下大势</p>
@@ -393,8 +1458,8 @@
           </div>
         </div>
 
-        <!-- STORY PAGE (天机台) -->
-        <div id="story-page" class="page-content" style="display:none;padding:24px;height:100%;overflow:hidden">
+        <!-- STORY PAGE -->
+        <div id="story-page" class="page-content">
           <div class="story-container">
             <div class="story-text-area" id="story-text-area">
               <div class="story-paragraph narrator" style="animation-delay:0s">
@@ -436,176 +1501,115 @@
             <div class="story-input-area">
               <input type="text" class="story-input" id="story-custom-input" placeholder="以掌门之意，自行决断..." />
               <button class="story-send-btn" onclick="sendCustomInput()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
               </button>
             </div>
           </div>
         </div>
 
         <!-- MEMBERS PAGE -->
-        <div id="members-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-            <h2 style="font-size:18px;letter-spacing:3px">弟子堂</h2>
+        <div id="members-page" class="page-content">
+          <div class="page-header">
+            <h2>弟子堂</h2>
             <div style="display:flex;gap:8px">
-              <input type="text" placeholder="搜索弟子..." style="padding:6px 14px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;color:var(--cloud-white);font-size:12px;font-family:'Noto Serif SC',serif;outline:none;width:160px">
-              <button class="action-btn-sm" style="padding:6px 14px">筛选</button>
+              <input type="text" class="search-box" placeholder="搜索弟子...">
+              <button class="action-btn-sm">筛选</button>
             </div>
           </div>
-          <table class="members-table">
-            <thead>
-              <tr>
-                <th>姓名</th>
-                <th>境界</th>
-                <th>职务</th>
-                <th>状态</th>
-                <th>天赋</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="members-tbody"></tbody>
-          </table>
+          <div class="data-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>姓名</th>
+                  <th>境界</th>
+                  <th>职务</th>
+                  <th>状态</th>
+                  <th>天赋</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="members-tbody"></tbody>
+            </table>
+          </div>
         </div>
 
         <!-- SECT INFO PAGE -->
-        <div id="sectinfo-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
-          <h2 style="font-size:18px;letter-spacing:3px;margin-bottom:18px">宗门志</h2>
+        <div id="sectinfo-page" class="page-content">
+          <div class="page-header">
+            <h2>宗门志</h2>
+          </div>
           <div class="sect-info-grid">
             <div class="info-block">
-              <h4>宗门名号</h4>
-              <div class="info-value text-jade">云璃仙宗</div>
+              <h4>宗门名称</h4>
+              <div class="info-value">云璃仙宗</div>
             </div>
             <div class="info-block">
-              <h4>宗门等级</h4>
-              <div class="info-value text-gold">甲等中宗</div>
+              <h4>创立时间</h4>
+              <div class="info-value">玄黄历三千七百二十一年</div>
             </div>
             <div class="info-block">
-              <h4>建宗年份</h4>
-              <div class="info-value">天元历 一千二百三十七年</div>
+              <h4>山门位置</h4>
+              <div class="info-value">东荒云璃山脉主峰</div>
             </div>
             <div class="info-block">
               <h4>现任掌门</h4>
-              <div class="info-value text-purple">清虚子（元婴中期）</div>
+              <div class="info-value text-gold">清虚子</div>
             </div>
             <div class="info-block full-width">
-              <h4>宗门简史</h4>
-              <div class="info-value" style="font-size:13px;line-height:2;color:rgba(232,244,240,0.7)">
-                云璃仙宗始建于天元历一千二百三十七年，由初代掌门玄璃真人于云璃峰开山立派。宗门坐拥三脉灵山、一处上品灵泉，历经数百年风雨，传承至今已有八代掌门。宗门以「太虚真解」为根本功法，擅长御剑与阵法之术。鼎盛时期曾位列九大仙宗之一，后因百年前的「天魔之乱」元气大伤，至今仍在恢复之中。当代掌门清虚子执掌门户已有三十载，励精图治，宗门正逐步重回昔日荣光。
+              <h4>宗门简介</h4>
+              <div class="info-value" style="font-size:13px;line-height:1.8">
+                云璃仙宗创立于玄黄历三千七百二十一年，创派祖师云璃真人以剑入道，一日悟道飞升，留下《太虚真解》作为镇宗之宝。宗门地处东荒云璃山脉，占据九条灵脉交汇之处，灵气充沛，是修炼的洞天福地。
+                <br><br>
+                历经千年发展，云璃仙宗由昔日小门派发展为今日的甲等中宗，门下弟子众多，高手如云。然而百年前天魔之乱，宗门遭受重创，至今仍在恢复元气...
               </div>
             </div>
-            <div class="info-block">
-              <h4>山门灵脉</h4>
-              <div class="info-value">
-                <div style="margin-bottom:6px">云璃主脉 — 上品
-                  <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:82%;background:var(--jade-glow)"></div></div>
-                </div>
-                <div style="margin-bottom:6px">青萝副脉 — 中品
-                  <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:63%;background:var(--mist-purple)"></div></div>
-                </div>
-                <div>玄石偏脉 — 中品
-                  <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:45%;background:var(--gold-spirit)"></div></div>
-                </div>
-              </div>
-            </div>
-            <div class="info-block">
-              <h4>宗规戒律</h4>
-              <div class="info-value" style="font-size:13px;line-height:2;color:rgba(232,244,240,0.7)">
-                一、不得擅离山门<br>
-                二、不得以大欺小<br>
-                三、不得泄露宗门秘法<br>
-                四、不得与魔修勾结<br>
-                五、遵从掌门号令
+            <div class="info-block full-width">
+              <h4>历代掌门</h4>
+              <div class="info-value" style="font-size:13px;line-height:2">
+                初代：云璃真人（飞升）→ 二代：玄霄子（渡劫失败）→ 三代：青松道长（寿终正寝）→ 四代：明月仙子（失踪）→ 五代：清虚子（现任）
               </div>
             </div>
           </div>
         </div>
 
         <!-- DIPLOMACY PAGE -->
-        <div id="diplomacy-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
-          <h2 style="font-size:18px;letter-spacing:3px;margin-bottom:18px">合纵阁 · 天下势</h2>
+        <div id="diplomacy-page" class="page-content">
+          <div class="page-header">
+            <h2>合纵阁</h2>
+            <button class="action-btn-sm">外交策略</button>
+          </div>
           <div class="faction-list" id="faction-list"></div>
         </div>
 
         <!-- LIBRARY PAGE -->
-        <div id="library-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-            <h2 style="font-size:18px;letter-spacing:3px">藏经阁</h2>
-            <div style="display:flex;gap:6px">
-              <button class="action-btn-sm skill-filter active-filter" onclick="filterSkills('all',this)">全部</button>
-              <button class="action-btn-sm skill-filter" onclick="filterSkills('攻击',this)">攻伐</button>
-              <button class="action-btn-sm skill-filter" onclick="filterSkills('防御',this)">防御</button>
-              <button class="action-btn-sm skill-filter" onclick="filterSkills('辅助',this)">辅助</button>
-              <button class="action-btn-sm skill-filter" onclick="filterSkills('炼丹',this)">炼丹</button>
-            </div>
+        <div id="library-page" class="page-content">
+          <div class="page-header">
+            <h2>藏经阁</h2>
+          </div>
+          <div class="skill-filters">
+            <button class="skill-filter active" onclick="filterSkills('all', this)">全部</button>
+            <button class="skill-filter" onclick="filterSkills('攻击', this)">攻击</button>
+            <button class="skill-filter" onclick="filterSkills('防御', this)">防御</button>
+            <button class="skill-filter" onclick="filterSkills('辅助', this)">辅助</button>
+            <button class="skill-filter" onclick="filterSkills('炼丹', this)">炼丹</button>
           </div>
           <div class="skill-grid" id="skill-grid"></div>
         </div>
 
         <!-- TREASURY PAGE -->
-        <div id="treasury-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
-          <h2 style="font-size:18px;letter-spacing:3px;margin-bottom:14px">万宝阁</h2>
+        <div id="treasury-page" class="page-content">
+          <div class="page-header">
+            <h2>万宝阁</h2>
+          </div>
           <div class="treasury-tabs">
-            <button class="treasury-tab active" onclick="switchTreasury('weapon',this)">法器</button>
-            <button class="treasury-tab" onclick="switchTreasury('armor',this)">护具</button>
-            <button class="treasury-tab" onclick="switchTreasury('pill',this)">丹药</button>
-            <button class="treasury-tab" onclick="switchTreasury('material',this)">灵材</button>
+            <button class="treasury-tab active" onclick="switchTreasury('weapon', this)">法器</button>
+            <button class="treasury-tab" onclick="switchTreasury('armor', this)">防具</button>
+            <button class="treasury-tab" onclick="switchTreasury('pill', this)">丹药</button>
+            <button class="treasury-tab" onclick="switchTreasury('material', this)">灵材</button>
           </div>
           <div class="item-grid" id="item-grid"></div>
-        </div>
-
-        <!-- PLAYER PAGE -->
-        <div id="player-page" class="page-content" style="display:none;padding:24px;overflow-y:auto">
-          <h2 style="font-size:18px;letter-spacing:3px;margin-bottom:18px">掌门修行录</h2>
-          <div class="profile-top">
-            <div class="profile-avatar-lg">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#a8e6e6" stroke-width="1.2"><circle cx="12" cy="9" r="4.5"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/><path d="M12 2v2M7 4l1 1.5M17 4l-1 1.5" stroke-width="1"/></svg>
-            </div>
-            <div class="profile-details">
-              <h3>清虚子</h3>
-              <div class="profile-title">云璃仙宗 · 第八代掌门</div>
-              <div class="profile-stats">
-                <div class="profile-stat">
-                  <div class="stat-val text-jade">元婴</div>
-                  <div class="stat-lbl">当前境界</div>
-                </div>
-                <div class="profile-stat">
-                  <div class="stat-val text-purple">892</div>
-                  <div class="stat-lbl">道行年数</div>
-                </div>
-                <div class="profile-stat">
-                  <div class="stat-val text-gold">剑道</div>
-                  <div class="stat-lbl">主修</div>
-                </div>
-                <div class="profile-stat">
-                  <div class="stat-val text-pink">阵法</div>
-                  <div class="stat-lbl">副修</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="sect-info-grid" style="margin-top:16px">
-            <div class="info-block">
-              <h4>修炼功法</h4>
-              <div class="info-value" style="font-size:13px;line-height:2">
-                <div>太虚真解（第九层） <span class="text-jade" style="font-size:11px">— 宗门根本</span></div>
-                <div>天罡剑诀（大成） <span class="text-gold" style="font-size:11px">— 攻伐</span></div>
-                <div>玄天阵录（小成） <span class="text-purple" style="font-size:11px">— 阵法</span></div>
-              </div>
-            </div>
-            <div class="info-block">
-              <h4>随身法器</h4>
-              <div class="info-value" style="font-size:13px;line-height:2">
-                <div>霜华剑 <span class="text-jade" style="font-size:11px">— 上品灵器</span></div>
-                <div>玄龟甲 <span class="text-purple" style="font-size:11px">— 中品灵器</span></div>
-                <div>传音玉符 <span style="font-size:11px;color:rgba(168,230,230,0.5)">— 下品灵器</span></div>
-              </div>
-            </div>
-            <div class="info-block full-width">
-              <h4>掌门日志</h4>
-              <div class="info-value" style="font-size:13px;line-height:2;color:rgba(232,244,240,0.7)">
-                执掌云璃三十载，虽殚精竭虑，奈何百年前天魔之乱的创伤太深。所幸近年来收得几名天赋出众的弟子，宗门渐有起色。近来天象异变，各方势力蠢蠢欲动，须得更加警醒。那苍梧山来人之事，也许正是转机......又或许，是风暴的前兆。
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -617,7 +1621,9 @@
       <div class="modal-header">
         <h2 id="modal-title"></h2>
         <button class="modal-close" onclick="closeModal()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 4l8 8M12 4l-8 8"/>
+          </svg>
         </button>
       </div>
       <div class="modal-body" id="modal-body"></div>
@@ -636,7 +1642,6 @@
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // Cloud layers
     class CloudLayer {
       constructor(y, speed, opacity, scale) {
         this.x = Math.random() * canvas.width;
@@ -650,136 +1655,49 @@
 
       update() {
         this.x += this.speed;
-        if (this.x > canvas.width + this.width) this.x = -this.width;
+        if (this.x > canvas.width + 100) this.x = -this.width;
       }
 
-      draw(c) {
-        c.save();
-        c.globalAlpha = this.opacity;
-        c.fillStyle = `rgba(110, 180, 180, ${this.opacity * 0.3})`;
-        c.beginPath();
-        const cx = this.x + this.width / 2;
-        const cy = this.y;
-        c.ellipse(cx, cy, this.width * this.scale / 2, this.height * this.scale / 2, 0, 0, Math.PI * 2);
-        c.fill();
-        c.restore();
-      }
-    }
-
-    // Jade-like light particles
-    class LightParticle {
-      constructor() {
-        this.reset();
-      }
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = canvas.height + 20;
-        this.size = 1 + Math.random() * 2.5;
-        this.speedY = -(0.15 + Math.random() * 0.4);
-        this.speedX = (Math.random() - 0.5) * 0.3;
-        this.opacity = 0;
-        this.maxOpacity = 0.2 + Math.random() * 0.4;
-        this.life = 0;
-        this.maxLife = 400 + Math.random() * 600;
-        const hues = [170, 180, 250, 310];
-        this.hue = hues[Math.floor(Math.random() * hues.length)];
-      }
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        this.life++;
-        const ratio = this.life / this.maxLife;
-        if (ratio < 0.2) this.opacity = this.maxOpacity * (ratio / 0.2);
-        else if (ratio > 0.7) this.opacity = this.maxOpacity * (1 - (ratio - 0.7) / 0.3);
-        else this.opacity = this.maxOpacity;
-        if (this.life >= this.maxLife) this.reset();
-      }
-      draw(c) {
-        c.save();
-        c.globalAlpha = this.opacity;
-        c.fillStyle = `hsla(${this.hue}, 60%, 70%, 1)`;
-        c.shadowColor = `hsla(${this.hue}, 60%, 70%, 0.5)`;
-        c.shadowBlur = 6;
-        c.beginPath();
-        c.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        c.fill();
-        c.restore();
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = '#4a8a8a';
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y, this.width * this.scale, this.height * this.scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
     }
 
     const clouds = [];
-    for (let i = 0; i < 8; i++) {
-      clouds.push(new CloudLayer(
-        50 + Math.random() * (canvas.height * 0.6),
-        0.05 + Math.random() * 0.15,
-        0.03 + Math.random() * 0.06,
-        0.6 + Math.random() * 0.8
-      ));
+    for (let i = 0; i < 6; i++) {
+      clouds.push(new CloudLayer(80 + i * 90, 0.1 + i * 0.05, 0.08 - i * 0.01, 0.8 + i * 0.1));
     }
 
-    const particles = [];
-    for (let i = 0; i < 40; i++) {
-      const p = new LightParticle();
-      p.life = Math.random() * p.maxLife;
-      p.y = Math.random() * canvas.height;
-      particles.push(p);
-    }
-
-    function drawBackground() {
-      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grad.addColorStop(0, '#0a1a1a');
-      grad.addColorStop(0.3, '#0d2222');
-      grad.addColorStop(0.6, '#0f2828');
-      grad.addColorStop(1, '#0a1818');
-      ctx.fillStyle = grad;
+    function animateBg() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#0d1f1f');
+      gradient.addColorStop(0.5, '#132b2b');
+      gradient.addColorStop(1, '#1a3a3a');
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Mountain silhouettes
-      ctx.save();
-      ctx.globalAlpha = 0.06;
-      ctx.fillStyle = '#4a8a8a';
-      ctx.beginPath();
-      ctx.moveTo(0, canvas.height * 0.7);
-      ctx.lineTo(canvas.width * 0.15, canvas.height * 0.35);
-      ctx.lineTo(canvas.width * 0.3, canvas.height * 0.55);
-      ctx.lineTo(canvas.width * 0.45, canvas.height * 0.25);
-      ctx.lineTo(canvas.width * 0.6, canvas.height * 0.5);
-      ctx.lineTo(canvas.width * 0.75, canvas.height * 0.3);
-      ctx.lineTo(canvas.width * 0.9, canvas.height * 0.45);
-      ctx.lineTo(canvas.width, canvas.height * 0.38);
-      ctx.lineTo(canvas.width, canvas.height);
-      ctx.lineTo(0, canvas.height);
-      ctx.fill();
-      ctx.restore();
-
-      clouds.forEach(c => { c.update(); c.draw(ctx); });
-      particles.forEach(p => { p.update(); p.draw(ctx); });
+      clouds.forEach(c => { c.update(); c.draw(); });
+      requestAnimationFrame(animateBg);
     }
-
-    function animateBackground() {
-      drawBackground();
-      requestAnimationFrame(animateBackground);
-    }
-    animateBackground();
+    animateBg();
 
     // ====== PAGE SWITCHING ======
-    let currentPage = 'home';
-
     function switchPage(page) {
-      document.querySelectorAll('.page-content').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active-page'));
 
-      const pageEl = document.getElementById(page + '-page');
-      if (pageEl) {
-        pageEl.style.display = '';
-        pageEl.style.animation = 'fadeInUp 0.4s ease forwards';
-      }
+      const btn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+      const pg = document.getElementById(`${page}-page`);
 
-      const navBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
-      if (navBtn) navBtn.classList.add('active');
-
-      currentPage = page;
-      closeModal();
+      if (btn) btn.classList.add('active');
+      if (pg) pg.classList.add('active-page');
     }
 
     // ====== MODAL ======
@@ -789,8 +1707,21 @@
       const body = document.getElementById('modal-body');
 
       if (type === 'player') {
-        switchPage('player');
-        return;
+        title.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg> 掌门信息';
+        body.innerHTML = `
+          <div class="sect-info-grid">
+            <div class="info-block"><h4>道号</h4><div class="info-value">清虚子</div></div>
+            <div class="info-block"><h4>境界</h4><div class="info-value text-gold">元婴中期</div></div>
+            <div class="info-block"><h4>寿元</h4><div class="info-value">612 / 1200</div></div>
+            <div class="info-block"><h4>灵根</h4><div class="info-value text-jade">水木双灵根</div></div>
+            <div class="info-block full-width">
+              <h4>掌门手记</h4>
+              <div class="info-value" style="font-size:13px;line-height:1.8">
+                执掌云璃三十载，虽殚精竭虑，奈何百年前天魔之乱的创伤太深。所幸近年来收得几名天赋出众的弟子，宗门渐有起色。近来天象异变，各方势力蠢蠢欲动，须得更加警醒...
+              </div>
+            </div>
+          </div>
+        `;
       }
 
       overlay.classList.add('active');
@@ -801,61 +1732,36 @@
     }
 
     function closeModalOutside(e) {
-      if (e.target === document.getElementById('modal-overlay')) closeModal();
+      if (e.target.id === 'modal-overlay') closeModal();
     }
 
-    // ====== STORY INTERACTION ======
-    function selectChoice(btn, idx) {
-      const text = btn.querySelector('span').textContent;
-      const area = document.getElementById('story-text-area');
-      const choiceDiv = document.createElement('div');
-      choiceDiv.className = 'story-paragraph';
-      choiceDiv.style.color = 'var(--jade-glow)';
-      choiceDiv.style.borderLeft = '2px solid var(--jade-glow)';
-      choiceDiv.style.paddingLeft = '12px';
-      choiceDiv.style.textIndent = '0';
-      choiceDiv.textContent = `掌门决断：${text}`;
-      area.appendChild(choiceDiv);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
 
-      // Simulate response
+    // ====== STORY ======
+    function selectChoice(btn, idx) {
+      document.querySelectorAll('.story-choice-btn').forEach(b => b.style.borderColor = 'var(--glass-border)');
+      btn.style.borderColor = 'var(--jade-glow)';
+
+      const area = document.getElementById('story-text-area');
+      const p = document.createElement('div');
+      p.className = 'story-paragraph';
+      p.style.color = 'var(--jade-glow)';
+      p.style.borderLeft = '2px solid var(--jade-glow)';
+      p.style.paddingLeft = '12px';
+      p.style.textIndent = '0';
+      p.textContent = `选择 ${['壹', '贰', '叁', '肆'][idx-1]}：${btn.querySelector('span').textContent}`;
+      area.appendChild(p);
+      area.scrollTop = area.scrollHeight;
+
       setTimeout(() => {
-        const responses = [
-          '你整了整衣冠，迈步走向偏殿。推门而入，只见一名身着灰色布衣的中年修士正负手而立，剑眉星目间透着一股沉稳之气。见你到来，他微微欠身，从袖中取出一枚玉简，双手递上。',
-          '你召来执法堂首座周明远，低声吩咐几句。周明远领命而去，半个时辰后回报：此人确为苍梧山门下，身上并无邪气，但其来路上似有人暗中跟踪。',
-          '叶青将密信取来。你打开玉简，神识探入，顿时面色微变——信中所述之事，远比想象中更为严峻。',
-          '长老们齐聚议事堂。你将来人之事道出，众人议论纷纷。大长老沈万钧捻须道："苍梧山与我宗素无往来，此番突然遣人送信，恐非寻常。"'
-        ];
         const resp = document.createElement('div');
         resp.className = 'story-paragraph';
-        resp.textContent = responses[idx - 1] || responses[0];
+        resp.textContent = '你的决断如同一颗石子投入静湖，涟漪渐次扩散。四周的灵气似乎因你的心意而微微波动，天机台上的卦象也随之轻转...';
         area.appendChild(resp);
         area.scrollTop = area.scrollHeight;
-
-        // New choices
-        setTimeout(() => {
-          updateChoices([
-            '仔细查看玉简中的全部内容',
-            '询问来人更多细节',
-            '先按兵不动，暗中加强山门防御',
-            '传讯天剑宗盟友，通报此事'
-          ]);
-        }, 300);
-      }, 600);
-
-      area.scrollTop = area.scrollHeight;
-    }
-
-    function updateChoices(choices) {
-      const markers = ['壹', '贰', '叁', '肆', '伍', '陆'];
-      const container = document.getElementById('story-choices');
-      container.innerHTML = '';
-      choices.forEach((text, i) => {
-        const btn = document.createElement('button');
-        btn.className = 'story-choice-btn';
-        btn.innerHTML = `<div class="choice-marker">${markers[i]}</div><span>${text}</span>`;
-        btn.onclick = () => selectChoice(btn, i + 1);
-        container.appendChild(btn);
-      });
+      }, 500);
     }
 
     function sendCustomInput() {
@@ -872,13 +1778,13 @@
       p.style.textIndent = '0';
       p.textContent = `掌门自决：${text}`;
       area.appendChild(p);
-
       input.value = '';
+      area.scrollTop = area.scrollHeight;
 
       setTimeout(() => {
         const resp = document.createElement('div');
         resp.className = 'story-paragraph';
-        resp.textContent = '你的决断如同一颗石子投入静湖，涟漪渐次扩散。四周的灵气似乎因你的心意而微微波动，天机台上的卦象也随之轻转。这一步棋，是福是祸，尚未可知......';
+        resp.textContent = '你的决断如同一颗石子投入静湖，涟漪渐次扩散。四周的灵气似乎因你的心意而微微波动...';
         area.appendChild(resp);
         area.scrollTop = area.scrollHeight;
       }, 500);
@@ -906,18 +1812,25 @@
       const tbody = document.getElementById('members-tbody');
       tbody.innerHTML = '';
       membersData.forEach(m => {
+        const colorMap = {
+          jade: 'var(--jade-glow)',
+          purple: 'var(--mist-purple)',
+          pink: 'var(--lotus-pink)',
+          gold: 'var(--gold-spirit)'
+        };
+        const color = colorMap[m.color];
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
             <div class="member-name-cell">
-              <div class="member-avatar-sm bg-${m.color}" style="color:var(--${m.color === 'jade' ? 'jade-glow' : m.color === 'purple' ? 'mist-purple' : m.color === 'pink' ? 'lotus-pink' : 'gold-spirit'})">
+              <div class="member-avatar-sm" style="background:rgba(110,207,207,0.15);color:${color}">
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="7" r="3"/><path d="M4 18c0-3 3-5 6-5s6 2 6 5"/></svg>
               </div>
               ${m.name}
             </div>
           </td>
-          <td><span class="realm-badge bg-${m.color}" style="color:var(--${m.color === 'jade' ? 'jade-glow' : m.color === 'purple' ? 'mist-purple' : m.color === 'pink' ? 'lotus-pink' : 'gold-spirit'})">${m.realm}</span></td>
-          <td><span class="role-badge" style="background:rgba(110,207,207,0.06);color:rgba(168,230,230,0.7)">${m.role}</span></td>
+          <td><span class="realm-badge" style="background:rgba(110,207,207,0.1);color:${color}">${m.realm}</span></td>
+          <td><span class="role-badge">${m.role}</span></td>
           <td style="color:${m.status === '闭关' ? 'var(--mist-purple)' : m.status === '巡查' ? 'var(--jade-glow)' : m.status === '炼丹' ? 'var(--lotus-pink)' : 'rgba(168,230,230,0.6)'}">${m.status}</td>
           <td style="color:var(--gold-spirit)">${m.talent}</td>
           <td>
@@ -933,7 +1846,7 @@
       const m = membersData.find(x => x.name === name);
       if (!m) return;
       const overlay = document.getElementById('modal-overlay');
-      document.getElementById('modal-title').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:20px;height:20px"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg> ${m.name}`;
+      document.getElementById('modal-title').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg> ${m.name}`;
       document.getElementById('modal-body').innerHTML = `
         <div class="sect-info-grid">
           <div class="info-block"><h4>境界</h4><div class="info-value">${m.realm}</div></div>
@@ -950,13 +1863,12 @@
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <span style="padding:4px 12px;background:rgba(110,207,207,0.1);border:1px solid var(--glass-border);border-radius:8px;font-size:12px">青锋剑 · 下品灵器</span>
                 <span style="padding:4px 12px;background:rgba(139,126,200,0.1);border:1px solid var(--glass-border);border-radius:8px;font-size:12px">护体符 · 法器</span>
-                <button class="action-btn-sm" style="margin-left:auto">重新分配</button>
               </div>
             </div>
           </div>
           <div class="info-block full-width" style="display:flex;gap:8px;justify-content:flex-end;background:transparent;border:none;padding:8px 0 0 0">
-            <button class="action-btn-sm" style="padding:8px 20px;background:rgba(139,126,200,0.12);border-color:rgba(139,126,200,0.3);color:var(--mist-purple)">调整职务</button>
-            <button class="action-btn-sm" style="padding:8px 20px;background:rgba(110,207,207,0.12);border-color:rgba(110,207,207,0.3);color:var(--jade-glow)">安排修炼</button>
+            <button class="action-btn-sm" style="background:rgba(139,126,200,0.12);border-color:rgba(139,126,200,0.3);color:var(--mist-purple)">调整职务</button>
+            <button class="action-btn-sm" style="background:rgba(110,207,207,0.12);border-color:rgba(110,207,207,0.3);color:var(--jade-glow)">安排修炼</button>
           </div>
         </div>
       `;
@@ -984,7 +1896,7 @@
         card.innerHTML = `
           <div class="faction-header">
             <div class="faction-name">
-              <svg viewBox="0 0 20 20" fill="none" stroke="${relColor}" stroke-width="1.2" style="width:16px;height:16px"><polygon points="10,2 17,7 14,16 6,16 3,7"/></svg>
+              <svg viewBox="0 0 20 20" fill="none" stroke="${relColor}" stroke-width="1.2"><polygon points="10,2 17,7 14,16 6,16 3,7"/></svg>
               ${f.name}
             </div>
             <span class="relation-badge" style="background:${relBg};color:${relColor}">${f.relation}</span>
@@ -1020,7 +1932,6 @@
       filtered.forEach(s => {
         const card = document.createElement('div');
         card.className = 'skill-card';
-        card.dataset.type = s.type;
         card.innerHTML = `
           <span class="skill-rank" style="background:${s.rankBg};color:${s.rankColor}">${s.rank}</span>
           <h4>${s.name}</h4>
@@ -1033,15 +1944,10 @@
     renderSkills('all');
 
     function filterSkills(type, btn) {
-      document.querySelectorAll('.skill-filter').forEach(b => b.classList.remove('active-filter'));
-      if (btn) btn.classList.add('active-filter');
+      document.querySelectorAll('.skill-filter').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
       renderSkills(type);
     }
-
-    // Style active filter
-    const styleActiveFilter = document.createElement('style');
-    styleActiveFilter.textContent = `.active-filter { background: rgba(110,207,207,0.12) !important; color: var(--jade-glow) !important; border-color: rgba(110,207,207,0.3) !important; }`;
-    document.head.appendChild(styleActiveFilter);
 
     // ====== TREASURY ======
     const treasuryData = {
@@ -1086,8 +1992,6 @@
       material: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><polygon points="12,2 20,8 20,16 12,22 4,16 4,8"/><path d="M12 2v20M4 8l16 8M20 8l-16 8"/></svg>'
     };
 
-    let currentTreasury = 'weapon';
-
     function renderTreasury(type) {
       const grid = document.getElementById('item-grid');
       grid.innerHTML = '';
@@ -1113,31 +2017,8 @@
     function switchTreasury(type, btn) {
       document.querySelectorAll('.treasury-tab').forEach(t => t.classList.remove('active'));
       if (btn) btn.classList.add('active');
-      currentTreasury = type;
       renderTreasury(type);
     }
-
-    // ====== KEYBOARD SHORTCUT ======
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModal();
-    });
-
-    // ====== SCROLL-TRIGGERED ANIMATIONS ======
-    const pages = document.querySelectorAll('.page-content');
-    pages.forEach(page => {
-      page.addEventListener('scroll', () => {
-        const cards = page.querySelectorAll('.stat-card, .module-card, .event-item, .faction-card, .skill-card, .item-card');
-        cards.forEach(card => {
-          const rect = card.getBoundingClientRect();
-          if (rect.top < window.innerHeight * 0.9) {
-            card.style.opacity = '1';
-            card.style.transform = card.style.transform || '';
-          }
-        });
-      });
-    });
   </script>
-  <!-- SillyTavern Enhancer Module -->
-  <script type="module" src="./sillytavern/st-integration.js"></script>
 </body>
 </html>
