@@ -552,6 +552,42 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .story-choices.hidden {
+      display: none;
+    }
+
+    .story-toggle-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      cursor: pointer;
+      color: rgba(168, 230, 230, 0.7);
+      font-size: 12px;
+      transition: all 0.3s;
+    }
+
+    .story-toggle-bar:hover {
+      background: rgba(110, 207, 207, 0.15);
+      border-color: rgba(110, 207, 207, 0.4);
+    }
+
+    .story-toggle-bar svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.3s;
+    }
+
+    .story-toggle-bar.collapsed svg {
+      transform: rotate(180deg);
     }
 
     .story-choice-btn {
@@ -1227,7 +1263,6 @@
             <path d="M12 3C7 3 3 6 3 10c0 3 2 5.5 5 7l-1 4 4-2c.3 0 .7.03 1 .03 5 0 9-3 9-7s-4-9-9-9z"/>
           </svg>
           <span>天机</span>
-          <div class="notif-dot"></div>
         </button>
         <button class="nav-btn" data-page="members" onclick="switchPage('members')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -1293,12 +1328,9 @@
                 </div>
                 <span class="stat-card-title">宗门实力</span>
               </div>
-              <div class="stat-card-value text-jade">甲等中宗</div>
-              <div class="stat-card-change positive">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                  <path d="M6 2l4 5H2z"/>
-                </svg>
-                声望上升中
+              <div class="stat-card-value text-jade" style="font-size:14px">东荒云洲二流宗门</div>
+              <div class="stat-card-change" style="color:rgba(168,230,230,0.6);font-size:12px;margin-top:6px">
+                排名：第 127 位
               </div>
             </div>
             <div class="stat-card">
@@ -1309,11 +1341,13 @@
                     <path d="M10 6v4l3 2"/>
                   </svg>
                 </div>
-                <span class="stat-card-title">灵脉充盈</span>
+                <span class="stat-card-title">灵脉灵资</span>
               </div>
-              <div class="stat-card-value text-purple">78%</div>
-              <div class="progress-bar-wrap">
-                <div class="progress-bar-fill" style="width:78%;background:linear-gradient(90deg,var(--mist-purple-deep),var(--mist-purple))"></div>
+              <div style="font-size:12px;color:rgba(168,230,230,0.8);line-height:1.8">
+                <div>甲等灵田 <span style="color:var(--mist-purple);font-weight:600">3</span> 处</div>
+                <div>乙等灵田 <span style="color:var(--mist-purple);font-weight:600">12</span> 处</div>
+                <div>上等灵脉 <span style="color:var(--mist-purple);font-weight:600">2</span> 条</div>
+                <div>中等灵脉 <span style="color:var(--mist-purple);font-weight:600">7</span> 条</div>
               </div>
             </div>
             <div class="stat-card">
@@ -1323,15 +1357,11 @@
                     <path d="M10 2l2.5 5H18l-4 3.5 1.5 5.5L10 13l-5.5 3 1.5-5.5L2 7h5.5z"/>
                   </svg>
                 </div>
-                <span class="stat-card-title">防御阵法</span>
+                <span class="stat-card-title">宗门大阵</span>
               </div>
-              <div class="stat-card-value text-gold">九曜阵</div>
-              <div class="stat-card-change positive">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                  <path d="M6 2l4 5H2z"/>
-                </svg>
-                运转稳定
-              </div>
+              <div class="stat-card-value text-gold" style="font-size:16px">九曜星辰阵</div>
+              <div style="font-size:11px;color:var(--gold-spirit);margin:4px 0">地阶上品</div>
+              <div style="font-size:12px;color:rgba(168,230,230,0.6)">聚灵护山，攻防一体</div>
             </div>
             <div class="stat-card">
               <div class="stat-card-header">
@@ -1341,11 +1371,18 @@
                     <path d="M14 3l3 3-3 3"/>
                   </svg>
                 </div>
-                <span class="stat-card-title">弟子修炼</span>
+                <span class="stat-card-title">收支概况</span>
               </div>
-              <div class="stat-card-value text-pink">32 / 47</div>
-              <div class="stat-card-change" style="color:rgba(168,230,230,0.5)">
-                正在闭关修炼
+              <div style="font-size:12px;line-height:1.8">
+                <div style="color:var(--jade-glow)">
+                  月收入：<span style="font-weight:600">+8,420</span> 灵石
+                </div>
+                <div style="color:var(--lotus-pink)">
+                  月支出：<span style="font-weight:600">-5,680</span> 灵石
+                </div>
+                <div style="color:var(--gold-spirit);margin-top:4px;padding-top:4px;border-top:1px solid var(--glass-border)">
+                  净盈余：<span style="font-weight:600">+2,740</span> 灵石
+                </div>
               </div>
             </div>
           </div>
@@ -1477,6 +1514,13 @@
               <div class="story-paragraph narrator" style="animation-delay:0.6s">
                 你望向窗外翻涌的云海，沉吟片刻——
               </div>
+            </div>
+
+            <div class="story-toggle-bar" id="story-toggle" onclick="toggleStoryChoices()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+              <span>选择应对之策</span>
             </div>
 
             <div class="story-choices" id="story-choices">
@@ -1689,6 +1733,34 @@
     animateBg();
 
     // ====== PAGE SWITCHING ======
+    // 页面红点状态管理
+    const pageNotifications = {
+      story: true,  // 初始有天机事件
+      members: false,
+      sectinfo: false,
+      diplomacy: false,
+      library: false,
+      treasury: false
+    };
+
+    function updateNotificationDots() {
+      for (const [page, hasNotification] of Object.entries(pageNotifications)) {
+        const btn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+        if (btn) {
+          let dot = btn.querySelector('.notif-dot');
+          if (hasNotification) {
+            if (!dot) {
+              dot = document.createElement('div');
+              dot.className = 'notif-dot';
+              btn.appendChild(dot);
+            }
+          } else if (dot) {
+            dot.remove();
+          }
+        }
+      }
+    }
+
     function switchPage(page) {
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active-page'));
@@ -1698,6 +1770,31 @@
 
       if (btn) btn.classList.add('active');
       if (pg) pg.classList.add('active-page');
+
+      // 清除当前页面的红点
+      if (pageNotifications[page]) {
+        pageNotifications[page] = false;
+        updateNotificationDots();
+      }
+    }
+
+    // 切换选项显示/隐藏
+    let storyChoicesVisible = true;
+    function toggleStoryChoices() {
+      const choices = document.getElementById('story-choices');
+      const toggle = document.getElementById('story-toggle');
+      if (choices && toggle) {
+        storyChoicesVisible = !storyChoicesVisible;
+        if (storyChoicesVisible) {
+          choices.classList.remove('hidden');
+          toggle.classList.remove('collapsed');
+          toggle.querySelector('span').textContent = '收起选择';
+        } else {
+          choices.classList.add('hidden');
+          toggle.classList.add('collapsed');
+          toggle.querySelector('span').textContent = '选择应对之策';
+        }
+      }
     }
 
     // ====== MODAL ======
@@ -2019,6 +2116,9 @@
       if (btn) btn.classList.add('active');
       renderTreasury(type);
     }
+
+    // 初始化红点显示
+    updateNotificationDots();
   </script>
 </body>
 </html>
