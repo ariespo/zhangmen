@@ -324,6 +324,40 @@
       background: rgba(212,114,140,0.3);
     }
 
+    .action-log-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--glass-border);
+      background: rgba(0,0,0,0.2);
+    }
+
+    .action-log-submit {
+      width: 100%;
+      padding: 10px;
+      background: rgba(110, 207, 207, 0.2);
+      border: 1px solid rgba(110, 207, 207, 0.4);
+      border-radius: 8px;
+      color: var(--jade-glow);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .action-log-submit:hover {
+      background: rgba(110, 207, 207, 0.3);
+    }
+
+    .action-log-btn.highlight {
+      animation: pulseHighlight 1.5s infinite;
+      background: rgba(212, 114, 140, 0.25);
+      border-color: rgba(212, 114, 140, 0.5);
+    }
+
+    @keyframes pulseHighlight {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(212, 114, 140, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(212, 114, 140, 0); }
+    }
+
     /* 品阶筛选按钮 */
     .rank-filter {
       padding: 6px 14px;
@@ -1634,6 +1668,9 @@
       <div class="action-log-list" id="action-log-list">
         <div class="action-log-empty">暂无操作记录</div>
       </div>
+      <div class="action-log-footer" id="action-log-footer" style="display:none">
+        <button class="action-log-submit" onclick="submitActions()">就如此行事吧</button>
+      </div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -2069,12 +2106,13 @@
         <div id="treasury-page" class="page-content">
           <div class="page-header">
             <h2>万宝阁</h2>
+            <div style="font-size:12px;color:rgba(168,230,230,0.5)">宗门法宝，任尔调配</div>
           </div>
           <div class="treasury-tabs">
-            <button class="treasury-tab active" onclick="switchTreasury('weapon', this)">法器</button>
-            <button class="treasury-tab" onclick="switchTreasury('armor', this)">防具</button>
-            <button class="treasury-tab" onclick="switchTreasury('pill', this)">丹药</button>
-            <button class="treasury-tab" onclick="switchTreasury('material', this)">灵材</button>
+            <button class="treasury-tab active" onclick="switchTreasury('weapon', this)">武器</button>
+            <button class="treasury-tab" onclick="switchTreasury('armor', this)">护具</button>
+            <button class="treasury-tab" onclick="switchTreasury('escape', this)">遁具</button>
+            <button class="treasury-tab" onclick="switchTreasury('accessory', this)">饰品</button>
           </div>
           <div class="item-grid" id="item-grid"></div>
         </div>
@@ -2372,16 +2410,16 @@
 
     // ====== MEMBERS DATA ======
     const membersData = [
-      { name: '沈万钧', realm: '元婴后期', role: '大长老', status: '坐镇', talent: '上上', color: 'jade' },
-      { name: '周明远', realm: '元婴初期', role: '执法首座', status: '巡查', talent: '上', color: 'purple' },
-      { name: '苏瑶', realm: '金丹后期', role: '丹峰长老', status: '炼丹', talent: '上上', color: 'pink' },
-      { name: '林淮安', realm: '金丹中期', role: '藏经长老', status: '研习', talent: '上', color: 'gold' },
-      { name: '叶青', realm: '筑基后期', role: '内门弟子', status: '守山', talent: '中上', color: 'jade' },
-      { name: '沈幽兰', realm: '筑基初期', role: '内门弟子', status: '闭关', talent: '上上', color: 'purple' },
-      { name: '赵长风', realm: '金丹初期', role: '客卿', status: '游历', talent: '中上', color: 'gold' },
-      { name: '白芷', realm: '筑基后期', role: '内门弟子', status: '修炼', talent: '上', color: 'pink' },
-      { name: '秦川', realm: '筑基中期', role: '外门弟子', status: '任务', talent: '中', color: 'jade' },
-      { name: '柳如烟', realm: '筑基中期', role: '内门弟子', status: '修炼', talent: '中上', color: 'purple' }
+      { name: '沈万钧', realm: '元婴后期', role: '大长老', status: '坐镇', talent: '上上', color: 'jade', baseStats: { 杀伐: 88, 防御: 72, 身法: 45 } },
+      { name: '周明远', realm: '元婴初期', role: '执法首座', status: '巡查', talent: '上', color: 'purple', baseStats: { 杀伐: 82, 防御: 58, 身法: 62 } },
+      { name: '苏瑶', realm: '金丹后期', role: '丹峰长老', status: '炼丹', talent: '上上', color: 'pink', baseStats: { 杀伐: 55, 防御: 48, 身法: 52 } },
+      { name: '林淮安', realm: '金丹中期', role: '藏经长老', status: '研习', talent: '上', color: 'gold', baseStats: { 杀伐: 42, 防御: 50, 身法: 38 } },
+      { name: '叶青', realm: '筑基后期', role: '内门弟子', status: '守山', talent: '中上', color: 'jade', baseStats: { 杀伐: 38, 防御: 32, 身法: 35 } },
+      { name: '沈幽兰', realm: '筑基初期', role: '内门弟子', status: '闭关', talent: '上上', color: 'purple', baseStats: { 杀伐: 35, 防御: 28, 身法: 42 } },
+      { name: '赵长风', realm: '金丹初期', role: '客卿', status: '游历', talent: '中上', color: 'gold', baseStats: { 杀伐: 68, 防御: 45, 身法: 70 } },
+      { name: '白芷', realm: '筑基后期', role: '内门弟子', status: '修炼', talent: '上', color: 'pink', baseStats: { 杀伐: 36, 防御: 30, 身法: 40 } },
+      { name: '秦川', realm: '筑基中期', role: '外门弟子', status: '任务', talent: '中', color: 'jade', baseStats: { 杀伐: 28, 防御: 25, 身法: 22 } },
+      { name: '柳如烟', realm: '筑基中期', role: '内门弟子', status: '修炼', talent: '中上', color: 'purple', baseStats: { 杀伐: 32, 防御: 26, 身法: 38 } }
     ];
 
     function renderMembers() {
@@ -2421,14 +2459,56 @@
     function openMemberDetail(name) {
       const m = membersData.find(x => x.name === name);
       if (!m) return;
+      const stats = getTotalStats(name);
+      const base = m.baseStats;
+      const equippedItems = getMemberEquippedItems(name);
       const overlay = document.getElementById('modal-overlay');
       document.getElementById('modal-title').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg> ${m.name}`;
+
+      const statDiff = (key) => {
+        const diff = stats[key] - base[key];
+        if (diff > 0) return ` <span style="color:var(--jade-glow);font-size:11px">(+${diff})</span>`;
+        if (diff < 0) return ` <span style="color:var(--lotus-pink);font-size:11px">(${diff})</span>`;
+        return '';
+      };
+
+      const equipmentHtml = equippedItems.length > 0
+        ? equippedItems.map(item => {
+            const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
+            const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.1)' : item.color === 'purple' ? 'rgba(139,126,200,0.1)' : item.color === 'pink' ? 'rgba(212,114,140,0.1)' : 'rgba(200,168,110,0.1)';
+            return `<span style="padding:4px 12px;background:${bgVar};border:1px solid var(--glass-border);border-radius:8px;font-size:12px;color:${colorVar}">${item.name} · ${item.rank}</span>`;
+          }).join('')
+        : '<span style="color:rgba(168,230,230,0.4);font-size:12px">暂无装备</span>';
+
       document.getElementById('modal-body').innerHTML = `
         <div class="sect-info-grid">
           <div class="info-block"><h4>境界</h4><div class="info-value">${m.realm}</div></div>
           <div class="info-block"><h4>职务</h4><div class="info-value">${m.role}</div></div>
           <div class="info-block"><h4>当前状态</h4><div class="info-value">${m.status}</div></div>
           <div class="info-block"><h4>天赋资质</h4><div class="info-value text-gold">${m.talent}</div></div>
+
+          <div class="info-block">
+            <h4>杀伐</h4>
+            <div class="info-value">
+              ${stats.杀伐}${statDiff('杀伐')}
+              <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.杀伐}</div>
+            </div>
+          </div>
+          <div class="info-block">
+            <h4>防御</h4>
+            <div class="info-value">
+              ${stats.防御}${statDiff('防御')}
+              <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.防御}</div>
+            </div>
+          </div>
+          <div class="info-block">
+            <h4>身法</h4>
+            <div class="info-value">
+              ${stats.身法}${statDiff('身法')}
+              <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.身法}</div>
+            </div>
+          </div>
+
           <div class="info-block full-width">
             <h4>已修功法</h4>
             <div class="info-value" style="font-size:13px;line-height:2">太虚真解（第三层）、基础剑术（大成）</div>
@@ -2437,8 +2517,7 @@
             <h4>佩戴装备</h4>
             <div class="info-value" style="font-size:13px;line-height:2">
               <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <span style="padding:4px 12px;background:rgba(110,207,207,0.1);border:1px solid var(--glass-border);border-radius:8px;font-size:12px">青锋剑 · 下品灵器</span>
-                <span style="padding:4px 12px;background:rgba(139,126,200,0.1);border:1px solid var(--glass-border);border-radius:8px;font-size:12px">护体符 · 法器</span>
+                ${equipmentHtml}
               </div>
             </div>
           </div>
@@ -2501,6 +2580,21 @@
       });
       const staminaLabel = document.querySelector('.stamina-bar + .resource-label');
       if (staminaLabel) staminaLabel.textContent = `${stamina.current}/${stamina.max} 体力`;
+
+      // 体力耗尽时高亮操作记录按钮
+      const logBtn = document.querySelector('.action-log-btn');
+      if (logBtn) {
+        if (stamina.current === 0 && actionLogs.length > 0) {
+          logBtn.classList.add('highlight');
+          // 自动展开操作记录面板
+          const panel = document.getElementById('action-log-panel');
+          if (panel && !panel.classList.contains('active')) {
+            panel.classList.add('active');
+          }
+        } else {
+          logBtn.classList.remove('highlight');
+        }
+      }
     }
 
     function consumeStamina(cost) {
@@ -2552,7 +2646,9 @@
     function renderActionLogs() {
       const list = document.getElementById('action-log-list');
       const count = document.getElementById('action-count');
+      const footer = document.getElementById('action-log-footer');
       if (count) count.textContent = actionLogs.length;
+      if (footer) footer.style.display = actionLogs.length > 0 ? 'block' : 'none';
       if (!list) return;
 
       if (actionLogs.length === 0) {
@@ -2573,6 +2669,35 @@
     function toggleActionLog() {
       const panel = document.getElementById('action-log-panel');
       if (panel) panel.classList.toggle('active');
+    }
+
+    function submitActions() {
+      if (actionLogs.length === 0) return;
+
+      const playerName = '清虚子';
+      const sectName = '云璃仙宗';
+      const operations = actionLogs.map(log => {
+        if (log.opportunityId) {
+          return `对「${log.title}」的决定是：${log.content}`;
+        } else if (log.type === '天机') {
+          return `在天机台剧情中做出抉择：${log.content}`;
+        }
+        return `执行了「${log.title}」：${log.content}`;
+      }).join('\n');
+
+      const prompt = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}`;
+
+      // 这里可以替换为实际的 LLM 调用
+      console.log(prompt);
+      alert(prompt);
+
+      // 清空本轮操作
+      actionLogs = [];
+      stamina.current = stamina.max;
+      updateStaminaSegments();
+      renderActionLogs();
+      renderOpportunities();
+      toggleActionLog();
     }
 
     // ====== LIBRARY / SKILLS ======
@@ -2750,52 +2875,160 @@
     renderOpportunities();
 
     // ====== TREASURY ======
-    const treasuryData = {
+    const sectTreasures = {
       weapon: [
-        { name: '霜华剑', rarity: '上品灵器', owner: '清虚子', color: 'jade' },
-        { name: '碧落剑', rarity: '上品灵器', owner: '未分配', color: 'jade' },
-        { name: '紫电鞭', rarity: '中品灵器', owner: '苏瑶', color: 'purple' },
-        { name: '玄铁枪', rarity: '中品灵器', owner: '未分配', color: 'gold' },
-        { name: '青锋剑', rarity: '下品灵器', owner: '叶青', color: 'jade' },
-        { name: '破阵锤', rarity: '下品灵器', owner: '未分配', color: 'pink' },
-        { name: '流云扇', rarity: '中品灵器', owner: '柳如烟', color: 'purple' },
-        { name: '噬魂刃', rarity: '上品灵器', owner: '周明远', color: 'pink' },
+        { id: 'w1', name: '霜华剑', type: '武器', rank: '上品灵器', rankLevel: '灵器', desc: '剑身如霜，挥剑时可凝冰气伤人', effects: { 杀伐: 45, 防御: 5, 身法: 8 }, owner: '清虚子', color: 'jade' },
+        { id: 'w2', name: '碧落剑', type: '武器', rank: '上品灵器', rankLevel: '灵器', desc: '通体碧绿，传闻可引动天地灵气', effects: { 杀伐: 42, 防御: 8, 身法: 10 }, owner: null, color: 'jade' },
+        { id: 'w3', name: '紫电鞭', type: '武器', rank: '中品灵器', rankLevel: '灵器', desc: '鞭身缠绕紫电，中者麻痹难动', effects: { 杀伐: 35, 防御: 0, 身法: 15 }, owner: '苏瑶', color: 'purple' },
+        { id: 'w4', name: '玄铁枪', type: '武器', rank: '中品灵器', rankLevel: '灵器', desc: '玄铁铸成，势大力沉，一往无前', effects: { 杀伐: 38, 防御: 12, 身法: -5 }, owner: null, color: 'gold' },
+        { id: 'w5', name: '青锋剑', type: '武器', rank: '下品灵器', rankLevel: '灵器', desc: '入门弟子常用的制式飞剑', effects: { 杀伐: 22, 防御: 2, 身法: 5 }, owner: '叶青', color: 'jade' },
+        { id: 'w6', name: '噬魂刃', type: '武器', rank: '上品灵器', rankLevel: '灵器', desc: '魔道凶器，可伤敌神魂', effects: { 杀伐: 50, 防御: 0, 身法: 12 }, owner: '周明远', color: 'pink' }
       ],
       armor: [
-        { name: '玄龟甲', rarity: '中品灵器', owner: '清虚子', color: 'jade' },
-        { name: '冰蚕衣', rarity: '上品灵器', owner: '未分配', color: 'purple' },
-        { name: '金丝软甲', rarity: '中品灵器', owner: '沈万钧', color: 'gold' },
-        { name: '护体符', rarity: '法器', owner: '沈幽兰', color: 'pink' }
+        { id: 'a1', name: '玄龟甲', type: '护具', rank: '中品灵器', rankLevel: '灵器', desc: '仿上古玄龟背甲所铸，坚不可摧', effects: { 杀伐: 0, 防御: 40, 身法: -8 }, owner: '清虚子', color: 'jade' },
+        { id: 'a2', name: '冰蚕衣', type: '护具', rank: '上品灵器', rankLevel: '灵器', desc: '万年冰蚕丝织成，水火不侵', effects: { 杀伐: 5, 防御: 35, 身法: 10 }, owner: null, color: 'purple' },
+        { id: 'a3', name: '金丝软甲', type: '护具', rank: '中品灵器', rankLevel: '灵器', desc: '金丝编织，轻便柔韧，贴身无形', effects: { 杀伐: 0, 防御: 28, 身法: 5 }, owner: '沈万钧', color: 'gold' },
+        { id: 'a4', name: '护体符', type: '护具', rank: '法器', rankLevel: '法器', desc: '可激发护体灵光的防御符箓', effects: { 杀伐: 0, 防御: 15, 身法: 0 }, owner: '沈幽兰', color: 'pink' }
       ],
-      pill: [
-        { name: '筑基丹', rarity: '四品', owner: '库存×3', color: 'jade' },
-        { name: '回灵丹', rarity: '五品', owner: '库存×12', color: 'purple' },
-        { name: '凝神丹', rarity: '五品', owner: '库存×8', color: 'gold' },
-        { name: '续命丹', rarity: '三品', owner: '库存×1', color: 'pink' },
-        { name: '培元丹', rarity: '六品', owner: '库存×20', color: 'jade' },
-        { name: '化毒丹', rarity: '五品', owner: '库存×5', color: 'purple' }
+      escape: [
+        { id: 'e1', name: '遁空梭', type: '遁具', rank: '上品灵器', rankLevel: '灵器', desc: '可撕裂虚空，瞬息千里', effects: { 杀伐: 0, 防御: 5, 身法: 50 }, owner: null, color: 'purple' },
+        { id: 'e2', name: '踏云靴', type: '遁具', rank: '中品灵器', rankLevel: '灵器', desc: '穿上可踏云而行，速度大增', effects: { 杀伐: 0, 防御: 0, 身法: 30 }, owner: '赵长风', color: 'gold' },
+        { id: 'e3', name: '缩地符', type: '遁具', rank: '法器', rankLevel: '法器', desc: '一步可达十里之外', effects: { 杀伐: 0, 防御: 0, 身法: 18 }, owner: null, color: 'jade' }
       ],
-      material: [
-        { name: '万年寒铁', rarity: '珍稀', owner: '库存×2', color: 'jade' },
-        { name: '九阳玄石', rarity: '珍稀', owner: '库存×1', color: 'gold' },
-        { name: '千年灵芝', rarity: '稀有', owner: '库存×4', color: 'purple' },
-        { name: '血玉髓', rarity: '珍稀', owner: '库存×1', color: 'pink' },
-        { name: '星辰砂', rarity: '稀有', owner: '库存×6', color: 'gold' },
-        { name: '蛟龙筋', rarity: '珍稀', owner: '库存×2', color: 'jade' }
+      accessory: [
+        { id: 'ac1', name: '凝神玉佩', type: '饰品', rank: '上品灵器', rankLevel: '灵器', desc: '可凝神静气，抵御心魔', effects: { 杀伐: 8, 防御: 15, 身法: 5 }, owner: null, color: 'jade' },
+        { id: 'ac2', name: '储物戒指', type: '饰品', rank: '中品灵器', rankLevel: '灵器', desc: '内含独立空间，可储万物', effects: { 杀伐: 0, 防御: 5, 身法: 5 }, owner: '清虚子', color: 'gold' },
+        { id: 'ac3', name: '锁灵镯', type: '饰品', rank: '下品灵器', rankLevel: '灵器', desc: '可锁住周身灵气，隐匿身形', effects: { 杀伐: 0, 防御: 10, 身法: 12 }, owner: null, color: 'purple' }
       ]
     };
 
     const itemSvgs = {
       weapon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14.5 3.5l6 6-11 11-6-6z"/><path d="M9.5 14.5l-5 5"/><path d="M18 2l4 4"/></svg>',
       armor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 3L4 7v5c0 5 3.5 9.5 8 10.5 4.5-1 8-5.5 8-10.5V7l-8-4z"/></svg>',
-      pill: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="7"/><path d="M5.5 12h13"/><path d="M12 5.5c-2 2-2 5 0 6.5s2 4.5 0 6.5"/></svg>',
-      material: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><polygon points="12,2 20,8 20,16 12,22 4,16 4,8"/><path d="M12 2v20M4 8l16 8M20 8l-16 8"/></svg>'
+      escape: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+      accessory: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>'
     };
+
+    function getMemberEquippedItems(memberName) {
+      const equipped = [];
+      for (const type in sectTreasures) {
+        sectTreasures[type].forEach(item => {
+          if (item.owner === memberName) equipped.push(item);
+        });
+      }
+      return equipped;
+    }
+
+    function getTotalStats(memberName) {
+      const member = membersData.find(m => m.name === memberName);
+      if (!member) return { 杀伐: 0, 防御: 0, 身法: 0 };
+      const equipped = getMemberEquippedItems(memberName);
+      const stats = { ...member.baseStats };
+      equipped.forEach(item => {
+        for (const [key, val] of Object.entries(item.effects)) {
+          stats[key] += val;
+        }
+      });
+      return stats;
+    }
+
+    function openAssignDialog(itemId, type) {
+      const item = sectTreasures[type].find(i => i.id === itemId);
+      if (!item) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        分配法宝
+      `;
+
+      const options = [
+        { name: null, label: '收回宗门库房' },
+        ...membersData.map(m => ({ name: m.name, label: `${m.name} · ${m.realm} · ${m.role}` }))
+      ];
+
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:14px;margin-bottom:16px">
+          将 <span style="color:var(--jade-glow)">${item.name}</span> 分配给：
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto">
+          ${options.map(opt => `
+            <button class="story-choice-btn" onclick="assignItem('${itemId}', '${type}', '${opt.name || ''}')" style="text-align:left">
+              <span>${opt.label}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function assignItem(itemId, type, targetName) {
+      const item = sectTreasures[type].find(i => i.id === itemId);
+      if (item) {
+        item.owner = targetName || null;
+        renderTreasury(type);
+        closeModal();
+      }
+    }
+
+    function openItemDetail(itemId, type) {
+      const item = sectTreasures[type].find(i => i.id === itemId);
+      if (!item) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+        ${item.name}
+      `;
+      const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
+      const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.12)' : item.color === 'purple' ? 'rgba(139,126,200,0.12)' : item.color === 'pink' ? 'rgba(212,114,140,0.12)' : 'rgba(200,168,110,0.12)';
+      document.getElementById('modal-body').innerHTML = `
+        <div class="sect-info-grid">
+          <div class="info-block">
+            <h4>装备名称</h4>
+            <div class="info-value" style="color:${colorVar};font-size:16px">${item.name}</div>
+          </div>
+          <div class="info-block">
+            <h4>类型</h4>
+            <div class="info-value">${item.type}</div>
+          </div>
+          <div class="info-block">
+            <h4>品阶</h4>
+            <div class="info-value" style="color:${colorVar}">${item.rank}</div>
+          </div>
+          <div class="info-block">
+            <h4>当前持有者</h4>
+            <div class="info-value">${item.owner || '宗门库房'}</div>
+          </div>
+          <div class="info-block full-width">
+            <h4>介绍</h4>
+            <div class="info-value" style="font-size:13px;line-height:1.8">${item.desc}</div>
+          </div>
+          <div class="info-block full-width">
+            <h4>效果</h4>
+            <div class="info-value" style="font-size:13px;line-height:2">
+              <div style="display:flex;gap:16px;flex-wrap:wrap">
+                <span style="padding:4px 12px;background:${bgVar};border-radius:6px;color:${colorVar}">杀伐 ${item.effects.杀伐 >= 0 ? '+' : ''}${item.effects.杀伐}</span>
+                <span style="padding:4px 12px;background:${bgVar};border-radius:6px;color:${colorVar}">防御 ${item.effects.防御 >= 0 ? '+' : ''}${item.effects.防御}</span>
+                <span style="padding:4px 12px;background:${bgVar};border-radius:6px;color:${colorVar}">身法 ${item.effects.身法 >= 0 ? '+' : ''}${item.effects.身法}</span>
+              </div>
+            </div>
+          </div>
+          <div class="info-block full-width" style="display:flex;gap:10px;justify-content:flex-end;background:transparent;border:none;padding:8px 0 0 0">
+            <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
+            <button class="opportunity-btn primary" onclick="closeModal();openAssignDialog('${item.id}', '${type}')">分配/收回</button>
+          </div>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
 
     function renderTreasury(type) {
       const grid = document.getElementById('item-grid');
       grid.innerHTML = '';
-      const items = treasuryData[type] || [];
+      const items = sectTreasures[type] || [];
       items.forEach(item => {
         const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
         const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.12)' : item.color === 'purple' ? 'rgba(139,126,200,0.12)' : item.color === 'pink' ? 'rgba(212,114,140,0.12)' : 'rgba(200,168,110,0.12)';
@@ -2806,8 +3039,12 @@
             ${itemSvgs[type]}
           </div>
           <h5>${item.name}</h5>
-          <div class="item-rarity" style="background:${bgVar};color:${colorVar}">${item.rarity}</div>
-          <div class="item-owner">${item.owner}</div>
+          <div class="item-rarity" style="background:${bgVar};color:${colorVar}">${item.rank}</div>
+          <div class="item-owner">${item.owner || '库房'}</div>
+          <div style="margin-top:10px;display:flex;gap:6px;justify-content:center">
+            <button class="action-btn-sm" onclick="event.stopPropagation();openItemDetail('${item.id}', '${type}')">详情</button>
+            <button class="action-btn-sm" onclick="event.stopPropagation();openAssignDialog('${item.id}', '${type}')">分配</button>
+          </div>
         `;
         grid.appendChild(card);
       });
