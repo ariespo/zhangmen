@@ -182,19 +182,23 @@
 
     /* 体力条 */
     .stamina-bar {
-      width: 60px;
-      height: 6px;
-      background: rgba(0,0,0,0.3);
-      border-radius: 3px;
-      overflow: hidden;
+      display: flex;
+      gap: 2px;
       margin-bottom: 2px;
     }
 
-    .stamina-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #ff6b6b, #ff8585);
-      border-radius: 3px;
-      transition: width 0.3s;
+    .stamina-segment {
+      width: 8px;
+      height: 10px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,107,107,0.3);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+
+    .stamina-segment.active {
+      background: linear-gradient(180deg, #ff6b6b, #ff8585);
+      border-color: #ff6b6b;
     }
 
     /* 操作记录按钮 */
@@ -825,6 +829,43 @@
       padding: 20px;
       overflow-y: auto;
       line-height: 1.8;
+      position: relative;
+    }
+
+    .story-edit-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: rgba(110, 207, 207, 0.1);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: var(--jade-pale);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+
+    .story-edit-btn:hover {
+      background: rgba(110, 207, 207, 0.2);
+      border-color: rgba(110, 207, 207, 0.4);
+    }
+
+    .story-edit-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .story-content-editable {
+      outline: none;
+      border: 1px dashed rgba(110, 207, 207, 0.3);
+      border-radius: 8px;
+      padding: 8px;
+      background: rgba(0,0,0,0.2);
     }
 
     .story-paragraph {
@@ -1543,7 +1584,11 @@
           </div>
           <div>
             <div class="stamina-bar">
-              <div class="stamina-fill" style="width:100%"></div>
+              <div class="stamina-segment active"></div>
+              <div class="stamina-segment active"></div>
+              <div class="stamina-segment active"></div>
+              <div class="stamina-segment active"></div>
+              <div class="stamina-segment active"></div>
             </div>
             <div class="resource-label">5/5 体力</div>
           </div>
@@ -1852,20 +1897,29 @@
         <div id="story-page" class="page-content">
           <div class="story-container">
             <div class="story-text-area" id="story-text-area">
-              <div class="story-paragraph narrator" style="animation-delay:0s">
-                【天机台 · 第一章 · 玄云密信】
+              <div class="story-edit-btn" onclick="toggleStoryEdit()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <span id="story-edit-label">编辑</span>
               </div>
-              <div class="story-paragraph" style="animation-delay:0.15s">
-                晨曦初露，云璃峰上雾气氤氲。你正于悟道殿中参悟《太虚真解》，忽闻门外传来一阵急促的脚步声。
-              </div>
-              <div class="story-paragraph" style="animation-delay:0.3s">
-                守山弟子叶青匆匆入内，单膝跪地，抱拳道："禀掌门，山门外来了一位散修，自称苍梧山洛风前辈的弟子，名唤周沉舟。此人修为不俗，约在金丹后期，身上隐有剑意流转。他说携有一封密信，事关重大，非见掌门不可。"
-              </div>
-              <div class="story-paragraph" style="animation-delay:0.45s">
-                你缓缓睁开双眼，掐指一算。苍梧山......洛风......此人三十年前曾与你有过一面之缘，是个性情古怪却颇有本事的剑修。他为何在此时遣弟子送信？
-              </div>
-              <div class="story-paragraph narrator" style="animation-delay:0.6s">
-                你望向窗外翻涌的云海，沉吟片刻——
+              <div id="story-content">
+                <div class="story-paragraph narrator" style="animation-delay:0s">
+                  【天机台 · 第一章 · 玄云密信】
+                </div>
+                <div class="story-paragraph" style="animation-delay:0.15s">
+                  晨曦初露，云璃峰上雾气氤氲。你正于悟道殿中参悟《太虚真解》，忽闻门外传来一阵急促的脚步声。
+                </div>
+                <div class="story-paragraph" style="animation-delay:0.3s">
+                  守山弟子叶青匆匆入内，单膝跪地，抱拳道："禀掌门，山门外来了一位散修，自称苍梧山洛风前辈的弟子，名唤周沉舟。此人修为不俗，约在金丹后期，身上隐有剑意流转。他说携有一封密信，事关重大，非见掌门不可。"
+                </div>
+                <div class="story-paragraph" style="animation-delay:0.45s">
+                  你缓缓睁开双眼，掐指一算。苍梧山......洛风......此人三十年前曾与你有过一面之缘，是个性情古怪却颇有本事的剑修。他为何在此时遣弟子送信？
+                </div>
+                <div class="story-paragraph narrator" style="animation-delay:0.6s">
+                  你望向窗外翻涌的云海，沉吟片刻——
+                </div>
               </div>
             </div>
 
@@ -1877,19 +1931,19 @@
             </div>
 
             <div class="story-choices" id="story-choices">
-              <button class="story-choice-btn" onclick="selectChoice(this, 1)">
+              <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
                 <div class="choice-marker">壹</div>
                 <span>令叶青将此人请至偏殿奉茶，你亲自前去接见，以示郑重</span>
               </button>
-              <button class="story-choice-btn" onclick="selectChoice(this, 2)">
+              <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
                 <div class="choice-marker">贰</div>
                 <span>先让执法堂暗中查探此人底细，确认身份后再做定夺</span>
               </button>
-              <button class="story-choice-btn" onclick="selectChoice(this, 3)">
+              <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
                 <div class="choice-marker">叁</div>
                 <span>只取密信来看，不必见人——非常之时，需防有诈</span>
               </button>
-              <button class="story-choice-btn" onclick="selectChoice(this, 4)">
+              <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
                 <div class="choice-marker">肆</div>
                 <span>召集长老议事，此事需众人商议后再做回复</span>
               </button>
@@ -2252,34 +2306,44 @@
     });
 
     // ====== STORY ======
-    function selectChoice(btn, idx) {
+    let isStoryEditing = false;
+
+    function toggleStoryEdit() {
+      const content = document.getElementById('story-content');
+      const label = document.getElementById('story-edit-label');
+      if (!content || !label) return;
+
+      isStoryEditing = !isStoryEditing;
+      if (isStoryEditing) {
+        content.contentEditable = 'true';
+        content.classList.add('story-content-editable');
+        content.focus();
+        label.textContent = '保存';
+      } else {
+        content.contentEditable = 'false';
+        content.classList.remove('story-content-editable');
+        label.textContent = '编辑';
+      }
+    }
+
+    function copyChoiceToInput(btn) {
       document.querySelectorAll('.story-choice-btn').forEach(b => b.style.borderColor = 'var(--glass-border)');
       btn.style.borderColor = 'var(--jade-glow)';
-
-      const area = document.getElementById('story-text-area');
-      const p = document.createElement('div');
-      p.className = 'story-paragraph';
-      p.style.color = 'var(--jade-glow)';
-      p.style.borderLeft = '2px solid var(--jade-glow)';
-      p.style.paddingLeft = '12px';
-      p.style.textIndent = '0';
-      p.textContent = `选择 ${['壹', '贰', '叁', '肆'][idx-1]}：${btn.querySelector('span').textContent}`;
-      area.appendChild(p);
-      area.scrollTop = area.scrollHeight;
-
-      setTimeout(() => {
-        const resp = document.createElement('div');
-        resp.className = 'story-paragraph';
-        resp.textContent = '你的决断如同一颗石子投入静湖，涟漪渐次扩散。四周的灵气似乎因你的心意而微微波动，天机台上的卦象也随之轻转...';
-        area.appendChild(resp);
-        area.scrollTop = area.scrollHeight;
-      }, 500);
+      const text = btn.querySelector('span').textContent;
+      const input = document.getElementById('story-custom-input');
+      if (input) {
+        input.value = text;
+        input.focus();
+      }
     }
 
     function sendCustomInput() {
       const input = document.getElementById('story-custom-input');
       const text = input.value.trim();
       if (!text) return;
+
+      const success = addActionLog('天机', '剧情抉择', text, 1);
+      if (!success) return;
 
       const area = document.getElementById('story-text-area');
       const p = document.createElement('div');
@@ -2430,32 +2494,26 @@
     let currentSkillTypeFilter = 'all';
     let currentSkillRankFilter = 'all';
 
-    function updateStaminaDisplay() {
-      const fill = document.querySelector('.stamina-fill');
-      const label = document.querySelector('.action-log-btn .resource-label');
-      if (fill) fill.style.width = `${(stamina.current / stamina.max) * 100}%`;
-      // 体力条旁边的标签显示体力
-      const staminaLabel = document.querySelector('.resource-item .resource-label');
+    function updateStaminaSegments() {
+      const bars = document.querySelectorAll('.stamina-segment');
+      bars.forEach((bar, i) => {
+        bar.classList.toggle('active', i < stamina.current);
+      });
+      const staminaLabel = document.querySelector('.stamina-bar + .resource-label');
+      if (staminaLabel) staminaLabel.textContent = `${stamina.current}/${stamina.max} 体力`;
     }
 
     function consumeStamina(cost) {
       stamina.current = Math.max(0, stamina.current - cost);
-      const fill = document.querySelector('.stamina-fill');
-      if (fill) fill.style.width = `${(stamina.current / stamina.max) * 100}%`;
-      // 更新体力显示
-      const staminaLabel = document.querySelector('.stamina-bar + .resource-label');
-      if (staminaLabel) staminaLabel.textContent = `${stamina.current}/${stamina.max} 体力`;
+      updateStaminaSegments();
     }
 
     function restoreStamina(cost) {
       stamina.current = Math.min(stamina.max, stamina.current + cost);
-      const fill = document.querySelector('.stamina-fill');
-      if (fill) fill.style.width = `${(stamina.current / stamina.max) * 100}%`;
-      const staminaLabel = document.querySelector('.stamina-bar + .resource-label');
-      if (staminaLabel) staminaLabel.textContent = `${stamina.current}/${stamina.max} 体力`;
+      updateStaminaSegments();
     }
 
-    function addActionLog(type, title, content, cost) {
+    function addActionLog(type, title, content, cost, extra = {}) {
       if (stamina.current < cost) {
         alert('体力不足！');
         return false;
@@ -2467,7 +2525,8 @@
         title,
         content,
         cost,
-        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        ...extra
       };
       actionLogs.push(log);
       renderActionLogs();
@@ -2477,9 +2536,16 @@
     function undoActionLog(id) {
       const index = actionLogs.findIndex(l => l.id === id);
       if (index > -1) {
-        restoreStamina(actionLogs[index].cost);
+        const log = actionLogs[index];
+        restoreStamina(log.cost);
+        // 恢复机缘状态
+        if (log.opportunityId && log.opportunityType && opportunities[log.opportunityType]) {
+          const opp = opportunities[log.opportunityType].find(o => o.id === log.opportunityId);
+          if (opp) opp.completed = false;
+        }
         actionLogs.splice(index, 1);
         renderActionLogs();
+        renderOpportunities();
       }
     }
 
@@ -2670,7 +2736,10 @@
       const content = input ? input.value.trim() : '';
 
       const typeName = type === 'tianshi' ? '天时' : type === 'dili' ? '地利' : '人和';
-      const success = addActionLog(typeName, opp.title, content || '未输入具体策略', opp.cost);
+      const success = addActionLog(typeName, opp.title, content || '未输入具体策略', opp.cost, {
+        opportunityId: id,
+        opportunityType: type
+      });
       if (success) {
         opp.completed = true;
         renderOpportunities();
@@ -2751,8 +2820,9 @@
       renderTreasury(type);
     }
 
-    // 初始化红点显示
+    // 初始化红点显示和体力条
     updateNotificationDots();
+    updateStaminaSegments();
   </script>
 </body>
 </html>
