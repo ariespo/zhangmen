@@ -2311,18 +2311,71 @@
       const body = document.getElementById('modal-body');
 
       if (type === 'player') {
+        const p = playerData;
+        const stats = getTotalStats(p.name);
+        const base = p.baseStats;
+        const equippedItems = getMemberEquippedItems(p.name);
+
+        const statDiff = (key) => {
+          const diff = stats[key] - base[key];
+          if (diff > 0) return ` <span style="color:var(--jade-glow);font-size:11px">(+${diff})</span>`;
+          if (diff < 0) return ` <span style="color:var(--lotus-pink);font-size:11px">(${diff})</span>`;
+          return '';
+        };
+
+        const equipmentHtml = equippedItems.length > 0
+          ? equippedItems.map(item => {
+              const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
+              const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.1)' : item.color === 'purple' ? 'rgba(139,126,200,0.1)' : item.color === 'pink' ? 'rgba(212,114,140,0.1)' : 'rgba(200,168,110,0.1)';
+              return `<span style="padding:4px 12px;background:${bgVar};border:1px solid var(--glass-border);border-radius:8px;font-size:12px;color:${colorVar}">${item.name} · ${item.rank}</span>`;
+            }).join('')
+          : '<span style="color:rgba(168,230,230,0.4);font-size:12px">暂无装备</span>';
+
         title.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg> 掌门信息';
         body.innerHTML = `
           <div class="sect-info-grid">
-            <div class="info-block"><h4>道号</h4><div class="info-value">清虚子</div></div>
-            <div class="info-block"><h4>境界</h4><div class="info-value text-gold">元婴中期</div></div>
-            <div class="info-block"><h4>寿元</h4><div class="info-value">612 / 1200</div></div>
-            <div class="info-block"><h4>灵根</h4><div class="info-value text-jade">水木双灵根</div></div>
-            <div class="info-block full-width">
-              <h4>掌门手记</h4>
-              <div class="info-value" style="font-size:13px;line-height:1.8">
-                执掌云璃三十载，虽殚精竭虑，奈何百年前天魔之乱的创伤太深。所幸近年来收得几名天赋出众的弟子，宗门渐有起色。近来天象异变，各方势力蠢蠢欲动，须得更加警醒...
+            <div class="info-block"><h4>名称</h4><div class="info-value">${p.name}</div></div>
+            <div class="info-block"><h4>道号</h4><div class="info-value">${p.daoName}</div></div>
+            <div class="info-block"><h4>境界</h4><div class="info-value text-gold">${p.realm}</div></div>
+            <div class="info-block"><h4>寿元</h4><div class="info-value">${p.lifespan.current} / ${p.lifespan.max}</div></div>
+            <div class="info-block"><h4>天赋资质</h4><div class="info-value text-jade">${p.talent}</div></div>
+
+            <div class="info-block">
+              <h4>杀伐</h4>
+              <div class="info-value">
+                ${stats.杀伐}${statDiff('杀伐')}
+                <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.杀伐}</div>
               </div>
+            </div>
+            <div class="info-block">
+              <h4>防御</h4>
+              <div class="info-value">
+                ${stats.防御}${statDiff('防御')}
+                <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.防御}</div>
+              </div>
+            </div>
+            <div class="info-block">
+              <h4>身法</h4>
+              <div class="info-value">
+                ${stats.身法}${statDiff('身法')}
+                <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.身法}</div>
+              </div>
+            </div>
+
+            <div class="info-block full-width">
+              <h4>已修功法</h4>
+              <div class="info-value" style="font-size:13px;line-height:2">${p.skills}</div>
+            </div>
+            <div class="info-block full-width">
+              <h4>佩戴装备</h4>
+              <div class="info-value" style="font-size:13px;line-height:2">
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  ${equipmentHtml}
+                </div>
+              </div>
+            </div>
+            <div class="info-block full-width" style="display:flex;gap:8px;justify-content:flex-end;background:transparent;border:none;padding:8px 0 0 0">
+              <button class="action-btn-sm" style="background:rgba(110,207,207,0.12);border-color:rgba(110,207,207,0.3);color:var(--jade-glow)" onclick="const ok=addActionLog('修炼','专心修炼','自己的实力提升更为重要，专心修炼',3); if(ok) closeModal();">专心修炼（消耗 3 体力）</button>
             </div>
           </div>
         `;
@@ -2409,6 +2462,16 @@
     });
 
     // ====== MEMBERS DATA ======
+    const playerData = {
+      name: '清虚子',
+      daoName: '清虚子',
+      realm: '元婴中期',
+      lifespan: { current: 612, max: 1200 },
+      talent: '水木双灵根',
+      baseStats: { 杀伐: 78, 防御: 68, 身法: 58 },
+      skills: '太虚真解（第五层）、云璃剑诀（大成）、清心咒（圆满）'
+    };
+
     const membersData = [
       { name: '沈万钧', realm: '元婴后期', role: '大长老', status: '坐镇', talent: '上上', color: 'jade', baseStats: { 杀伐: 88, 防御: 72, 身法: 45 } },
       { name: '周明远', realm: '元婴初期', role: '执法首座', status: '巡查', talent: '上', color: 'purple', baseStats: { 杀伐: 82, 防御: 58, 身法: 62 } },
@@ -2921,9 +2984,10 @@
 
     function getTotalStats(memberName) {
       const member = membersData.find(m => m.name === memberName);
-      if (!member) return { 杀伐: 0, 防御: 0, 身法: 0 };
+      const target = member || (playerData.name === memberName ? playerData : null);
+      if (!target) return { 杀伐: 0, 防御: 0, 身法: 0 };
       const equipped = getMemberEquippedItems(memberName);
-      const stats = { ...member.baseStats };
+      const stats = { ...target.baseStats };
       equipped.forEach(item => {
         for (const [key, val] of Object.entries(item.effects)) {
           stats[key] += val;
