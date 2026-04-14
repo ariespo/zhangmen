@@ -1582,7 +1582,7 @@
             <div class="resource-label">时间</div>
           </div>
         </div>
-        <!-- 弟子 -->
+        <!-- 成员 -->
         <div class="resource-item">
           <div class="resource-icon" style="color:var(--lotus-pink)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -1593,8 +1593,8 @@
             </svg>
           </div>
           <div>
-            <div class="resource-value" style="color:var(--lotus-pink)">47</div>
-            <div class="resource-label">弟子</div>
+            <div class="resource-value" style="color:var(--lotus-pink)">4</div>
+            <div class="resource-label">成员</div>
           </div>
         </div>
         <!-- 声望 -->
@@ -1697,7 +1697,7 @@
             <circle cx="17" cy="9" r="2.5"/>
             <path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/>
           </svg>
-          <span>弟子</span>
+          <span>成员</span>
         </button>
         <button class="nav-btn" data-page="sectinfo" onclick="switchPage('sectinfo')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -1848,8 +1848,8 @@
                   <path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/>
                 </svg>
               </div>
-              <h3 class="text-purple">弟子堂</h3>
-              <p>管理宗门弟子，分配职务，调配修炼资源</p>
+              <h3 class="text-purple">成员堂</h3>
+              <p>管理宗门成员，分配职务，调配修炼资源</p>
             </div>
             <div class="module-card" onclick="switchPage('library')">
               <div class="module-icon-wrap bg-gold">
@@ -1863,7 +1863,7 @@
                 </svg>
               </div>
               <h3 class="text-gold">藏经阁</h3>
-              <p>功法典籍、秘术传承，供弟子参悟研习</p>
+              <p>功法典籍、秘术传承，供成员参悟研习</p>
             </div>
             <div class="module-card" onclick="switchPage('treasury')">
               <div class="module-icon-wrap bg-pink">
@@ -1913,7 +1913,7 @@
               </div>
               <div class="event-item" onclick="switchPage('members')">
                 <div class="event-dot normal"></div>
-                <div class="event-text">弟子「沈幽兰」突破筑基期，请求掌门赐下筑基丹</div>
+                <div class="event-text">成员「林淮安」整理藏经阁时发现一卷失传古籍</div>
                 <div class="event-time">一炷香前</div>
               </div>
               <div class="event-item" onclick="switchPage('diplomacy')">
@@ -1949,10 +1949,10 @@
                   晨曦初露，云璃峰上雾气氤氲。你正于悟道殿中参悟《太虚真解》，忽闻门外传来一阵急促的脚步声。
                 </div>
                 <div class="story-paragraph" style="animation-delay:0.3s">
-                  守山弟子叶青匆匆入内，单膝跪地，抱拳道："禀掌门，山门外来了一位散修，自称苍梧山洛风前辈的弟子，名唤周沉舟。此人修为不俗，约在金丹后期，身上隐有剑意流转。他说携有一封密信，事关重大，非见掌门不可。"
+                  守山成员周明远匆匆入内，单膝跪地，抱拳道："禀掌门，山门外来了一位散修，自称受苍梧山洛风前辈所遣，名唤周沉舟。此人修为不俗，约在金丹后期，身上隐有剑意流转。他说携有一封密信，事关重大，非见掌门不可。"
                 </div>
                 <div class="story-paragraph" style="animation-delay:0.45s">
-                  你缓缓睁开双眼，掐指一算。苍梧山......洛风......此人三十年前曾与你有过一面之缘，是个性情古怪却颇有本事的剑修。他为何在此时遣弟子送信？
+                  你缓缓睁开双眼，掐指一算。苍梧山......洛风......此人三十年前曾与你有过一面之缘，是个性情古怪却颇有本事的剑修。他为何在此时遣人送信？
                 </div>
                 <div class="story-paragraph narrator" style="animation-delay:0.6s">
                   你望向窗外翻涌的云海，沉吟片刻——
@@ -1970,7 +1970,7 @@
             <div class="story-choices" id="story-choices">
               <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
                 <div class="choice-marker">壹</div>
-                <span>令叶青将此人请至偏殿奉茶，你亲自前去接见，以示郑重</span>
+                <span>令周明远将此人请至偏殿奉茶，你亲自前去接见，以示郑重</span>
               </button>
               <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
                 <div class="choice-marker">贰</div>
@@ -2000,9 +2000,9 @@
         <!-- MEMBERS PAGE -->
         <div id="members-page" class="page-content">
           <div class="page-header">
-            <h2>弟子堂</h2>
+            <h2>成员堂</h2>
             <div style="display:flex;gap:8px">
-              <input type="text" class="search-box" placeholder="搜索弟子...">
+              <input type="text" class="search-box" placeholder="搜索成员...">
               <button class="action-btn-sm">筛选</button>
             </div>
           </div>
@@ -2011,7 +2011,9 @@
               <thead>
                 <tr>
                   <th>姓名</th>
+                  <th>道号</th>
                   <th>境界</th>
+                  <th>寿元</th>
                   <th>职务</th>
                   <th>状态</th>
                   <th>天赋</th>
@@ -2050,7 +2052,7 @@
               <div class="info-value" style="font-size:13px;line-height:1.8">
                 云璃仙宗创立于玄黄历三千七百二十一年，创派祖师云璃真人以剑入道，一日悟道飞升，留下《太虚真解》作为镇宗之宝。宗门地处东荒云璃山脉，占据九条灵脉交汇之处，灵气充沛，是修炼的洞天福地。
                 <br><br>
-                历经千年发展，云璃仙宗由昔日小门派发展为今日的甲等中宗，门下弟子众多，高手如云。然而百年前天魔之乱，宗门遭受重创，至今仍在恢复元气...
+                历经千年发展，云璃仙宗由昔日小门派发展为今日的甲等中宗，门下成员众多，高手如云。然而百年前天魔之乱，宗门遭受重创，至今仍在恢复元气...
               </div>
             </div>
             <div class="info-block full-width">
@@ -2473,16 +2475,10 @@
     };
 
     const membersData = [
-      { name: '沈万钧', realm: '元婴后期', role: '大长老', status: '坐镇', talent: '上上', color: 'jade', baseStats: { 杀伐: 88, 防御: 72, 身法: 45 } },
-      { name: '周明远', realm: '元婴初期', role: '执法首座', status: '巡查', talent: '上', color: 'purple', baseStats: { 杀伐: 82, 防御: 58, 身法: 62 } },
-      { name: '苏瑶', realm: '金丹后期', role: '丹峰长老', status: '炼丹', talent: '上上', color: 'pink', baseStats: { 杀伐: 55, 防御: 48, 身法: 52 } },
-      { name: '林淮安', realm: '金丹中期', role: '藏经长老', status: '研习', talent: '上', color: 'gold', baseStats: { 杀伐: 42, 防御: 50, 身法: 38 } },
-      { name: '叶青', realm: '筑基后期', role: '内门弟子', status: '守山', talent: '中上', color: 'jade', baseStats: { 杀伐: 38, 防御: 32, 身法: 35 } },
-      { name: '沈幽兰', realm: '筑基初期', role: '内门弟子', status: '闭关', talent: '上上', color: 'purple', baseStats: { 杀伐: 35, 防御: 28, 身法: 42 } },
-      { name: '赵长风', realm: '金丹初期', role: '客卿', status: '游历', talent: '中上', color: 'gold', baseStats: { 杀伐: 68, 防御: 45, 身法: 70 } },
-      { name: '白芷', realm: '筑基后期', role: '内门弟子', status: '修炼', talent: '上', color: 'pink', baseStats: { 杀伐: 36, 防御: 30, 身法: 40 } },
-      { name: '秦川', realm: '筑基中期', role: '外门弟子', status: '任务', talent: '中', color: 'jade', baseStats: { 杀伐: 28, 防御: 25, 身法: 22 } },
-      { name: '柳如烟', realm: '筑基中期', role: '内门弟子', status: '修炼', talent: '中上', color: 'purple', baseStats: { 杀伐: 32, 防御: 26, 身法: 38 } }
+      { name: '沈万钧', daoName: '万钧真人', realm: '元婴后期', role: '大长老', status: '坐镇', talent: '上上', color: 'jade', baseStats: { 杀伐: 88, 防御: 72, 身法: 45 }, lifespan: { current: 892, max: 1500 } },
+      { name: '周明远', daoName: '明远子', realm: '元婴初期', role: '执法首座', status: '巡查', talent: '上', color: 'purple', baseStats: { 杀伐: 82, 防御: 58, 身法: 62 }, lifespan: { current: 710, max: 1200 } },
+      { name: '苏瑶', daoName: '瑶光', realm: '金丹后期', role: '丹峰长老', status: '炼丹', talent: '上上', color: 'pink', baseStats: { 杀伐: 55, 防御: 48, 身法: 52 }, lifespan: { current: 412, max: 800 } },
+      { name: '林淮安', daoName: '静虚子', realm: '金丹中期', role: '藏经长老', status: '研习', talent: '上', color: 'gold', baseStats: { 杀伐: 42, 防御: 50, 身法: 38 }, lifespan: { current: 356, max: 700 } }
     ];
 
     function renderMembers() {
@@ -2506,7 +2502,9 @@
               ${m.name}
             </div>
           </td>
+          <td style="color:var(--gold-spirit)">${m.daoName}</td>
           <td><span class="realm-badge" style="background:rgba(110,207,207,0.1);color:${color}">${m.realm}</span></td>
+          <td>${m.lifespan.current} / ${m.lifespan.max}</td>
           <td><span class="role-badge">${m.role}</span></td>
           <td style="color:${m.status === '闭关' ? 'var(--mist-purple)' : m.status === '巡查' ? 'var(--jade-glow)' : m.status === '炼丹' ? 'var(--lotus-pink)' : 'rgba(168,230,230,0.6)'}">${m.status}</td>
           <td style="color:var(--gold-spirit)">${m.talent}</td>
@@ -2545,7 +2543,9 @@
 
       document.getElementById('modal-body').innerHTML = `
         <div class="sect-info-grid">
+          <div class="info-block"><h4>道号</h4><div class="info-value text-gold">${m.daoName}</div></div>
           <div class="info-block"><h4>境界</h4><div class="info-value">${m.realm}</div></div>
+          <div class="info-block"><h4>寿元</h4><div class="info-value">${m.lifespan.current} / ${m.lifespan.max}</div></div>
           <div class="info-block"><h4>职务</h4><div class="info-value">${m.role}</div></div>
           <div class="info-block"><h4>当前状态</h4><div class="info-value">${m.status}</div></div>
           <div class="info-block"><h4>天赋资质</h4><div class="info-value text-gold">${m.talent}</div></div>
@@ -2599,7 +2599,7 @@
       { name: '万象门', relation: '友好', value: 65, desc: '近年来往密切，有意深化合作', color: 'purple', leader: '门主·玄机老人' },
       { name: '血影谷', relation: '敌对', value: 15, desc: '魔修势力，多次侵犯边境', color: 'pink', leader: '谷主·血罗' },
       { name: '碧落宫', relation: '中立', value: 50, desc: '女修门派，鲜少涉及外界纷争', color: 'gold', leader: '宫主·明月仙子' },
-      { name: '太玄学府', relation: '友好', value: 70, desc: '学术交流频繁，弟子互有往来', color: 'jade', leader: '府主·青阳居士' },
+      { name: '太玄学府', relation: '友好', value: 70, desc: '学术交流频繁，成员互有往来', color: 'jade', leader: '府主·青阳居士' },
       { name: '九幽教', relation: '警惕', value: 30, desc: '行事诡秘，近来动向不明', color: 'pink', leader: '教主·幽冥真人' }
     ];
 
@@ -2769,7 +2769,7 @@
       { name: '紫霄神雷诀', type: '道修', rank: '地阶上品', rankLevel: '地', desc: '雷法秘术，引天雷入体，威力惊人，修炼者需承受雷霆淬体之痛', color: 'purple', rankBg: 'rgba(139,126,200,0.15)', rankColor: 'var(--mist-purple)' },
       { name: '天罡剑诀', type: '道修', rank: '地阶中品', rankLevel: '地', desc: '上古剑法，凝聚天罡之力，一剑可破万法，剑修必修之术', color: 'gold', rankBg: 'rgba(200,168,110,0.15)', rankColor: 'var(--gold-spirit)' },
       { name: '碧波心经', type: '道修', rank: '玄阶上品', rankLevel: '玄', desc: '水属性功法，可凝神静气，疗伤恢复，适合水木灵根修炼', color: 'jade', rankBg: 'rgba(110,207,207,0.12)', rankColor: 'var(--jade-glow)' },
-      { name: '基础剑术', type: '道修', rank: '黄阶', rankLevel: '黄', desc: '入门剑法，简单实用，外门弟子必修的基础剑道之术', color: 'jade', rankBg: 'rgba(110,207,207,0.08)', rankColor: 'rgba(168,230,230,0.6)' },
+      { name: '基础剑术', type: '道修', rank: '黄阶', rankLevel: '黄', desc: '入门剑法，简单实用，外门成员必修的基础剑道之术', color: 'jade', rankBg: 'rgba(110,207,207,0.08)', rankColor: 'rgba(168,230,230,0.6)' },
       { name: '神念九转', type: '神修', rank: '天阶下品', rankLevel: '天', desc: '以神识为根基，九转之后神念可覆盖千里，一念杀敌于无形', color: 'purple', rankBg: 'rgba(139,126,200,0.2)', rankColor: 'var(--mist-purple)' },
       { name: '炼神诀', type: '神修', rank: '地阶上品', rankLevel: '地', desc: '锤炼神魂之法，可抵御心魔入侵，提升悟性', color: 'purple', rankBg: 'rgba(139,126,200,0.15)', rankColor: 'var(--mist-purple)' },
       { name: '噬魂魔典', type: '魔修', rank: '天阶中品', rankLevel: '天', desc: '魔道至高功法，可吞噬他人魂魄提升修为，为正道所不容', color: 'pink', rankBg: 'rgba(212,114,140,0.2)', rankColor: 'var(--lotus-pink)' },
@@ -2864,8 +2864,8 @@
         { id: 5, title: '青阳道人讲法', desc: '太玄学府的青阳居士将于下月在云梦泽开设法会，讲授「道法自然」之理', cost: 1, completed: false }
       ],
       renhe: [
-        { id: 6, title: '长老请愿', desc: '大长老沈万钧请求上调执法堂弟子俸禄，称近年宗门收入增加，理应惠及门人', cost: 1, completed: false },
-        { id: 7, title: '弟子纷争', desc: '内门弟子叶青与亲传弟子沈幽兰因一处洞府归属产生激烈矛盾，请求掌门主持公道', cost: 1, completed: false },
+        { id: 6, title: '长老请愿', desc: '大长老沈万钧请求上调执法堂成员俸禄，称近年宗门收入增加，理应惠及门人', cost: 1, completed: false },
+        { id: 7, title: '成员纷争', desc: '成员林淮安与苏瑶因一处洞府归属产生激烈矛盾，请求掌门主持公道', cost: 1, completed: false },
         { id: 8, title: '万象门求见', desc: '万象门特使携带厚礼求见，希望能够与我宗建立更深层次的战略合作关系', cost: 1, completed: false }
       ]
     };
@@ -2944,14 +2944,14 @@
         { id: 'w2', name: '碧落剑', type: '武器', rank: '上品灵器', rankLevel: '灵器', desc: '通体碧绿，传闻可引动天地灵气', effects: { 杀伐: 42, 防御: 8, 身法: 10 }, owner: null, color: 'jade' },
         { id: 'w3', name: '紫电鞭', type: '武器', rank: '中品灵器', rankLevel: '灵器', desc: '鞭身缠绕紫电，中者麻痹难动', effects: { 杀伐: 35, 防御: 0, 身法: 15 }, owner: '苏瑶', color: 'purple' },
         { id: 'w4', name: '玄铁枪', type: '武器', rank: '中品灵器', rankLevel: '灵器', desc: '玄铁铸成，势大力沉，一往无前', effects: { 杀伐: 38, 防御: 12, 身法: -5 }, owner: null, color: 'gold' },
-        { id: 'w5', name: '青锋剑', type: '武器', rank: '下品灵器', rankLevel: '灵器', desc: '入门弟子常用的制式飞剑', effects: { 杀伐: 22, 防御: 2, 身法: 5 }, owner: '叶青', color: 'jade' },
+        { id: 'w5', name: '青锋剑', type: '武器', rank: '下品灵器', rankLevel: '灵器', desc: '入门成员常用的制式飞剑', effects: { 杀伐: 22, 防御: 2, 身法: 5 }, owner: null, color: 'jade' },
         { id: 'w6', name: '噬魂刃', type: '武器', rank: '上品灵器', rankLevel: '灵器', desc: '魔道凶器，可伤敌神魂', effects: { 杀伐: 50, 防御: 0, 身法: 12 }, owner: '周明远', color: 'pink' }
       ],
       armor: [
         { id: 'a1', name: '玄龟甲', type: '护具', rank: '中品灵器', rankLevel: '灵器', desc: '仿上古玄龟背甲所铸，坚不可摧', effects: { 杀伐: 0, 防御: 40, 身法: -8 }, owner: '清虚子', color: 'jade' },
         { id: 'a2', name: '冰蚕衣', type: '护具', rank: '上品灵器', rankLevel: '灵器', desc: '万年冰蚕丝织成，水火不侵', effects: { 杀伐: 5, 防御: 35, 身法: 10 }, owner: null, color: 'purple' },
         { id: 'a3', name: '金丝软甲', type: '护具', rank: '中品灵器', rankLevel: '灵器', desc: '金丝编织，轻便柔韧，贴身无形', effects: { 杀伐: 0, 防御: 28, 身法: 5 }, owner: '沈万钧', color: 'gold' },
-        { id: 'a4', name: '护体符', type: '护具', rank: '法器', rankLevel: '法器', desc: '可激发护体灵光的防御符箓', effects: { 杀伐: 0, 防御: 15, 身法: 0 }, owner: '沈幽兰', color: 'pink' }
+        { id: 'a4', name: '护体符', type: '护具', rank: '法器', rankLevel: '法器', desc: '可激发护体灵光的防御符箓', effects: { 杀伐: 0, 防御: 15, 身法: 0 }, owner: null, color: 'pink' }
       ],
       escape: [
         { id: 'e1', name: '遁空梭', type: '遁具', rank: '上品灵器', rankLevel: '灵器', desc: '可撕裂虚空，瞬息千里', effects: { 杀伐: 0, 防御: 5, 身法: 50 }, owner: null, color: 'purple' },
