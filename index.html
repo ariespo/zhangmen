@@ -1600,6 +1600,96 @@
       pointer-events: auto !important;
       opacity: 1 !important;
     }
+    body.llm-processing .think-view-btn,
+    body.llm-processing .think-panel,
+    body.llm-processing .think-panel-close {
+      pointer-events: auto !important;
+      opacity: 1 !important;
+    }
+
+    /* Think viewer */
+    .think-view-btn {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: rgba(110, 207, 207, 0.1);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: var(--jade-pale);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+    .think-view-btn:hover {
+      background: rgba(110, 207, 207, 0.2);
+      border-color: rgba(110, 207, 207, 0.4);
+    }
+    .think-view-btn.hidden {
+      display: none;
+    }
+    .think-panel {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      max-height: 70vh;
+      background: var(--ink-mid);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .think-panel.active {
+      display: flex;
+    }
+    .think-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(0,0,0,0.2);
+    }
+    .think-panel-header h3 {
+      font-size: 14px;
+      color: var(--jade-pale);
+    }
+    .think-panel-close {
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: rgba(168,230,230,0.6);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .think-panel-close:hover {
+      background: rgba(212,114,140,0.15);
+      color: var(--lotus-pink);
+    }
+    .think-panel-body {
+      padding: 16px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.8;
+      color: rgba(168,230,230,0.85);
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
@@ -2001,6 +2091,13 @@
               <div style="color:var(--jade-glow);font-size:16px;letter-spacing:4px">天道运转中</div>
             </div>
             <div class="story-text-area" id="story-text-area">
+              <div class="think-view-btn hidden" id="think-view-btn" onclick="openThinkPanel()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                <span>天道运转</span>
+              </div>
               <div class="story-edit-btn" onclick="toggleStoryEdit()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -2248,6 +2345,15 @@
       </div>
       <div class="modal-body" id="modal-body"></div>
     </div>
+  </div>
+
+  <!-- Think Panel -->
+  <div class="think-panel" id="think-panel">
+    <div class="think-panel-header">
+      <h3>天道推演</h3>
+      <button class="think-panel-close" onclick="closeThinkPanel()">×</button>
+    </div>
+    <div class="think-panel-body" id="think-panel-body"></div>
   </div>
 
   <script>
@@ -2811,6 +2917,7 @@
     let currentCaptureTag = null; // 'main' | 'option' | null
     let capturedMainText = '';
     let capturedOptionText = '';
+    let capturedThinkText = '';
     let currentMainParagraph = null;
 
     async function getLLMConfig() {
@@ -2849,7 +2956,9 @@
       currentCaptureTag = null;
       capturedMainText = '';
       capturedOptionText = '';
+      capturedThinkText = '';
       currentMainParagraph = null;
+      updateThinkButton();
     }
 
     function ensureMainParagraph() {
@@ -2895,6 +3004,27 @@
       `).join('');
     }
 
+    function updateThinkButton() {
+      const btn = document.getElementById('think-view-btn');
+      if (btn) {
+        btn.classList.toggle('hidden', !capturedThinkText.trim());
+      }
+    }
+
+    function openThinkPanel() {
+      const panel = document.getElementById('think-panel');
+      const body = document.getElementById('think-panel-body');
+      if (panel && body) {
+        body.textContent = capturedThinkText.trim() || '暂无推演内容';
+        panel.classList.add('active');
+      }
+    }
+
+    function closeThinkPanel() {
+      const panel = document.getElementById('think-panel');
+      if (panel) panel.classList.remove('active');
+    }
+
     function processStreamChunk(chunk) {
       streamBuffer += chunk;
       while (streamBuffer.length > 0) {
@@ -2909,28 +3039,30 @@
           else if (endThinking !== -1) { endIdx = endThinking; endLen = 11; }
 
           if (endIdx !== -1) {
+            capturedThinkText += streamBuffer.slice(0, endIdx);
             streamBuffer = streamBuffer.slice(endIdx + endLen);
             inThinkTag = false;
+            updateThinkButton();
           } else {
+            capturedThinkText += streamBuffer;
             streamBuffer = '';
+            updateThinkButton();
             break;
           }
         } else {
           const startThink = streamBuffer.indexOf('<think>');
           const startThinking = streamBuffer.indexOf('<thinking>');
-          let tagStart = -1;
+          let tagStart = -1, tagLen = 0;
           if (startThink !== -1 && startThinking !== -1) {
-            tagStart = Math.min(startThink, startThinking);
-          } else if (startThink !== -1) {
-            tagStart = startThink;
-          } else if (startThinking !== -1) {
-            tagStart = startThinking;
-          }
+            if (startThink < startThinking) { tagStart = startThink; tagLen = 7; }
+            else { tagStart = startThinking; tagLen = 10; }
+          } else if (startThink !== -1) { tagStart = startThink; tagLen = 7; }
+          else if (startThinking !== -1) { tagStart = startThinking; tagLen = 10; }
 
           if (tagStart !== -1) {
             const beforeThink = streamBuffer.slice(0, tagStart);
             processNormalBuffer(beforeThink);
-            streamBuffer = streamBuffer.slice(tagStart);
+            streamBuffer = streamBuffer.slice(tagStart + tagLen);
             inThinkTag = true;
             continue;
           } else {
