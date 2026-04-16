@@ -1629,8 +1629,14 @@
       background: rgba(110, 207, 207, 0.2);
       border-color: rgba(110, 207, 207, 0.4);
     }
-    .think-view-btn.hidden {
-      display: none;
+    .think-view-btn.empty {
+      opacity: 0.4;
+      cursor: default;
+      background: rgba(110, 207, 207, 0.05);
+    }
+    .think-view-btn.empty:hover {
+      background: rgba(110, 207, 207, 0.05);
+      border-color: var(--glass-border);
     }
     .think-panel {
       position: fixed;
@@ -2091,7 +2097,7 @@
               <div style="color:var(--jade-glow);font-size:16px;letter-spacing:4px">天道运转中</div>
             </div>
             <div class="story-text-area" id="story-text-area">
-              <div class="think-view-btn hidden" id="think-view-btn" onclick="openThinkPanel()">
+              <div class="think-view-btn empty" id="think-view-btn" onclick="openThinkPanel()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
                   <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
                   <path d="M12 6v6l4 2"/>
@@ -3007,7 +3013,7 @@
     function updateThinkButton() {
       const btn = document.getElementById('think-view-btn');
       if (btn) {
-        btn.classList.toggle('hidden', !capturedThinkText.trim());
+        btn.classList.toggle('empty', !capturedThinkText.trim());
       }
     }
 
