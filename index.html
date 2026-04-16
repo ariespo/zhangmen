@@ -1537,6 +1537,69 @@
         grid-column: span 1;
       }
     }
+
+    /* === LLM PROCESSING OVERLAY === */
+    .llm-processing-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(13, 31, 31, 0.85);
+      backdrop-filter: blur(6px);
+      z-index: 50;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      border-radius: 12px;
+    }
+    .llm-processing-overlay.active {
+      display: flex;
+    }
+    .llm-spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(110, 207, 207, 0.2);
+      border-top-color: var(--jade-glow);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    body.llm-processing .nav-btn,
+    body.llm-processing .story-choice-btn,
+    body.llm-processing .story-send-btn,
+    body.llm-processing .story-toggle-bar,
+    body.llm-processing .story-edit-btn,
+    body.llm-processing .module-card,
+    body.llm-processing .event-item,
+    body.llm-processing .faction-card,
+    body.llm-processing .skill-card,
+    body.llm-processing .item-card,
+    body.llm-processing .opportunity-item,
+    body.llm-processing .action-btn-sm,
+    body.llm-processing .action-log-btn,
+    body.llm-processing .action-log-submit,
+    body.llm-processing .action-log-undo,
+    body.llm-processing .opportunity-btn,
+    body.llm-processing .player-info,
+    body.llm-processing .rank-filter,
+    body.llm-processing .treasury-tab,
+    body.llm-processing .skill-filter,
+    body.llm-processing .modal-close,
+    body.llm-processing .action-log-close,
+    body.llm-processing .search-box,
+    body.llm-processing .story-input,
+    body.llm-processing .opportunity-input {
+      pointer-events: none !important;
+      opacity: 0.5 !important;
+    }
+    body.llm-processing #story-text-area,
+    body.llm-processing .action-log-list,
+    body.llm-processing .page-content {
+      pointer-events: auto !important;
+      opacity: 1 !important;
+    }
   </style>
 </head>
 <body>
@@ -1933,6 +1996,10 @@
         <!-- STORY PAGE -->
         <div id="story-page" class="page-content">
           <div class="story-container">
+            <div class="llm-processing-overlay" id="llm-overlay">
+              <div class="llm-spinner"></div>
+              <div style="color:var(--jade-glow);font-size:16px;letter-spacing:4px">天道运转中</div>
+            </div>
             <div class="story-text-area" id="story-text-area">
               <div class="story-edit-btn" onclick="toggleStoryEdit()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -2271,6 +2338,7 @@
     }
 
     function switchPage(page) {
+      if (isLLMProcessing && page !== 'story') return;
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active-page'));
 
@@ -2290,6 +2358,7 @@
     // 切换选项显示/隐藏
     let storyChoicesVisible = true;
     function toggleStoryChoices() {
+      if (isLLMProcessing) return;
       const choices = document.getElementById('story-choices');
       const toggle = document.getElementById('story-toggle');
       if (choices && toggle) {
@@ -2387,21 +2456,24 @@
     }
 
     function closeModal() {
+      if (isLLMProcessing) return;
       document.getElementById('modal-overlay').classList.remove('active');
     }
 
     function closeModalOutside(e) {
+      if (isLLMProcessing) return;
       if (e.target.id === 'modal-overlay') closeModal();
     }
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape' && !isLLMProcessing) closeModal();
     });
 
     // ====== STORY ======
     let isStoryEditing = false;
 
     function toggleStoryEdit() {
+      if (isLLMProcessing) return;
       const content = document.getElementById('story-content');
       const label = document.getElementById('story-edit-label');
       if (!content || !label) return;
@@ -2420,6 +2492,7 @@
     }
 
     function copyChoiceToInput(btn) {
+      if (isLLMProcessing) return;
       document.querySelectorAll('.story-choice-btn').forEach(b => b.style.borderColor = 'var(--glass-border)');
       btn.style.borderColor = 'var(--jade-glow)';
       const text = btn.querySelector('span').textContent;
@@ -2431,6 +2504,7 @@
     }
 
     function sendCustomInput() {
+      if (isLLMProcessing) return;
       const input = document.getElementById('story-custom-input');
       const text = input.value.trim();
       if (!text) return;
@@ -2729,12 +2803,199 @@
       `).join('');
     }
 
+    // ====== LLM INTEGRATION ======
+    let isLLMProcessing = false;
+    let llmAbortController = null;
+    let streamBuffer = '';
+    let inThinkTag = false;
+    let currentCaptureTag = null; // 'main' | 'option' | null
+    let capturedMainText = '';
+    let capturedOptionText = '';
+    let currentMainParagraph = null;
+
+    async function getLLMConfig() {
+      const saved = localStorage.getItem('zhangmen_api_config');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      if (window.sillyTavernStore) {
+        const s = window.sillyTavernStore.getState().settings;
+        return { baseUrl: s.api.baseUrl, apiKey: s.api.apiKey, model: s.api.model };
+      }
+      try {
+        const { db } = await import('./sillytavern/st-core.js');
+        const s = await db.settings.get('settings');
+        if (s && s.api) return { baseUrl: s.api.baseUrl, apiKey: s.api.apiKey, model: s.api.model };
+      } catch (e) {}
+      return { baseUrl: 'https://api.openai.com/v1', apiKey: '', model: 'gpt-3.5-turbo' };
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function setLLMProcessing(active) {
+      isLLMProcessing = active;
+      document.body.classList.toggle('llm-processing', active);
+      const overlay = document.getElementById('llm-overlay');
+      if (overlay) overlay.classList.toggle('active', active);
+    }
+
+    function resetStreamState() {
+      streamBuffer = '';
+      inThinkTag = false;
+      currentCaptureTag = null;
+      capturedMainText = '';
+      capturedOptionText = '';
+      currentMainParagraph = null;
+    }
+
+    function ensureMainParagraph() {
+      if (!currentMainParagraph) {
+        const container = document.getElementById('story-content');
+        if (!container) return null;
+        currentMainParagraph = document.createElement('div');
+        currentMainParagraph.className = 'story-paragraph';
+        container.appendChild(currentMainParagraph);
+        const area = document.getElementById('story-text-area');
+        if (area) area.scrollTop = area.scrollHeight;
+      }
+      return currentMainParagraph;
+    }
+
+    function updateLiveMain(text) {
+      const p = ensureMainParagraph();
+      if (!p) return;
+      p.innerHTML = escapeHtml(text.trim()).replace(/\n/g, '<br>');
+      const area = document.getElementById('story-text-area');
+      if (area) area.scrollTop = area.scrollHeight;
+    }
+
+    function finalizeMainParagraph() {
+      currentMainParagraph = null;
+      capturedMainText = '';
+    }
+
+    function updateLiveOptions(text) {
+      const container = document.getElementById('story-choices');
+      if (!container) return;
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      const markers = ['壹','贰','叁','肆','伍','陆','柒','捌','玖','拾'];
+      container.innerHTML = lines.map((line, i) => `
+        <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
+          <div class="choice-marker">${markers[i] || '选'}</div>
+          <span>${escapeHtml(line)}</span>
+        </button>
+      `).join('');
+    }
+
+    function processStreamChunk(chunk) {
+      streamBuffer += chunk;
+      while (streamBuffer.length > 0) {
+        if (inThinkTag) {
+          const endThink = streamBuffer.indexOf('</think>');
+          const endThinking = streamBuffer.indexOf('</thinking>');
+          let endIdx = -1, endLen = 0;
+          if (endThink !== -1 && endThinking !== -1) {
+            if (endThink < endThinking) { endIdx = endThink; endLen = 8; }
+            else { endIdx = endThinking; endLen = 11; }
+          } else if (endThink !== -1) { endIdx = endThink; endLen = 8; }
+          else if (endThinking !== -1) { endIdx = endThinking; endLen = 11; }
+
+          if (endIdx !== -1) {
+            streamBuffer = streamBuffer.slice(endIdx + endLen);
+            inThinkTag = false;
+          } else {
+            streamBuffer = '';
+            break;
+          }
+        } else {
+          const startThink = streamBuffer.indexOf('<think>');
+          const startThinking = streamBuffer.indexOf('<thinking>');
+          let tagStart = -1;
+          if (startThink !== -1 && startThinking !== -1) {
+            tagStart = Math.min(startThink, startThinking);
+          } else if (startThink !== -1) {
+            tagStart = startThink;
+          } else if (startThinking !== -1) {
+            tagStart = startThinking;
+          }
+
+          if (tagStart !== -1) {
+            const beforeThink = streamBuffer.slice(0, tagStart);
+            processNormalBuffer(beforeThink);
+            streamBuffer = streamBuffer.slice(tagStart);
+            inThinkTag = true;
+            continue;
+          } else {
+            processNormalBuffer(streamBuffer);
+            streamBuffer = '';
+            break;
+          }
+        }
+      }
+    }
+
+    function processNormalBuffer(text) {
+      let remaining = text;
+      while (remaining.length > 0) {
+        if (currentCaptureTag === null) {
+          const mainStart = remaining.indexOf('<main>');
+          const optionStart = remaining.indexOf('<option>');
+          if (mainStart !== -1 && (optionStart === -1 || mainStart < optionStart)) {
+            remaining = remaining.slice(mainStart + 6);
+            currentCaptureTag = 'main';
+            capturedMainText = '';
+          } else if (optionStart !== -1) {
+            remaining = remaining.slice(optionStart + 8);
+            currentCaptureTag = 'option';
+            capturedOptionText = '';
+          } else {
+            remaining = '';
+          }
+        } else if (currentCaptureTag === 'main') {
+          const mainEnd = remaining.indexOf('</main>');
+          if (mainEnd !== -1) {
+            capturedMainText += remaining.slice(0, mainEnd);
+            updateLiveMain(capturedMainText);
+            remaining = remaining.slice(mainEnd + 7);
+            currentCaptureTag = null;
+            finalizeMainParagraph();
+          } else {
+            capturedMainText += remaining;
+            updateLiveMain(capturedMainText);
+            remaining = '';
+          }
+        } else if (currentCaptureTag === 'option') {
+          const optionEnd = remaining.indexOf('</option>');
+          if (optionEnd !== -1) {
+            capturedOptionText += remaining.slice(0, optionEnd);
+            updateLiveOptions(capturedOptionText);
+            remaining = remaining.slice(optionEnd + 10);
+            currentCaptureTag = null;
+            capturedOptionText = '';
+          } else {
+            capturedOptionText += remaining;
+            updateLiveOptions(capturedOptionText);
+            remaining = '';
+          }
+        }
+      }
+    }
+
     function toggleActionLog() {
+      if (isLLMProcessing) return;
       const panel = document.getElementById('action-log-panel');
       if (panel) panel.classList.toggle('active');
     }
 
-    function submitActions() {
+    async function submitActions() {
       if (actionLogs.length === 0) return;
 
       const playerName = '清虚子';
@@ -2748,19 +3009,85 @@
         return `执行了「${log.title}」：${log.content}`;
       }).join('\n');
 
-      const prompt = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}`;
+      const prompt = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}\n\n请根据这些操作，给出接下来的剧情发展和可选择的应对策略。`;
 
-      // 这里可以替换为实际的 LLM 调用
-      console.log(prompt);
-      alert(prompt);
-
-      // 清空本轮操作
+      // 清空本轮操作和体力
       actionLogs = [];
       stamina.current = stamina.max;
       updateStaminaSegments();
       renderActionLogs();
       renderOpportunities();
       toggleActionLog();
+
+      // 进入 LLM 交互阶段
+      switchPage('story');
+      setLLMProcessing(true);
+      resetStreamState();
+
+      // 清空旧选项
+      const choicesContainer = document.getElementById('story-choices');
+      if (choicesContainer) choicesContainer.innerHTML = '';
+
+      const config = await getLLMConfig();
+      if (!config.apiKey) {
+        alert('未配置 API Key，请先在系统设置中配置。');
+        setLLMProcessing(false);
+        return;
+      }
+
+      llmAbortController = new AbortController();
+
+      try {
+        const response = await fetch(`${config.baseUrl.replace(/\/$/, '')}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`
+          },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [{ role: 'user', content: prompt }],
+            stream: true
+          }),
+          signal: llmAbortController.signal
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`API 错误 ${response.status}: ${errText}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed === 'data: [DONE]') continue;
+            if (trimmed.startsWith('data: ')) {
+              try {
+                const json = JSON.parse(trimmed.slice(6));
+                const delta = json.choices?.[0]?.delta?.content || '';
+                if (delta) processStreamChunk(delta);
+              } catch (e) {
+                // 忽略解析失败的行
+              }
+            }
+          }
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('LLM 请求失败:', err);
+          alert('天道运转受阻：' + err.message);
+        }
+      } finally {
+        setLLMProcessing(false);
+        llmAbortController = null;
+      }
     }
 
     // ====== LIBRARY / SKILLS ======
