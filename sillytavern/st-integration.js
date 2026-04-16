@@ -13,6 +13,11 @@ import { renderModal, bindEvents, updateLorebookBadge } from './st-ui.js';
  * @param {string} options.theme - 主题名称 (jade, gothic, etc.)
  */
 export async function initSillyTavernEnhancer(options = {}) {
+  if (window.__sillyTavernInitialized) {
+    return window.sillyTavernStore;
+  }
+  window.__sillyTavernInitialized = true;
+
   const { container = '.st-button-container', theme = 'jade' } = options;
 
   // 创建状态管理器

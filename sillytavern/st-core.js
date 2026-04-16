@@ -1,6 +1,6 @@
 /**
  * SillyTavern Web Enhancer - 核心模块
- * 数据库、导入导出、状态管理
+ * 数据库、导入导出、状态管理（整合 tavernlike 功能）
  */
 
 import Dexie from 'https://unpkg.com/dexie@4.0.1/dist/dexie.mjs';
@@ -109,17 +109,27 @@ export async function initDatabase() {
   }
 }
 
+// ===== 映射表 =====
+const POSITION_MAP = {
+  0: 'before_char',
+  1: 'after_char',
+  2: 'before_example',
+  3: 'after_example',
+  4: 'at_depth'
+};
+
+const REVERSE_POSITION_MAP = {
+  before_char: 0,
+  after_char: 1,
+  before_example: 2,
+  after_example: 3,
+  at_depth: 4
+};
+
+const LOGIC_MAP = { 0: 'and', 1: 'or' };
+
 // ===== 世界书导入 =====
 export function importLorebook(data) {
-  const positionMap = {
-    0: 'before_char',
-    1: 'after_char',
-    2: 'before_example',
-    3: 'after_example',
-    4: 'at_depth'
-  };
-  const logicMap = { 0: 'and', 1: 'or' };
-
   return {
     id: crypto.randomUUID(),
     name: data.name || '导入的世界书',
@@ -129,12 +139,13 @@ export function importLorebook(data) {
       .map(e => ({
         id: crypto.randomUUID(),
         keys: e.key || [],
+        secondaryKeys: e.keysecondary || [],
         content: e.content || '',
         order: e.order ?? 100,
-        position: positionMap[e.position ?? 1],
+        position: POSITION_MAP[e.position ?? 1],
         depth: e.depth,
         selective: e.selective ?? false,
-        selectiveLogic: logicMap[e.selectiveLogic ?? 1],
+        selectiveLogic: LOGIC_MAP[e.selectiveLogic ?? 1],
         constant: e.constant ?? false,
         probability: e.useProbability ? (e.probability ?? 100) : 100,
         addMemo: e.addMemo ?? false,
@@ -150,30 +161,21 @@ export function importLorebook(data) {
 
 // ===== 世界书导出 =====
 export function exportLorebook(book) {
-  const reversePositionMap = {
-    before_char: 0,
-    after_char: 1,
-    before_example: 2,
-    after_example: 3,
-    at_depth: 4
-  };
-  const reverseLogicMap = { and: 0, or: 1 };
-
   return {
     name: book.name,
     description: book.description,
     entries: book.entries.map((e, idx) => ({
       uid: idx,
       key: e.keys,
-      keysecondary: [],
+      keysecondary: e.secondaryKeys || [],
       comment: e.comment || e.content.slice(0, 50),
       content: e.content,
       constant: e.constant,
       selective: e.selective,
-      selectiveLogic: reverseLogicMap[e.selectiveLogic],
+      selectiveLogic: (e.selectiveLogic === 'and' ? 0 : 1),
       addMemo: e.addMemo,
       order: e.order,
-      position: reversePositionMap[e.position],
+      position: REVERSE_POSITION_MAP[e.position],
       disable: false,
       probability: e.probability,
       depth: e.depth ?? 4,
@@ -212,6 +214,38 @@ export function exportPreset(preset) {
   };
 }
 
+// ===== 通用 JSON 导入导出 =====
+export async function importJsonFile() {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) { resolve(null); return; }
+      try {
+        const text = await file.text();
+        resolve(JSON.parse(text));
+      } catch {
+        resolve(null);
+      }
+    };
+    input.click();
+  });
+}
+
+export function exportToJson(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ===== 全数据导出 =====
 export async function exportAllData() {
   const data = {
@@ -224,13 +258,7 @@ export async function exportAllData() {
     }
   };
 
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `sillytavern_backup_${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  exportToJson(data, `sillytavern_backup_${new Date().toISOString().slice(0, 10)}.json`);
 }
 
 // ===== 全数据导入 =====
@@ -272,7 +300,10 @@ export function createStore() {
     selectedBookId: null,
     selectedPresetId: null,
     activeTab: 'api',
-    isCreatingBook: false
+    isCreatingBook: false,
+    chats: [],
+    activeChatId: null,
+    editingEntryId: null
   };
 
   const listeners = new Set();
@@ -295,12 +326,71 @@ export function createStore() {
     },
 
     async loadData() {
+      await initDatabase();
       state.lorebooks = await db.lorebooks.toArray();
       state.presets = await db.presets.toArray();
+      state.chats = await db.chats.toArray();
       const settingsData = await db.settings.get('settings');
       if (settingsData) {
         state.settings = { ...DEFAULT_SETTINGS, ...settingsData };
       }
+      listeners.forEach(fn => fn(state));
+    },
+
+    async saveLorebook(book) {
+      book.updatedAt = Date.now();
+      await db.lorebooks.put(book);
+      state.lorebooks = await db.lorebooks.toArray();
+      listeners.forEach(fn => fn(state));
+    },
+
+    async deleteLorebook(id) {
+      await db.lorebooks.delete(id);
+      state.lorebooks = await db.lorebooks.toArray();
+      if (state.selectedBookId === id) {
+        state.selectedBookId = null;
+      }
+      const activeIds = state.settings.activeLorebookIds.filter(x => x !== id);
+      state.settings.activeLorebookIds = activeIds;
+      await db.settings.put(state.settings);
+      listeners.forEach(fn => fn(state));
+    },
+
+    async savePreset(preset) {
+      preset.updatedAt = Date.now();
+      await db.presets.put(preset);
+      state.presets = await db.presets.toArray();
+      listeners.forEach(fn => fn(state));
+    },
+
+    async deletePreset(id) {
+      await db.presets.delete(id);
+      state.presets = await db.presets.toArray();
+      if (state.selectedPresetId === id) {
+        state.selectedPresetId = null;
+      }
+      if (state.settings.activePresetId === id) {
+        state.settings.activePresetId = null;
+        await db.settings.put(state.settings);
+      }
+      listeners.forEach(fn => fn(state));
+    },
+
+    async saveSettings(settings) {
+      Object.assign(state.settings, settings);
+      await db.settings.put(state.settings);
+      listeners.forEach(fn => fn(state));
+    },
+
+    async addChat(chat) {
+      await db.chats.put(chat);
+      state.chats = await db.chats.toArray();
+      listeners.forEach(fn => fn(state));
+    },
+
+    async deleteChat(id) {
+      await db.chats.delete(id);
+      state.chats = await db.chats.toArray();
       listeners.forEach(fn => fn(state));
     }
   };

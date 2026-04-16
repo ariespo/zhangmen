@@ -3,6 +3,19 @@
  * 云璃仙宗主题 - 翡翠仙侠风格
  */
 
+/* ===== 顶部栏按钮容器 ===== */
+.st-button-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.st-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ===== 按钮 ===== */
 .st-btn {
   background: var(--glass-bg, rgba(26, 58, 58, 0.55));
