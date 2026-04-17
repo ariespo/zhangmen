@@ -1316,6 +1316,96 @@
       transition: width 0.5s;
     }
 
+    /* === WORLD PAGE === */
+    .world-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .world-tab {
+      padding: 8px 18px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: rgba(168,230,230,0.7);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .world-tab:hover, .world-tab.active {
+      background: rgba(110,207,207,0.15);
+      border-color: rgba(110,207,207,0.4);
+      color: var(--jade-glow);
+    }
+    .world-panel {
+      display: none;
+    }
+    .world-panel.active {
+      display: block;
+    }
+    .building-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .region-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .building-card, .region-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all 0.3s;
+    }
+    .building-card:hover, .region-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(110,207,207,0.3);
+    }
+    .building-card.locked, .region-card.locked {
+      opacity: 0.6;
+      filter: grayscale(0.6);
+    }
+    .building-header, .region-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .building-name, .region-name {
+      font-weight: 500;
+      font-size: 15px;
+    }
+    .building-level {
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      background: rgba(110,207,207,0.12);
+      color: var(--jade-glow);
+    }
+    .building-desc, .region-desc {
+      font-size: 12px;
+      color: rgba(168,230,230,0.6);
+      line-height: 1.6;
+    }
+    .region-controller {
+      margin-top: 8px;
+      font-size: 12px;
+      color: rgba(168,230,230,0.5);
+    }
+    .locked-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      background: rgba(0,0,0,0.25);
+      color: rgba(168,230,230,0.5);
+      margin-left: 8px;
+    }
+
     /* === LIBRARY PAGE === */
     .skill-filters {
       display: flex;
@@ -1596,6 +1686,9 @@
       .skill-grid, .item-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+      .building-grid, .region-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 768px) {
@@ -1611,7 +1704,7 @@
       .module-card.large {
         grid-column: span 1;
       }
-      .skill-grid, .item-grid, .sect-info-grid {
+      .skill-grid, .item-grid, .sect-info-grid, .building-grid, .region-grid {
         grid-template-columns: 1fr;
       }
       .info-block.full-width {
@@ -1666,6 +1759,7 @@
     body.llm-processing .player-info,
     body.llm-processing .rank-filter,
     body.llm-processing .treasury-tab,
+    body.llm-processing .world-tab,
     body.llm-processing .skill-filter,
     body.llm-processing .modal-close,
     body.llm-processing .action-log-close,
@@ -1948,6 +2042,14 @@
             <path d="M2 12l10 5 10-5"/>
           </svg>
           <span>宗门</span>
+        </button>
+        <button class="nav-btn" data-page="world" onclick="switchPage('world')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 21h18"/>
+            <path d="M5 21v-8l7-4 7 4v8"/>
+            <path d="M9 21v-4h6v4"/>
+          </svg>
+          <span>山河</span>
         </button>
         <button class="nav-btn" data-page="diplomacy" onclick="switchPage('diplomacy')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -2345,6 +2447,24 @@
                 初代：云璃真人（飞升）→ 二代：玄霄子（渡劫失败）→ 三代：青松道长（寿终正寝）→ 四代：明月仙子（失踪）→ 五代：清虚子（现任）
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- WORLD PAGE -->
+        <div id="world-page" class="page-content">
+          <div class="page-header">
+            <h2>山河殿</h2>
+            <div style="font-size:12px;color:rgba(168,230,230,0.5)">宗门基业，尽览于斯</div>
+          </div>
+          <div class="world-tabs">
+            <button class="world-tab active" onclick="switchWorldTab('buildings', this)">山门建筑</button>
+            <button class="world-tab" onclick="switchWorldTab('regions', this)">疆域舆图</button>
+          </div>
+          <div class="world-panel active" id="buildings-panel">
+            <div class="building-grid" id="building-grid"></div>
+          </div>
+          <div class="world-panel" id="regions-panel">
+            <div class="region-grid" id="region-grid"></div>
           </div>
         </div>
 
@@ -2948,6 +3068,54 @@
       });
     }
     renderFactions();
+
+    // ====== WORLD DATA ======
+    function switchWorldTab(type, btn) {
+      document.querySelectorAll('.world-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.world-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(type + '-panel').classList.add('active');
+    }
+
+    function renderBuildings() {
+      const grid = document.getElementById('building-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      const buildings = window.gameStateManager?.state?.world?.buildings || [];
+      buildings.forEach(b => {
+        const card = document.createElement('div');
+        card.className = 'building-card' + (b.unlocked ? '' : ' locked');
+        card.innerHTML = `
+          <div class="building-header">
+            <div class="building-name">${b.name}${b.unlocked ? '' : '<span class="locked-badge">未解锁</span>'}</div>
+            <div class="building-level">Lv.${b.level}</div>
+          </div>
+          <div class="building-desc">${b.description || '暂无描述'}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function renderRegions() {
+      const grid = document.getElementById('region-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      const regions = window.gameStateManager?.state?.world?.regions || [];
+      regions.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'region-card' + (r.unlocked ? '' : ' locked');
+        card.innerHTML = `
+          <div class="region-header">
+            <div class="region-name">${r.name}${r.unlocked ? '' : '<span class="locked-badge">迷雾</span>'}</div>
+          </div>
+          <div class="region-desc">${r.unlocked ? '已探索' : '尚未探索此区域'}</div>
+          <div class="region-controller">掌控势力：${r.controlledBy || '未知'}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+    renderBuildings();
+    renderRegions();
 
     // ====== ACTION LOG SYSTEM ======
     let stamina = { current: 5, max: 5 };
@@ -4132,9 +4300,17 @@
       const el = document.getElementById('res-members');
       if (el) el.textContent = Object.keys(members || {}).length;
     });
-    // 首次手动刷新外交与成员列表（后续由 LLM patch 触发变更后自动重渲染）
+    gameStateManager.subscribe('/world/buildings', () => {
+      if (typeof renderBuildings === 'function') renderBuildings();
+    });
+    gameStateManager.subscribe('/world/regions', () => {
+      if (typeof renderRegions === 'function') renderRegions();
+    });
+    // 首次手动刷新各页面（后续由 LLM patch 触发变更后自动重渲染）
     if (typeof renderMembers === 'function') renderMembers();
     if (typeof renderFactions === 'function') renderFactions();
+    if (typeof renderBuildings === 'function') renderBuildings();
+    if (typeof renderRegions === 'function') renderRegions();
   </script>
 </body>
 </html>
