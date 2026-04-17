@@ -1807,7 +1807,7 @@
             </svg>
           </div>
           <div>
-            <div class="resource-value" style="color:var(--jade-glow)">12,580</div>
+            <div class="resource-value" id="res-gold" style="color:var(--jade-glow)">12,580</div>
             <div class="resource-label">灵石</div>
           </div>
         </div>
@@ -1835,7 +1835,7 @@
             </svg>
           </div>
           <div>
-            <div class="resource-value" style="color:var(--lotus-pink)">4</div>
+            <div class="resource-value" id="res-members" style="color:var(--lotus-pink)">4</div>
             <div class="resource-label">成员</div>
           </div>
         </div>
@@ -1847,8 +1847,8 @@
             </svg>
           </div>
           <div>
-            <div class="resource-value" style="color:var(--gold-spirit)">1800</div>
-            <div class="resource-label" style="font-size:10px;color:var(--jade-glow)">一洲正道魁首</div>
+            <div class="resource-value" id="res-prestige" style="color:var(--gold-spirit)">1800</div>
+            <div class="resource-label" id="res-realm-title" style="font-size:10px;color:var(--jade-glow)">一洲正道魁首</div>
           </div>
         </div>
         <!-- 体力 -->
@@ -2805,17 +2805,12 @@
       skills: '太虚真解（第五层）、云璃剑诀（大成）、清心咒（圆满）'
     };
 
-    const membersData = [
-      { name: '沈万钧', daoName: '万钧真人', realm: '元婴后期', role: '大长老', status: '坐镇', talent: '上上', color: 'jade', baseStats: { 杀伐: 88, 防御: 72, 身法: 45 }, lifespan: { current: 892, max: 1500 } },
-      { name: '周明远', daoName: '明远子', realm: '元婴初期', role: '执法首座', status: '巡查', talent: '上', color: 'purple', baseStats: { 杀伐: 82, 防御: 58, 身法: 62 }, lifespan: { current: 710, max: 1200 } },
-      { name: '苏瑶', daoName: '瑶光', realm: '金丹后期', role: '丹峰长老', status: '炼丹', talent: '上上', color: 'pink', baseStats: { 杀伐: 55, 防御: 48, 身法: 52 }, lifespan: { current: 412, max: 800 } },
-      { name: '林淮安', daoName: '静虚子', realm: '金丹中期', role: '藏经长老', status: '研习', talent: '上', color: 'gold', baseStats: { 杀伐: 42, 防御: 50, 身法: 38 }, lifespan: { current: 356, max: 700 } }
-    ];
+    // members 已迁移至 gameStateManager.state.members
 
     function renderMembers() {
       const tbody = document.getElementById('members-tbody');
       tbody.innerHTML = '';
-      membersData.forEach(m => {
+      Object.values(window.gameStateManager.state.members).forEach(m => {
         const colorMap = {
           jade: 'var(--jade-glow)',
           purple: 'var(--mist-purple)',
@@ -2849,7 +2844,7 @@
     renderMembers();
 
     function openMemberDetail(name) {
-      const m = membersData.find(x => x.name === name);
+      const m = window.gameStateManager.state.members[name];
       if (!m) return;
       const stats = getTotalStats(name);
       const base = m.baseStats;
@@ -2925,19 +2920,12 @@
     }
 
     // ====== DIPLOMACY DATA ======
-    const factions = [
-      { name: '天剑宗', relation: '盟友', value: 82, desc: '百年盟约，互为犄角之势', color: 'jade', leader: '剑尊·凌霄子' },
-      { name: '万象门', relation: '友好', value: 65, desc: '近年来往密切，有意深化合作', color: 'purple', leader: '门主·玄机老人' },
-      { name: '血影谷', relation: '敌对', value: 15, desc: '魔修势力，多次侵犯边境', color: 'pink', leader: '谷主·血罗' },
-      { name: '碧落宫', relation: '中立', value: 50, desc: '女修门派，鲜少涉及外界纷争', color: 'gold', leader: '宫主·明月仙子' },
-      { name: '太玄学府', relation: '友好', value: 70, desc: '学术交流频繁，成员互有往来', color: 'jade', leader: '府主·青阳居士' },
-      { name: '九幽教', relation: '警惕', value: 30, desc: '行事诡秘，近来动向不明', color: 'pink', leader: '教主·幽冥真人' }
-    ];
+    // factions 已迁移至 gameStateManager.state.diplomacy
 
     function renderFactions() {
       const list = document.getElementById('faction-list');
       list.innerHTML = '';
-      factions.forEach(f => {
+      Object.values(window.gameStateManager.state.diplomacy).forEach(f => {
         const relColor = f.value >= 60 ? 'var(--jade-glow)' : f.value >= 40 ? 'var(--gold-spirit)' : 'var(--lotus-pink)';
         const relBg = f.value >= 60 ? 'rgba(110,207,207,0.12)' : f.value >= 40 ? 'rgba(200,168,110,0.12)' : 'rgba(212,114,140,0.12)';
         const card = document.createElement('div');
@@ -2966,6 +2954,7 @@
     let actionLogs = [];
     let recentEvents = [];
     let capturedSumText = '';
+    let capturedVarsText = '';
     let currentSkillTypeFilter = 'all';
     let currentSkillRankFilter = 'all';
 
@@ -3126,6 +3115,7 @@
       capturedOptionText = '';
       capturedThinkText = '';
       capturedSumText = '';
+      capturedVarsText = '';
       currentMainParagraph = null;
       updateThinkButton();
     }
@@ -3262,6 +3252,19 @@
       renderEvents();
     }
 
+    function parseVarsAndApplyPatch(text) {
+      const raw = text.trim();
+      if (!raw) return;
+      try {
+        const patch = JSON.parse(raw);
+        if (window.gameStateManager && Array.isArray(patch)) {
+          window.gameStateManager.applyPatch(patch);
+        }
+      } catch (e) {
+        console.warn('[Vars] Failed to parse patch:', raw, e);
+      }
+    }
+
     function renderEvents() {
       const container = document.querySelector('.event-list');
       if (!container) return;
@@ -3353,10 +3356,12 @@
           const mainStart = remaining.indexOf('<maintext>');
           const optionStart = remaining.indexOf('<option>');
           const sumStart = remaining.indexOf('<sum>');
+          const varsStart = remaining.indexOf('<vars>');
           const candidates = [];
           if (mainStart !== -1) candidates.push({ start: mainStart, len: 10, tag: 'maintext' });
           if (optionStart !== -1) candidates.push({ start: optionStart, len: 8, tag: 'option' });
           if (sumStart !== -1) candidates.push({ start: sumStart, len: 5, tag: 'sum' });
+          if (varsStart !== -1) candidates.push({ start: varsStart, len: 6, tag: 'vars' });
           if (candidates.length > 0) {
             candidates.sort((a, b) => a.start - b.start);
             const first = candidates[0];
@@ -3365,6 +3370,7 @@
             if (first.tag === 'maintext') capturedMainText = '';
             if (first.tag === 'option') capturedOptionText = '';
             if (first.tag === 'sum') capturedSumText = '';
+            if (first.tag === 'vars') capturedVarsText = '';
           } else {
             if (isFlush) return '';
             // 保留可能的不完整起始标签后缀（最长 <maintext> = 10）
@@ -3415,6 +3421,27 @@
             const keepLen = 6;
             const processLen = Math.max(0, remaining.length - keepLen);
             capturedSumText += remaining.slice(0, processLen);
+            return remaining.slice(processLen);
+          }
+        } else if (currentCaptureTag === 'vars') {
+          const varsEnd = remaining.indexOf('</vars>');
+          if (varsEnd !== -1) {
+            capturedVarsText += remaining.slice(0, varsEnd);
+            parseVarsAndApplyPatch(capturedVarsText);
+            remaining = remaining.slice(varsEnd + 7);
+            currentCaptureTag = null;
+            capturedVarsText = '';
+          } else {
+            if (isFlush) {
+              capturedVarsText += remaining;
+              parseVarsAndApplyPatch(capturedVarsText);
+              capturedVarsText = '';
+              return '';
+            }
+            // 保留可能的不完整结束标签后缀（最长 </vars> = 7）
+            const keepLen = 7;
+            const processLen = Math.max(0, remaining.length - keepLen);
+            capturedVarsText += remaining.slice(0, processLen);
             return remaining.slice(processLen);
           }
         } else if (currentCaptureTag === 'option') {
@@ -3906,7 +3933,7 @@
     }
 
     function getTotalStats(memberName) {
-      const member = membersData.find(m => m.name === memberName);
+      const member = window.gameStateManager.state.members[memberName];
       const target = member || (playerData.name === memberName ? playerData : null);
       if (!target) return { 杀伐: 0, 防御: 0, 身法: 0 };
       const equipped = getMemberEquippedItems(memberName);
@@ -3930,7 +3957,7 @@
 
       const options = [
         { name: null, label: '收回宗门库房' },
-        ...membersData.map(m => ({ name: m.name, label: `${m.name} · ${m.realm} · ${m.role}` }))
+        ...Object.values(window.gameStateManager.state.members).map(m => ({ name: m.name, label: `${m.name} · ${m.realm} · ${m.role}` }))
       ];
 
       document.getElementById('modal-body').innerHTML = `
@@ -4070,12 +4097,44 @@
     import { initSillyTavernEnhancer, addChatMessage, getActiveChat } from './sillytavern/st-integration.js';
     import { assemblePrompt } from './sillytavern/st-prompt.js';
     import { db } from './sillytavern/st-core.js';
+    import { createGameStateManager, GameStateSchema } from './sillytavern/game-state.js';
     window.__st_assemblePrompt = assemblePrompt;
     window.__st_db = db;
     window.__st_addChatMessage = addChatMessage;
     window.__st_getActiveChat = getActiveChat;
     window.storyHistory = [];
+    const gameStateManager = createGameStateManager();
+    window.gameStateManager = gameStateManager;
+    window.GameStateSchema = GameStateSchema;
     await initSillyTavernEnhancer();
+    const settingsData = await db.settings.get('settings');
+    if (settingsData?.activeChatId) {
+      await gameStateManager.load(settingsData.activeChatId);
+    }
+
+    // 资源条自动订阅
+    function fmtNumber(n) {
+      return typeof n === 'number' ? n.toLocaleString('zh-CN') : String(n);
+    }
+    gameStateManager.subscribe('/finance/gold', v => {
+      const el = document.getElementById('res-gold');
+      if (el) el.textContent = fmtNumber(v);
+    });
+    gameStateManager.subscribe('/finance/prestige', v => {
+      const el = document.getElementById('res-prestige');
+      if (el) el.textContent = fmtNumber(v);
+    });
+    gameStateManager.subscribe('/finance/realmTitle', v => {
+      const el = document.getElementById('res-realm-title');
+      if (el) el.textContent = v || '一洲正道魁首';
+    });
+    gameStateManager.subscribe('/members', members => {
+      const el = document.getElementById('res-members');
+      if (el) el.textContent = Object.keys(members || {}).length;
+    });
+    // 首次手动刷新外交与成员列表（后续由 LLM patch 触发变更后自动重渲染）
+    if (typeof renderMembers === 'function') renderMembers();
+    if (typeof renderFactions === 'function') renderFactions();
   </script>
 </body>
 </html>
