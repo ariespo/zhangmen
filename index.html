@@ -3180,22 +3180,24 @@
       let messages = [{ role: 'user', content: userInput }];
       let apiParams = { temperature: 0.85, max_tokens: 2048, top_p: 0.9, frequency_penalty: 0.2, presence_penalty: 0.3 };
 
+      let fullRawResponse = '';
+
       try {
         const store = window.sillyTavernStore;
-        let settings, presets, lorebooks;
+        let settings, preset, activeBooks;
         if (store) {
-          const s = store.getState();
-          settings = s.settings;
-          presets = s.presets;
-          lorebooks = s.lorebooks;
+          settings = store.getState().settings;
+          preset = store.getActivePreset();
+          activeBooks = store.getActiveLorebooks();
         } else {
           const { db } = await import('./sillytavern/st-core.js');
           settings = await db.settings.get('settings');
-          presets = await db.presets.toArray();
-          lorebooks = await db.lorebooks.toArray();
+          const presets = await db.presets.toArray();
+          const lorebooks = await db.lorebooks.toArray();
+          preset = presets.find(p => p.id === settings.activePresetId) || presets[0];
+          activeBooks = lorebooks.filter(b => settings.activeLorebookIds?.includes(b.id));
         }
 
-        const preset = presets.find(p => p.id === settings.activePresetId) || presets[0];
         if (preset) {
           apiParams = {
             temperature: preset.parameters.temperature ?? 0.85,
@@ -3206,18 +3208,26 @@
           };
         }
 
-        const activeBooks = lorebooks.filter(b => settings.activeLorebookIds?.includes(b.id));
         const assemblePrompt = window.__st_assemblePrompt || (await import('./sillytavern/st-prompt.js')).assemblePrompt;
+        const chat = store?.getActiveChat();
         const assembled = assemblePrompt({
           userInput,
-          history: window.storyHistory || [],
+          history: chat?.messages || window.storyHistory || [],
           preset: preset || { promptOrder: [], parameters: {}, contextLength: 4096 },
-          lorebooks: activeBooks,
-          userName: settings.userName || playerName,
-          characterName: settings.characterName || '云璃仙子',
-          variables: {}
+          lorebooks: activeBooks || [],
+          userName: settings?.userName || playerName,
+          characterName: settings?.characterName || '云璃仙子',
+          variables: chat?.variables || {}
         });
         messages = assembled.messages;
+
+        // Save user message to active chat
+        if (store) {
+          const activeChat = store.getActiveChat();
+          if (activeChat) {
+            await store.addMessage(activeChat.id, { role: 'user', content: userInput });
+          }
+        }
       } catch (e) {
         console.warn('SillyTavern 提示词组装失败，使用默认 prompt:', e);
       }
@@ -3260,7 +3270,10 @@
               try {
                 const json = JSON.parse(trimmed.slice(6));
                 const delta = json.choices?.[0]?.delta?.content || '';
-                if (delta) processStreamChunk(delta);
+                if (delta) {
+                  processStreamChunk(delta);
+                  fullRawResponse += delta;
+                }
               } catch (e) {
                 // 忽略解析失败的行
               }
@@ -3275,6 +3288,26 @@
       } finally {
         setLLMProcessing(false);
         llmAbortController = null;
+
+        // Save assistant response to SillyTavern chat and extract variables
+        if (fullRawResponse.trim()) {
+          try {
+            const store = window.sillyTavernStore;
+            if (store) {
+              const chat = store.getActiveChat();
+              if (chat) {
+                const { extractVariables } = await import('./sillytavern/st-variables.js');
+                const { cleanedText, updates } = extractVariables(fullRawResponse);
+                await store.addMessage(chat.id, { role: 'assistant', content: cleanedText || fullRawResponse });
+                if (Object.keys(updates).length > 0) {
+                  await store.setChatVariables(chat.id, updates);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('保存聊天记录失败:', e);
+          }
+        }
       }
     }
 
@@ -3641,11 +3674,14 @@
     updateStaminaSegments();
   </script>
   <script type="module">
-    import { initSillyTavernEnhancer } from './sillytavern/st-integration.js';
+    import { initSillyTavernEnhancer, addChatMessage, getActiveChat } from './sillytavern/st-integration.js';
     import { assemblePrompt } from './sillytavern/st-prompt.js';
     import { db } from './sillytavern/st-core.js';
     window.__st_assemblePrompt = assemblePrompt;
     window.__st_db = db;
+    window.__st_addChatMessage = addChatMessage;
+    window.__st_getActiveChat = getActiveChat;
+    window.storyHistory = [];
     await initSillyTavernEnhancer();
   </script>
 </body>

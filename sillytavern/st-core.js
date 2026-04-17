@@ -1,17 +1,17 @@
 /**
- * SillyTavern Web Enhancer - 核心模块
- * 数据库、导入导出、状态管理（整合 tavernlike 功能）
+ * SillyTavern Web v2.0 - Core Module
+ * Database, state management, chat sessions, import/export
  */
 
 import Dexie from 'https://unpkg.com/dexie@4.0.1/dist/dexie.mjs';
 
-// ===== 数据库 =====
+// ===== Database =====
 const DB_NAME = 'SillyTavernWebDB_Zhangmen';
 
 class AppDatabase extends Dexie {
   constructor() {
     super(DB_NAME);
-    this.version(1).stores({
+    this.version(2).stores({
       lorebooks: '++id, name, updatedAt',
       presets: '++id, name, updatedAt',
       settings: 'key',
@@ -22,7 +22,7 @@ class AppDatabase extends Dexie {
 
 export const db = new AppDatabase();
 
-// ===== 默认数据 =====
+// ===== Default Data =====
 export const DEFAULT_SETTINGS = {
   key: 'settings',
   api: {
@@ -33,6 +33,7 @@ export const DEFAULT_SETTINGS = {
   },
   activePresetId: null,
   activeLorebookIds: [],
+  activeChatId: null,
   userName: '清虚子',
   characterName: '云璃仙子',
   theme: 'jade',
@@ -75,6 +76,24 @@ export const DEFAULT_PRESET = {
       role: 'system'
     },
     {
+      id: 'scenario',
+      name: '场景设定',
+      content: '当前场景：云璃仙宗，太素历9877年。',
+      enabled: false,
+      position: 250,
+      insertionType: 'system',
+      role: 'system'
+    },
+    {
+      id: 'example_messages',
+      name: '示例对话',
+      content: '',
+      enabled: false,
+      position: 280,
+      insertionType: 'system',
+      role: 'system'
+    },
+    {
       id: 'history',
       name: '聊天记录',
       content: '',
@@ -82,6 +101,15 @@ export const DEFAULT_PRESET = {
       position: 300,
       insertionType: 'system',
       role: 'system'
+    },
+    {
+      id: 'user_input',
+      name: '用户输入',
+      content: '',
+      enabled: true,
+      position: 400,
+      insertionType: 'user',
+      role: 'user'
     }
   ],
   parameters: {
@@ -96,7 +124,26 @@ export const DEFAULT_PRESET = {
   updatedAt: Date.now()
 };
 
-// ===== 初始化 =====
+// ===== Position Maps =====
+export const POSITION_MAP = {
+  0: 'before_char',
+  1: 'after_char',
+  2: 'before_example',
+  3: 'after_example',
+  4: 'at_depth'
+};
+
+export const REVERSE_POSITION_MAP = {
+  before_char: 0,
+  after_char: 1,
+  before_example: 2,
+  after_example: 3,
+  at_depth: 4
+};
+
+export const LOGIC_MAP = { 0: 'and', 1: 'or' };
+
+// ===== Initialization =====
 export async function initDatabase() {
   const presetCount = await db.presets.count();
   if (presetCount === 0) {
@@ -109,26 +156,7 @@ export async function initDatabase() {
   }
 }
 
-// ===== 映射表 =====
-const POSITION_MAP = {
-  0: 'before_char',
-  1: 'after_char',
-  2: 'before_example',
-  3: 'after_example',
-  4: 'at_depth'
-};
-
-const REVERSE_POSITION_MAP = {
-  before_char: 0,
-  after_char: 1,
-  before_example: 2,
-  after_example: 3,
-  at_depth: 4
-};
-
-const LOGIC_MAP = { 0: 'and', 1: 'or' };
-
-// ===== 世界书导入 =====
+// ===== Import / Export =====
 export function importLorebook(data) {
   return {
     id: crypto.randomUUID(),
@@ -159,7 +187,6 @@ export function importLorebook(data) {
   };
 }
 
-// ===== 世界书导出 =====
 export function exportLorebook(book) {
   return {
     name: book.name,
@@ -191,7 +218,6 @@ export function exportLorebook(book) {
   };
 }
 
-// ===== 预设导出 =====
 export function exportPreset(preset) {
   return {
     name: preset.name,
@@ -214,7 +240,44 @@ export function exportPreset(preset) {
   };
 }
 
-// ===== 通用 JSON 导入导出 =====
+export async function importPreset(data) {
+  const id = crypto.randomUUID();
+  const promptOrder = (data.prompt_order || []).map(b => ({
+    id: b.identifier || b.id || crypto.randomUUID(),
+    name: b.name || '未命名块',
+    content: b.system_prompt || b.content || '',
+    enabled: b.enabled ?? true,
+    position: b.position ?? 0,
+    insertionType: b.role === 1 ? 'user' : b.role === 2 ? 'assistant' : 'system',
+    role: b.role === 1 ? 'user' : b.role === 2 ? 'assistant' : 'system',
+    description: b.description || ''
+  }));
+
+  if (promptOrder.length === 0) {
+    DEFAULT_PRESET.promptOrder.forEach(b => {
+      promptOrder.push({ ...b, id: crypto.randomUUID() });
+    });
+  }
+
+  return {
+    id,
+    name: data.name || '导入的预设',
+    description: data.description || '',
+    promptOrder,
+    parameters: {
+      temperature: data.gen_params?.temperature ?? 0.85,
+      maxTokens: data.gen_params?.max_tokens ?? 2048,
+      topP: data.gen_params?.top_p ?? 0.9,
+      frequencyPenalty: data.gen_params?.frequency_penalty ?? 0.2,
+      presencePenalty: data.gen_params?.presence_penalty ?? 0.3
+    },
+    contextLength: data.gen_params?.max_tokens ? data.gen_params.max_tokens * 2 : 4096,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+}
+
+// ===== JSON Helpers =====
 export async function importJsonFile() {
   return new Promise((resolve) => {
     const input = document.createElement('input');
@@ -246,22 +309,21 @@ export function exportToJson(data, filename) {
   URL.revokeObjectURL(url);
 }
 
-// ===== 全数据导出 =====
+// ===== Full Data Export/Import =====
 export async function exportAllData() {
   const data = {
-    version: '1.0',
+    version: '2.0',
     exportedAt: new Date().toISOString(),
     data: {
       lorebooks: await db.lorebooks.toArray(),
       presets: await db.presets.toArray(),
-      settings: await db.settings.get('settings')
+      settings: await db.settings.get('settings'),
+      chats: await db.chats.toArray()
     }
   };
-
   exportToJson(data, `sillytavern_backup_${new Date().toISOString().slice(0, 10)}.json`);
 }
 
-// ===== 全数据导入 =====
 export async function importAllData(file) {
   const text = await file.text();
   const data = JSON.parse(text);
@@ -280,46 +342,59 @@ export async function importAllData(file) {
     if (data.data.settings) {
       await db.settings.put({ ...data.data.settings, key: 'settings' });
     }
+    if (data.data.chats) {
+      for (const chat of data.data.chats) {
+        await db.chats.put({ ...chat, id: chat.id || crypto.randomUUID() });
+      }
+    }
   }
-
   return true;
 }
 
-// ===== 清理数据 =====
 export async function clearAllData() {
   await db.delete();
 }
 
-// ===== 状态管理（简单版）=====
+// ===== State Store =====
 export function createStore() {
   const state = {
     lorebooks: [],
     presets: [],
-    settings: DEFAULT_SETTINGS,
+    settings: { ...DEFAULT_SETTINGS },
+    chats: [],
     activeModal: null,
+    activeTab: 'api',
     selectedBookId: null,
     selectedPresetId: null,
-    activeTab: 'api',
+    selectedChatId: null,
     isCreatingBook: false,
-    chats: [],
-    activeChatId: null,
-    editingEntryId: null
+    editingEntryId: null,
+    editingMessageId: null,
+    promptPreview: null,
+    toast: null
   };
 
   const listeners = new Set();
 
+  const notify = () => listeners.forEach(fn => fn(state));
+
+  const setState = (updater) => {
+    if (typeof updater === 'function') {
+      Object.assign(state, updater(state));
+    } else {
+      Object.assign(state, updater);
+    }
+    notify();
+  };
+
+  const showToast = (message, type = 'info') => {
+    setState({ toast: { message, type, id: Date.now() } });
+    setTimeout(() => setState({ toast: null }), 2500);
+  };
+
   return {
     getState: () => state,
-
-    setState: (updater) => {
-      if (typeof updater === 'function') {
-        Object.assign(state, updater(state));
-      } else {
-        Object.assign(state, updater);
-      }
-      listeners.forEach(fn => fn(state));
-    },
-
+    setState,
     subscribe: (fn) => {
       listeners.add(fn);
       return () => listeners.delete(fn);
@@ -334,64 +409,205 @@ export function createStore() {
       if (settingsData) {
         state.settings = { ...DEFAULT_SETTINGS, ...settingsData };
       }
-      listeners.forEach(fn => fn(state));
+      notify();
     },
 
+    // ---- Lorebooks ----
     async saveLorebook(book) {
       book.updatedAt = Date.now();
       await db.lorebooks.put(book);
       state.lorebooks = await db.lorebooks.toArray();
-      listeners.forEach(fn => fn(state));
+      notify();
     },
 
     async deleteLorebook(id) {
       await db.lorebooks.delete(id);
       state.lorebooks = await db.lorebooks.toArray();
-      if (state.selectedBookId === id) {
-        state.selectedBookId = null;
-      }
+      if (state.selectedBookId === id) state.selectedBookId = null;
       const activeIds = state.settings.activeLorebookIds.filter(x => x !== id);
       state.settings.activeLorebookIds = activeIds;
       await db.settings.put(state.settings);
-      listeners.forEach(fn => fn(state));
+      notify();
     },
 
+    // ---- Presets ----
     async savePreset(preset) {
       preset.updatedAt = Date.now();
       await db.presets.put(preset);
       state.presets = await db.presets.toArray();
-      listeners.forEach(fn => fn(state));
+      notify();
     },
 
     async deletePreset(id) {
       await db.presets.delete(id);
       state.presets = await db.presets.toArray();
-      if (state.selectedPresetId === id) {
-        state.selectedPresetId = null;
-      }
+      if (state.selectedPresetId === id) state.selectedPresetId = null;
       if (state.settings.activePresetId === id) {
         state.settings.activePresetId = null;
         await db.settings.put(state.settings);
       }
-      listeners.forEach(fn => fn(state));
+      notify();
     },
 
+    // ---- Settings ----
     async saveSettings(settings) {
       Object.assign(state.settings, settings);
       await db.settings.put(state.settings);
-      listeners.forEach(fn => fn(state));
+      notify();
     },
 
-    async addChat(chat) {
+    // ---- Chats ----
+    async createChat(name = '新对话') {
+      const chat = {
+        id: crypto.randomUUID(),
+        name,
+        messages: [],
+        variables: {},
+        presetId: state.settings.activePresetId,
+        lorebookIds: [...state.settings.activeLorebookIds],
+        userName: state.settings.userName,
+        characterName: state.settings.characterName,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
       await db.chats.put(chat);
       state.chats = await db.chats.toArray();
-      listeners.forEach(fn => fn(state));
+      state.settings.activeChatId = chat.id;
+      await db.settings.put(state.settings);
+      notify();
+      return chat;
+    },
+
+    async loadChat(id) {
+      state.settings.activeChatId = id;
+      await db.settings.put(state.settings);
+      notify();
     },
 
     async deleteChat(id) {
       await db.chats.delete(id);
       state.chats = await db.chats.toArray();
-      listeners.forEach(fn => fn(state));
-    }
+      if (state.settings.activeChatId === id) {
+        state.settings.activeChatId = null;
+        await db.settings.put(state.settings);
+      }
+      notify();
+    },
+
+    async renameChat(id, name) {
+      const chat = await db.chats.get(id);
+      if (chat) {
+        chat.name = name;
+        chat.updatedAt = Date.now();
+        await db.chats.put(chat);
+        state.chats = await db.chats.toArray();
+        notify();
+      }
+    },
+
+    async addMessage(chatId, message) {
+      const chat = await db.chats.get(chatId);
+      if (!chat) return;
+      chat.messages.push({
+        id: crypto.randomUUID(),
+        role: message.role,
+        content: message.content,
+        variables: message.variables || {},
+        timestamp: Date.now()
+      });
+      chat.updatedAt = Date.now();
+      await db.chats.put(chat);
+      state.chats = await db.chats.toArray();
+      notify();
+    },
+
+    async editMessage(chatId, messageId, newContent) {
+      const chat = await db.chats.get(chatId);
+      if (!chat) return;
+      const msg = chat.messages.find(m => m.id === messageId);
+      if (msg) {
+        msg.content = newContent;
+        chat.updatedAt = Date.now();
+        await db.chats.put(chat);
+        state.chats = await db.chats.toArray();
+        notify();
+      }
+    },
+
+    async deleteMessagesAfter(chatId, messageId) {
+      const chat = await db.chats.get(chatId);
+      if (!chat) return;
+      const idx = chat.messages.findIndex(m => m.id === messageId);
+      if (idx !== -1) {
+        chat.messages = chat.messages.slice(0, idx + 1);
+        chat.updatedAt = Date.now();
+        await db.chats.put(chat);
+        state.chats = await db.chats.toArray();
+        notify();
+      }
+    },
+
+    async branchChat(sourceChatId, messageId, newName) {
+      const source = await db.chats.get(sourceChatId);
+      if (!source) return null;
+      const idx = source.messages.findIndex(m => m.id === messageId);
+      const chat = {
+        id: crypto.randomUUID(),
+        name: newName || `${source.name} 分支`,
+        messages: source.messages.slice(0, idx + 1).map(m => ({ ...m, id: crypto.randomUUID() })),
+        variables: source.messages[idx]?.variables || { ...source.variables },
+        presetId: source.presetId,
+        lorebookIds: [...source.lorebookIds],
+        userName: source.userName,
+        characterName: source.characterName,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      await db.chats.put(chat);
+      state.chats = await db.chats.toArray();
+      state.settings.activeChatId = chat.id;
+      await db.settings.put(state.settings);
+      notify();
+      return chat;
+    },
+
+    async setChatVariables(chatId, variables) {
+      const chat = await db.chats.get(chatId);
+      if (chat) {
+        chat.variables = { ...chat.variables, ...variables };
+        chat.updatedAt = Date.now();
+        await db.chats.put(chat);
+        state.chats = await db.chats.toArray();
+        notify();
+      }
+    },
+
+    async updateMessageVariables(chatId, messageId, variables) {
+      const chat = await db.chats.get(chatId);
+      if (!chat) return;
+      const msg = chat.messages.find(m => m.id === messageId);
+      if (msg) {
+        msg.variables = { ...msg.variables, ...variables };
+        chat.updatedAt = Date.now();
+        await db.chats.put(chat);
+        state.chats = await db.chats.toArray();
+        notify();
+      }
+    },
+
+    // ---- Helpers ----
+    getActivePreset() {
+      return state.presets.find(p => p.id === state.settings.activePresetId) || null;
+    },
+
+    getActiveLorebooks() {
+      return state.lorebooks.filter(b => state.settings.activeLorebookIds.includes(b.id));
+    },
+
+    getActiveChat() {
+      return state.chats.find(c => c.id === state.settings.activeChatId) || null;
+    },
+
+    showToast
   };
 }

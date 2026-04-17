@@ -1,16 +1,19 @@
 /**
- * SillyTavern Web Enhancer - 集成入口
+ * SillyTavern Web v2.0 - Integration Entry
  * 解耦设计：此文件是唯一与宿主项目交互的入口点
  */
 
 import { createStore } from './st-core.js';
-import { renderModal, bindEvents, updateLorebookBadge } from './st-ui.js';
+import { renderModal, bindEvents, updateLorebookBadge, updateChatBadge, renderToast } from './st-ui.js';
+import { previewPrompt } from './st-prompt.js';
+import { extractVariables } from './st-variables.js';
+import { createLorebookEngine } from './st-engine.js';
 
 /**
- * 初始化 SillyTavern 增强功能
- * @param {Object} options - 配置选项
- * @param {string} options.container - 宿主页面按钮容器的 CSS 选择器
- * @param {string} options.theme - 主题名称 (jade, gothic, etc.)
+ * Initialize SillyTavern Enhancer
+ * @param {Object} options
+ * @param {string} options.container - Host button container selector
+ * @param {string} options.theme - Theme name
  */
 export async function initSillyTavernEnhancer(options = {}) {
   if (window.__sillyTavernInitialized) {
@@ -20,47 +23,62 @@ export async function initSillyTavernEnhancer(options = {}) {
 
   const { container = '.st-button-container', theme = 'jade' } = options;
 
-  // 创建状态管理器
   const store = createStore();
-  window.sillyTavernStore = store; // 全局访问，便于调试
+  window.sillyTavernStore = store;
 
-  // 加载数据
+  // Expose prompt preview globally
+  window.__st_previewPrompt = (opts) => {
+    const state = store.getState();
+    const preset = store.getActivePreset();
+    const activeBooks = store.getActiveLorebooks();
+    const chat = store.getActiveChat();
+    return previewPrompt({
+      userInput: opts.userInput || '',
+      history: opts.history || chat?.messages || [],
+      preset: preset || opts.preset,
+      lorebooks: activeBooks,
+      userName: state.settings.userName || '用户',
+      characterName: state.settings.characterName || 'AI',
+      variables: chat?.variables || {}
+    });
+  };
+
   await store.loadData();
 
-  // 渲染控制按钮到宿主页面
   renderControlButtons(container);
-
-  // 绑定事件
   bindEvents(store);
 
-  // 订阅状态变化，更新UI
   store.subscribe((state) => {
     renderModal(state, store);
     updateLorebookBadge(state);
+    updateChatBadge(state);
+    renderToast(state);
   });
 
-  // 初始化徽章
   updateLorebookBadge(store.getState());
+  updateChatBadge(store.getState());
 
-  console.log('[SillyTavern] 增强功能已初始化');
+  // Ensure active chat exists
+  if (!store.getActiveChat() && store.getState().chats.length === 0) {
+    await store.createChat('默认对话');
+  }
+
+  console.log('[SillyTavern] v2.0 增强功能已初始化');
   return store;
 }
 
 /**
- * 渲染控制按钮到宿主页面
+ * Render control buttons into host page
  */
 function renderControlButtons(containerSelector) {
-  // 查找宿主容器
   let container = document.querySelector(containerSelector);
 
-  // 如果宿主没有提供容器，创建一个浮动容器
   if (!container) {
     container = document.createElement('div');
     container.className = 'st-floating-container';
     document.body.appendChild(container);
   }
 
-  // 注入控制按钮
   const controls = document.createElement('div');
   controls.className = 'st-controls';
   controls.innerHTML = `
@@ -79,6 +97,30 @@ function renderControlButtons(containerSelector) {
       </svg>
       <span>预设</span>
     </button>
+    <button class="st-btn" id="st-btn-chat" title="对话管理">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span>对话</span>
+      <span class="st-badge" id="st-chat-count" style="display:none">0</span>
+    </button>
+    <button class="st-btn" id="st-btn-variables" title="变量面板">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+      <span>变量</span>
+    </button>
+    <button class="st-btn" id="st-btn-prompt-preview" title="提示词预览">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+        <path d="M11 8v6"/>
+        <path d="M8 11h6"/>
+      </svg>
+      <span>预览</span>
+    </button>
     <button class="st-btn" id="st-btn-settings" title="系统设置">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="3"/>
@@ -91,39 +133,68 @@ function renderControlButtons(containerSelector) {
 }
 
 /**
- * 获取当前激活的世界书内容（供宿主项目调用）
- * @param {string} text - 要扫描的文本
- * @returns {Object} 匹配结果
+ * Get active lorebook entries for host scanning
+ * @param {string} text - Text to scan
  */
 export function getActiveLorebookEntries(text) {
   const store = window.sillyTavernStore;
-  if (!store) return [];
+  if (!store) return { activeBookIds: [], matchedEntries: [] };
 
-  const state = store.getState();
-  // 这里可以集成 LorebookEngine 进行关键词匹配
-  // 返回匹配的条目内容
+  const activeBooks = store.getActiveLorebooks();
+  const matched = [];
+  for (const book of activeBooks) {
+    const engine = createLorebookEngine(book);
+    matched.push(...engine.scan(text));
+  }
   return {
-    activeBookIds: state.settings.activeLorebookIds,
-    // TODO: 实现具体的匹配逻辑
+    activeBookIds: store.getState().settings.activeLorebookIds,
+    matchedEntries: matched
   };
 }
 
 /**
- * 获取当前预设的生成参数（供宿主项目调用）
- * @returns {Object|null} 生成参数
+ * Get active preset parameters for host
  */
 export function getActivePresetParams() {
   const store = window.sillyTavernStore;
   if (!store) return null;
-
-  const state = store.getState();
-  const preset = state.presets.find(p => p.id === state.settings.activePresetId);
+  const preset = store.getActivePreset();
   return preset?.parameters || null;
 }
 
-// 自动初始化（如果页面已加载）
+/**
+ * Get active chat for host
+ */
+export function getActiveChat() {
+  const store = window.sillyTavernStore;
+  if (!store) return null;
+  return store.getActiveChat();
+}
+
+/**
+ * Add a message to the active chat and extract variables
+ */
+export async function addChatMessage(message) {
+  const store = window.sillyTavernStore;
+  if (!store) return;
+  const chat = store.getActiveChat();
+  if (!chat) {
+    await store.createChat('新对话');
+  }
+  const activeChat = store.getActiveChat();
+  if (!activeChat) return;
+
+  const { cleanedText, updates } = extractVariables(message.content || '');
+  const msg = { ...message, content: cleanedText || message.content };
+
+  await store.addMessage(activeChat.id, msg);
+  if (Object.keys(updates).length > 0) {
+    await store.setChatVariables(activeChat.id, updates);
+  }
+}
+
+// Auto-initialize
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  // 延迟一点确保 DOM 完全就绪
   setTimeout(() => initSillyTavernEnhancer(), 100);
 } else {
   document.addEventListener('DOMContentLoaded', () => initSillyTavernEnhancer());
