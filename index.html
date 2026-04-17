@@ -812,17 +812,19 @@
 
     .event-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 12px;
-      padding: 12px;
+      padding: 14px;
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.3s;
+      border-left: 3px solid transparent;
     }
 
     .event-item:hover {
-      background: rgba(110, 207, 207, 0.1);
+      background: rgba(110, 207, 207, 0.08);
+      border-left-color: var(--jade-glow);
     }
 
     .event-dot {
@@ -830,22 +832,57 @@
       height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
+      margin-top: 6px;
     }
 
-    .event-dot.urgent { background: var(--lotus-pink); }
-    .event-dot.normal { background: var(--jade-glow); }
-    .event-dot.info { background: var(--gold-spirit); }
+    .event-dot.urgent { background: var(--lotus-pink); box-shadow: 0 0 6px var(--lotus-pink); }
+    .event-dot.normal { background: var(--jade-glow); box-shadow: 0 0 6px var(--jade-glow); }
+    .event-dot.info { background: var(--gold-spirit); box-shadow: 0 0 6px var(--gold-spirit); }
 
-    .event-text {
+    .event-content {
       flex: 1;
-      font-size: 13px;
-      color: rgba(232, 244, 240, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .event-time {
+    .event-desc {
+      font-size: 13.5px;
+      color: rgba(232, 244, 240, 0.95);
+      line-height: 1.55;
+    }
+
+    .event-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .event-meta-item {
       font-size: 11px;
-      color: rgba(168, 230, 230, 0.5);
-      flex-shrink: 0;
+      padding: 3px 9px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      backdrop-filter: blur(2px);
+    }
+
+    .event-meta-item.time {
+      color: rgba(250, 214, 137, 0.9);
+      background: rgba(250, 214, 137, 0.12);
+      border: 1px solid rgba(250, 214, 137, 0.2);
+    }
+    .event-meta-item.location {
+      color: rgba(168, 230, 230, 0.9);
+      background: rgba(110, 207, 207, 0.12);
+      border: 1px solid rgba(110, 207, 207, 0.2);
+    }
+    .event-meta-item.people {
+      color: rgba(232, 183, 202, 0.9);
+      background: rgba(232, 183, 202, 0.12);
+      border: 1px solid rgba(232, 183, 202, 0.2);
     }
 
     /* === STORY PAGE === */
@@ -2096,19 +2133,47 @@
             <div class="event-list">
               <div class="event-item" onclick="switchPage('story')">
                 <div class="event-dot urgent"></div>
-                <div class="event-text" style="line-height:1.6">时间：刚刚 | 事件：苍梧山散修求见，携密信一封，称事关宗门存亡</div>
+                <div class="event-content">
+                  <div class="event-desc">苍梧山散修求见，携密信一封，称事关宗门存亡</div>
+                  <div class="event-meta">
+                    <span class="event-meta-item time">⏳ 刚刚</span>
+                    <span class="event-meta-item location">📍 苍梧山</span>
+                    <span class="event-meta-item people">👤 散修</span>
+                  </div>
+                </div>
               </div>
               <div class="event-item" onclick="switchPage('members')">
                 <div class="event-dot normal"></div>
-                <div class="event-text" style="line-height:1.6">时间：一炷香前 | 事件：成员「林淮安」整理藏经阁时发现一卷失传古籍</div>
+                <div class="event-content">
+                  <div class="event-desc">成员「林淮安」整理藏经阁时发现一卷失传古籍</div>
+                  <div class="event-meta">
+                    <span class="event-meta-item time">⏳ 一炷香前</span>
+                    <span class="event-meta-item location">📍 藏经阁</span>
+                    <span class="event-meta-item people">👤 林淮安</span>
+                  </div>
+                </div>
               </div>
               <div class="event-item" onclick="switchPage('diplomacy')">
                 <div class="event-dot info"></div>
-                <div class="event-text" style="line-height:1.6">时间：半日前 | 事件：天剑宗送来拜帖，邀请参加三月后的论剑大会</div>
+                <div class="event-content">
+                  <div class="event-desc">天剑宗送来拜帖，邀请参加三月后的论剑大会</div>
+                  <div class="event-meta">
+                    <span class="event-meta-item time">⏳ 半日前</span>
+                    <span class="event-meta-item location">📍 天剑宗</span>
+                    <span class="event-meta-item people">👤 天剑宗使者</span>
+                  </div>
+                </div>
               </div>
               <div class="event-item" onclick="switchPage('treasury')">
                 <div class="event-dot normal"></div>
-                <div class="event-text" style="line-height:1.6">时间：一日前 | 事件：炼器峰新铸「碧落剑」一柄，品质上佳，待入库</div>
+                <div class="event-content">
+                  <div class="event-desc">炼器峰新铸「碧落剑」一柄，品质上佳，待入库</div>
+                  <div class="event-meta">
+                    <span class="event-meta-item time">⏳ 一日前</span>
+                    <span class="event-meta-item location">📍 炼器峰</span>
+                    <span class="event-meta-item people">👤 炼器长老</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -3167,16 +3232,17 @@
         return;
       }
       container.innerHTML = recentEvents.map(ev => {
-        const parts = [];
-        if (ev.time) parts.push(`时间：${ev.time}`);
-        if (ev.location) parts.push(`地点：${ev.location}`);
-        if (ev.people) parts.push(`人物：${ev.people}`);
-        if (ev.text) parts.push(`事件：${ev.text}`);
-        const displayText = parts.join(' | ');
+        const metaHtml = [];
+        if (ev.time) metaHtml.push(`<span class="event-meta-item time">⏳ ${escapeHtml(ev.time)}</span>`);
+        if (ev.location) metaHtml.push(`<span class="event-meta-item location">📍 ${escapeHtml(ev.location)}</span>`);
+        if (ev.people) metaHtml.push(`<span class="event-meta-item people">👤 ${escapeHtml(ev.people)}</span>`);
         return `
           <div class="event-item" onclick="switchPage('story')">
             <div class="event-dot ${ev.type || 'normal'}"></div>
-            <div class="event-text" style="line-height:1.6">${escapeHtml(displayText)}</div>
+            <div class="event-content">
+              <div class="event-desc">${escapeHtml(ev.text || '')}</div>
+              ${metaHtml.length ? `<div class="event-meta">${metaHtml.join('')}</div>` : ''}
+            </div>
           </div>
         `;
       }).join('');
@@ -3946,10 +4012,10 @@
 
     // 初始化近日要事
     recentEvents = [
-      { text: '苍梧山散修求见，携密信一封，称事关宗门存亡', time: '刚刚', type: 'urgent' },
-      { text: '成员「林淮安」整理藏经阁时发现一卷失传古籍', time: '一炷香前', type: 'normal' },
-      { text: '天剑宗送来拜帖，邀请参加三月后的论剑大会', time: '半日前', type: 'info' },
-      { text: '炼器峰新铸「碧落剑」一柄，品质上佳，待入库', time: '一日前', type: 'normal' }
+      { text: '苍梧山散修求见，携密信一封，称事关宗门存亡', time: '刚刚', location: '苍梧山', people: '散修', type: 'urgent' },
+      { text: '成员「林淮安」整理藏经阁时发现一卷失传古籍', time: '一炷香前', location: '藏经阁', people: '林淮安', type: 'normal' },
+      { text: '天剑宗送来拜帖，邀请参加三月后的论剑大会', time: '半日前', location: '天剑宗', people: '天剑宗使者', type: 'info' },
+      { text: '炼器峰新铸「碧落剑」一柄，品质上佳，待入库', time: '一日前', location: '炼器峰', people: '炼器长老', type: 'normal' }
     ];
     renderEvents();
   </script>
