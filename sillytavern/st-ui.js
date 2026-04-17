@@ -600,13 +600,17 @@ function renderApiSettings(state) {
       <div class="st-form-group">
         <label class="st-label">模型名称</label>
         <input type="text" class="st-input" id="st-model" value="${escapeHtml(state.settings.api.model)}" placeholder="gpt-3.5-turbo">
+        <div id="st-model-select-container" style="margin-top:8px;display:none"></div>
       </div>
       <div class="st-form-group">
         <label class="st-label">API基础URL</label>
         <input type="text" class="st-input" id="st-base-url" value="${escapeHtml(state.settings.api.baseUrl)}" placeholder="https://api.openai.com/v1">
         <p style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:4px">支持 OpenAI / DeepSeek / Kimi / 本地模型等兼容端点</p>
       </div>
-      <button class="st-btn-primary" id="st-save-api">保存设置</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="st-btn-primary" id="st-save-api">保存设置</button>
+        <button class="st-btn-secondary" id="st-fetch-models">获取模型列表</button>
+      </div>
     </div>
   `;
 }
@@ -1158,6 +1162,44 @@ function attachSettingsListeners(state, store) {
       }
     });
     store.showToast('API 设置已保存');
+  });
+
+  body.querySelector('#st-fetch-models')?.addEventListener('click', async () => {
+    const baseUrl = (document.getElementById('st-base-url')?.value || '').replace(/\/$/, '');
+    const apiKey = document.getElementById('st-api-key')?.value || '';
+    const container = document.getElementById('st-model-select-container');
+    if (!baseUrl) {
+      alert('请先填写 API 基础 URL');
+      return;
+    }
+    try {
+      const res = await fetch(`${baseUrl}/models`, {
+        headers: apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const models = (data.data || []).map(m => m.id).filter(Boolean).sort();
+      if (models.length === 0) {
+        alert('未获取到模型列表');
+        return;
+      }
+      const select = document.createElement('select');
+      select.className = 'st-input';
+      select.style.background = 'rgba(0,0,0,0.3)';
+      select.innerHTML = `<option value="">-- 选择模型 --</option>` + models.map(m =>
+        `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`
+      ).join('');
+      select.addEventListener('change', () => {
+        const modelInput = document.getElementById('st-model');
+        if (modelInput && select.value) modelInput.value = select.value;
+      });
+      container.innerHTML = '';
+      container.appendChild(select);
+      container.style.display = 'block';
+      store.showToast(`已获取 ${models.length} 个模型`);
+    } catch (err) {
+      alert('获取模型列表失败: ' + err.message);
+    }
   });
 
   body.querySelector('#st-save-profile')?.addEventListener('click', async () => {
