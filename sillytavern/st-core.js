@@ -258,7 +258,7 @@ function resolveRole(b) {
 
 function buildPromptOrder(promptsRepo, orderIndex) {
   // promptsRepo: array of prompt definitions (content repo)
-  // orderIndex: array of {identifier, enabled} ordering entries
+  // orderIndex: ordering entries in various SillyTavern formats
   if (!Array.isArray(promptsRepo)) promptsRepo = [];
 
   const promptMap = new Map();
@@ -267,23 +267,35 @@ function buildPromptOrder(promptsRepo, orderIndex) {
     if (id) promptMap.set(id, p);
   }
 
-  let orderEntries = [];
+  // Normalize orderIndex into a flat array of {identifier, enabled}
+  let flatOrder = [];
+
   if (Array.isArray(orderIndex)) {
-    orderEntries = orderIndex;
+    if (orderIndex.length > 0) {
+      const first = orderIndex[0];
+      // Wrapped character format: [{character_id, order: [{identifier, enabled}]}]
+      if (first && typeof first === 'object' && Array.isArray(first.order)) {
+        flatOrder = first.order;
+      }
+      // Flat format: [{identifier, enabled}]
+      else if (first && (first.identifier !== undefined || first.id !== undefined)) {
+        flatOrder = orderIndex;
+      }
+    }
   } else if (orderIndex && typeof orderIndex === 'object') {
-    // SillyTavern sometimes wraps prompt_order under API keys like {openai: [...], claude: [...]}
-    // Pick the first non-empty array we find
+    // Object keyed by API type: {openai: [{identifier, enabled}], claude: [...]}
     for (const key of Object.keys(orderIndex)) {
-      if (Array.isArray(orderIndex[key]) && orderIndex[key].length > 0) {
-        orderEntries = orderIndex[key];
+      const arr = orderIndex[key];
+      if (Array.isArray(arr) && arr.length > 0) {
+        flatOrder = arr;
         break;
       }
     }
   }
 
   const result = [];
-  if (orderEntries.length > 0) {
-    for (const entry of orderEntries) {
+  if (flatOrder.length > 0) {
+    for (const entry of flatOrder) {
       const identifier = entry.identifier || entry.id;
       if (!identifier) continue;
       const prompt = promptMap.get(identifier);
@@ -292,16 +304,16 @@ function buildPromptOrder(promptsRepo, orderIndex) {
       result.push({
         id: identifier,
         name: prompt.name || identifier,
-        content: prompt.content || prompt.system_prompt || '',
+        content: prompt.content || '',
         enabled: entry.enabled ?? true,
-        position: prompt.injection_order ?? prompt.position ?? 0,
+        position: prompt.injection_order ?? prompt.position ?? prompt.injectionPosition ?? 0,
         insertionType: roleStr,
         role: roleStr,
         description: prompt.description || ''
       });
     }
-  } else {
-    // No order index: use all prompts in their natural order
+  } else if (promptsRepo.length > 0) {
+    // No valid order index: use all prompts in their natural order
     for (const prompt of promptsRepo) {
       const identifier = prompt.identifier || prompt.id;
       if (!identifier) continue;
@@ -309,9 +321,9 @@ function buildPromptOrder(promptsRepo, orderIndex) {
       result.push({
         id: identifier,
         name: prompt.name || identifier,
-        content: prompt.content || prompt.system_prompt || '',
+        content: prompt.content || '',
         enabled: prompt.enabled ?? true,
-        position: prompt.injection_order ?? prompt.position ?? 0,
+        position: prompt.injection_order ?? prompt.position ?? prompt.injectionPosition ?? 0,
         insertionType: roleStr,
         role: roleStr,
         description: prompt.description || ''
