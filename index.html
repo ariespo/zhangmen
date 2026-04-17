@@ -3072,8 +3072,11 @@
             inThinkTag = false;
             updateThinkButton();
           } else {
-            capturedThinkText += streamBuffer;
-            streamBuffer = '';
+            // 保留可能的不完整结束标签后缀（最长 </thinking> = 11）
+            const keepLen = 11;
+            const processLen = Math.max(0, streamBuffer.length - keepLen);
+            capturedThinkText += streamBuffer.slice(0, processLen);
+            streamBuffer = streamBuffer.slice(processLen);
             updateThinkButton();
             break;
           }
@@ -3089,13 +3092,17 @@
 
           if (tagStart !== -1) {
             const beforeThink = streamBuffer.slice(0, tagStart);
-            processNormalBuffer(beforeThink);
-            streamBuffer = streamBuffer.slice(tagStart + tagLen);
+            const leftover = processNormalBufferImpl(beforeThink);
+            streamBuffer = leftover + streamBuffer.slice(tagStart + tagLen);
             inThinkTag = true;
             continue;
           } else {
-            processNormalBuffer(streamBuffer);
-            streamBuffer = '';
+            // 保留可能的不完整起始标签后缀（最长 <thinking> = 10）
+            const keepLen = 10;
+            const processLen = Math.max(0, streamBuffer.length - keepLen);
+            const toProcess = streamBuffer.slice(0, processLen);
+            const leftover = processNormalBufferImpl(toProcess);
+            streamBuffer = leftover + streamBuffer.slice(processLen);
             break;
           }
         }
@@ -3103,6 +3110,10 @@
     }
 
     function processNormalBuffer(text) {
+      processNormalBufferImpl(text);
+    }
+
+    function processNormalBufferImpl(text) {
       let remaining = text;
       while (remaining.length > 0) {
         if (currentCaptureTag === null) {
@@ -3117,7 +3128,12 @@
             currentCaptureTag = 'option';
             capturedOptionText = '';
           } else {
-            remaining = '';
+            // 保留可能的不完整起始标签后缀（最长 <maintext> = 10）
+            const keepLen = 10;
+            if (remaining.length <= keepLen) {
+              return remaining;
+            }
+            return remaining.slice(-keepLen);
           }
         } else if (currentCaptureTag === 'maintext') {
           const mainEnd = remaining.indexOf('</maintext>');
@@ -3128,25 +3144,32 @@
             currentCaptureTag = null;
             finalizeMainParagraph();
           } else {
-            capturedMainText += remaining;
+            // 保留可能的不完整结束标签后缀（最长 </maintext> = 11）
+            const keepLen = 11;
+            const processLen = Math.max(0, remaining.length - keepLen);
+            capturedMainText += remaining.slice(0, processLen);
             updateLiveMain(capturedMainText);
-            remaining = '';
+            return remaining.slice(processLen);
           }
         } else if (currentCaptureTag === 'option') {
           const optionEnd = remaining.indexOf('</option>');
           if (optionEnd !== -1) {
             capturedOptionText += remaining.slice(0, optionEnd);
             updateLiveOptions(capturedOptionText);
-            remaining = remaining.slice(optionEnd + 10);
+            remaining = remaining.slice(optionEnd + 9);
             currentCaptureTag = null;
             capturedOptionText = '';
           } else {
-            capturedOptionText += remaining;
+            // 保留可能的不完整结束标签后缀（最长 </option> = 9）
+            const keepLen = 9;
+            const processLen = Math.max(0, remaining.length - keepLen);
+            capturedOptionText += remaining.slice(0, processLen);
             updateLiveOptions(capturedOptionText);
-            remaining = '';
+            return remaining.slice(processLen);
           }
         }
       }
+      return '';
     }
 
     function toggleActionLog() {
