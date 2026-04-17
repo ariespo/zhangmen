@@ -2626,10 +2626,15 @@
       const choicesContainer = document.getElementById('story-choices');
       if (choicesContainer) choicesContainer.innerHTML = '';
       setLLMProcessing(true);
+      setTimeout(() => {
+        const overlay = document.getElementById('llm-overlay');
+        if (overlay) overlay.classList.remove('active');
+      }, 1000);
 
       let idx = 0;
       function nextChunk() {
         if (idx >= mockText.length) {
+          flushStreamProcessing();
           setLLMProcessing(false);
           return;
         }
@@ -3107,6 +3112,19 @@
       if (panel) panel.classList.remove('active');
     }
 
+    function flushStreamProcessing() {
+      if (inThinkTag) {
+        capturedThinkText += streamBuffer;
+        streamBuffer = '';
+        inThinkTag = false;
+        updateThinkButton();
+      } else if (streamBuffer) {
+        const leftover = processNormalBufferImpl(streamBuffer, true);
+        streamBuffer = leftover || '';
+        currentCaptureTag = null;
+      }
+    }
+
     function parseSumAndAddEvent(sumText) {
       const raw = sumText.trim();
       if (!raw) return;
@@ -3224,7 +3242,7 @@
       processNormalBufferImpl(text);
     }
 
-    function processNormalBufferImpl(text) {
+    function processNormalBufferImpl(text, isFlush = false) {
       let remaining = text;
       while (remaining.length > 0) {
         if (currentCaptureTag === null) {
@@ -3244,6 +3262,7 @@
             if (first.tag === 'option') capturedOptionText = '';
             if (first.tag === 'sum') capturedSumText = '';
           } else {
+            if (isFlush) return '';
             // 保留可能的不完整起始标签后缀（最长 <maintext> = 10）
             const keepLen = 10;
             if (remaining.length <= keepLen) {
@@ -3260,6 +3279,12 @@
             currentCaptureTag = null;
             finalizeMainParagraph();
           } else {
+            if (isFlush) {
+              capturedMainText += remaining;
+              updateLiveMain(capturedMainText);
+              finalizeMainParagraph();
+              return '';
+            }
             // 保留可能的不完整结束标签后缀（最长 </maintext> = 11）
             const keepLen = 11;
             const processLen = Math.max(0, remaining.length - keepLen);
@@ -3276,6 +3301,12 @@
             currentCaptureTag = null;
             capturedSumText = '';
           } else {
+            if (isFlush) {
+              capturedSumText += remaining;
+              parseSumAndAddEvent(capturedSumText);
+              capturedSumText = '';
+              return '';
+            }
             // 保留可能的不完整结束标签后缀（最长 </sum> = 6）
             const keepLen = 6;
             const processLen = Math.max(0, remaining.length - keepLen);
@@ -3291,6 +3322,12 @@
             currentCaptureTag = null;
             capturedOptionText = '';
           } else {
+            if (isFlush) {
+              capturedOptionText += remaining;
+              updateLiveOptions(capturedOptionText);
+              capturedOptionText = '';
+              return '';
+            }
             // 保留可能的不完整结束标签后缀（最长 </option> = 9）
             const keepLen = 9;
             const processLen = Math.max(0, remaining.length - keepLen);
@@ -3381,6 +3418,10 @@
       // 进入 LLM 交互阶段
       switchPage('story');
       setLLMProcessing(true);
+      setTimeout(() => {
+        const overlay = document.getElementById('llm-overlay');
+        if (overlay) overlay.classList.remove('active');
+      }, 1000);
       resetStreamState();
 
       // 清空旧选项
@@ -3507,6 +3548,7 @@
           }
         }
 
+        flushStreamProcessing();
         console.log('=== [LLM Raw] 返回的完整原始信息 ===', fullRawResponse);
       } catch (err) {
         if (err.name !== 'AbortError') {
