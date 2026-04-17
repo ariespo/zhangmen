@@ -1217,9 +1217,9 @@ function attachSettingsListeners(state, store) {
     await store.saveSettings({
       api: {
         ...state.settings.api,
-        apiKey: document.getElementById('st-api-key')?.value || '',
-        model: document.getElementById('st-model')?.value || '',
-        baseUrl: document.getElementById('st-base-url')?.value || ''
+        apiKey: (document.getElementById('st-api-key')?.value || '').trim(),
+        model: (document.getElementById('st-model')?.value || '').trim(),
+        baseUrl: (document.getElementById('st-base-url')?.value || '').trim().replace(/\/$/, '')
       }
     });
     store.showToast('API 设置已保存');
@@ -1273,10 +1273,13 @@ function attachSettingsListeners(state, store) {
     alert(`获取模型列表失败 (${lastErr?.message || 'Unknown'})，已显示常用模型供选择。`);
   });
 
-  body.querySelector('#st-model-select')?.addEventListener('change', () => {
+  body.querySelector('#st-model-select')?.addEventListener('change', async () => {
     const select = document.getElementById('st-model-select');
     const modelInput = document.getElementById('st-model');
-    if (select && modelInput && select.value) modelInput.value = select.value;
+    if (select && modelInput && select.value) {
+      modelInput.value = select.value;
+      await store.saveSettings({ api: { ...state.settings.api, model: select.value } });
+    }
   });
 
   body.querySelector('#st-save-profile')?.addEventListener('click', async () => {

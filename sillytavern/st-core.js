@@ -401,9 +401,14 @@ function buildPromptOrder(promptsRepo, orderIndex) {
   // Append any prompts from the repo that were NOT listed in the order index.
   // These are typically custom user prompts; default them to disabled since
   // they weren't part of the active preset order.
+  // Skip custom UUID prompts with no content to avoid bloating the editor.
+  const STANDARD_IDS = new Set(Object.keys(SILLYTAVERN_ID_MAP));
   for (const prompt of promptsRepo) {
     const identifier = prompt.identifier || prompt.id;
     if (!identifier || processedIds.has(identifier)) continue;
+    const isStandard = STANDARD_IDS.has(identifier);
+    const hasContent = !!(prompt.content || prompt.name || prompt.description);
+    if (!isStandard && !hasContent) continue;
     const mappedId = mapSillyTavernId(identifier);
     const roleStr = resolveRole(prompt);
     result.push({
@@ -758,6 +763,16 @@ export function createStore() {
         state.chats = await db.chats.toArray();
         notify();
       }
+    },
+
+    async restoreChatMessages(chatId, messages) {
+      const chat = await db.chats.get(chatId);
+      if (!chat) return;
+      chat.messages = JSON.parse(JSON.stringify(messages));
+      chat.updatedAt = Date.now();
+      await db.chats.put(chat);
+      state.chats = await db.chats.toArray();
+      notify();
     },
 
     async branchChat(sourceChatId, messageId, newName) {

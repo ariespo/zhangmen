@@ -74,11 +74,14 @@ export class LorebookEngine {
 
   groupByPosition(matched) {
     const grouped = {
-      before_char: [], after_char: [], before_example: [], after_example: [], at_depth: []
+      before_char: [], after_char: [], before_example: [], after_example: [],
+      at_depth: [], example_msg_top: [], example_msg_bottom: [], outlet: []
     };
 
     for (const m of matched) {
-      grouped[m.entry.position].push(m);
+      const pos = m.entry.position;
+      if (grouped[pos]) grouped[pos].push(m);
+      else grouped.after_char.push(m); // fallback
     }
 
     return grouped;
@@ -95,7 +98,7 @@ export class LorebookEngine {
     if (keys.length === 0) return false;
 
     const primaryMatches = keys.map(k => this.containsKeyword(text, this.normalizeKeyword(k)));
-    const hasPrimaryMatch = selectiveLogic === 'and'
+    const hasPrimaryMatch = (selectiveLogic === 'and' || selectiveLogic === 'and_any' || selectiveLogic === 'and_all')
       ? primaryMatches.every(m => m)
       : primaryMatches.some(m => m);
 

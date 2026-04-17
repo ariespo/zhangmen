@@ -903,6 +903,10 @@
       background: rgba(0,0,0,0.2);
     }
 
+    #story-content {
+      padding-top: 52px;
+    }
+
     .story-paragraph {
       margin-bottom: 14px;
       text-indent: 2em;
@@ -2930,19 +2934,34 @@
     let currentMainParagraph = null;
 
     async function getLLMConfig() {
-      const saved = localStorage.getItem('zhangmen_api_config');
-      if (saved) {
-        try { return JSON.parse(saved); } catch(e) {}
-      }
+      let cfg = null;
+      // 1. Prioritize SillyTavern in-memory store
       if (window.sillyTavernStore) {
         const s = window.sillyTavernStore.getState().settings;
-        return { baseUrl: s.api.baseUrl, apiKey: s.api.apiKey, model: s.api.model };
+        if (s && s.api) cfg = s.api;
       }
-      try {
-        const { db } = await import('./sillytavern/st-core.js');
-        const s = await db.settings.get('settings');
-        if (s && s.api) return { baseUrl: s.api.baseUrl, apiKey: s.api.apiKey, model: s.api.model };
-      } catch (e) {}
+      // 2. Then SillyTavern IndexedDB
+      if (!cfg) {
+        try {
+          const { db } = await import('./sillytavern/st-core.js');
+          const s = await db.settings.get('settings');
+          if (s && s.api) cfg = s.api;
+        } catch (e) {}
+      }
+      // 3. Fallback to legacy localStorage
+      if (!cfg) {
+        const saved = localStorage.getItem('zhangmen_api_config');
+        if (saved) {
+          try { cfg = JSON.parse(saved); } catch(e) {}
+        }
+      }
+      if (cfg) {
+        return {
+          baseUrl: (cfg.baseUrl || '').trim().replace(/\/$/, ''),
+          apiKey: (cfg.apiKey || '').trim(),
+          model: (cfg.model || '').trim() || 'gpt-3.5-turbo'
+        };
+      }
       return { baseUrl: 'https://api.openai.com/v1', apiKey: '', model: 'gpt-3.5-turbo' };
     }
 
@@ -3087,11 +3106,11 @@
       let remaining = text;
       while (remaining.length > 0) {
         if (currentCaptureTag === null) {
-          const mainStart = remaining.indexOf('<main>');
+          const mainStart = remaining.indexOf('<maintext>');
           const optionStart = remaining.indexOf('<option>');
           if (mainStart !== -1 && (optionStart === -1 || mainStart < optionStart)) {
-            remaining = remaining.slice(mainStart + 6);
-            currentCaptureTag = 'main';
+            remaining = remaining.slice(mainStart + 10);
+            currentCaptureTag = 'maintext';
             capturedMainText = '';
           } else if (optionStart !== -1) {
             remaining = remaining.slice(optionStart + 8);
@@ -3100,12 +3119,12 @@
           } else {
             remaining = '';
           }
-        } else if (currentCaptureTag === 'main') {
-          const mainEnd = remaining.indexOf('</main>');
+        } else if (currentCaptureTag === 'maintext') {
+          const mainEnd = remaining.indexOf('</maintext>');
           if (mainEnd !== -1) {
             capturedMainText += remaining.slice(0, mainEnd);
             updateLiveMain(capturedMainText);
-            remaining = remaining.slice(mainEnd + 7);
+            remaining = remaining.slice(mainEnd + 11);
             currentCaptureTag = null;
             finalizeMainParagraph();
           } else {
@@ -3136,6 +3155,33 @@
       if (panel) panel.classList.toggle('active');
     }
 
+    async function rollbackSnapshot(snapshot) {
+      actionLogs = snapshot.actionLogs;
+      stamina.current = snapshot.staminaCurrent;
+      updateStaminaSegments();
+      renderActionLogs();
+      renderOpportunities();
+      // 恢复操作记录面板状态
+      const panel = document.getElementById('action-log-panel');
+      if (panel) panel.classList.toggle('active', snapshot.actionLogPanelActive);
+      // 切回主页面
+      switchPage('main');
+      // 清理 story 页面可能残留的流式内容
+      resetStreamState();
+      const storyContent = document.getElementById('story-content');
+      if (storyContent) storyContent.innerHTML = '';
+      const choicesContainer = document.getElementById('story-choices');
+      if (choicesContainer) choicesContainer.innerHTML = '';
+      // 恢复聊天记录
+      if (snapshot.chatId && window.sillyTavernStore) {
+        try {
+          await window.sillyTavernStore.restoreChatMessages(snapshot.chatId, snapshot.chatMessages);
+        } catch (e) {
+          console.warn('恢复聊天记录失败:', e);
+        }
+      }
+    }
+
     async function submitActions() {
       if (actionLogs.length === 0) return;
 
@@ -3151,6 +3197,24 @@
       }).join('\n');
 
       const userInput = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}\n\n请根据这些操作，给出接下来的剧情发展和可选择的应对策略。`;
+
+      // ===== 发送前快照 =====
+      const panel = document.getElementById('action-log-panel');
+      const snapshot = {
+        actionLogs: [...actionLogs],
+        staminaCurrent: stamina.current,
+        actionLogPanelActive: panel ? panel.classList.contains('active') : false,
+        chatId: null,
+        chatMessages: null
+      };
+      const stStore = window.sillyTavernStore;
+      if (stStore) {
+        const activeChat = stStore.getActiveChat();
+        if (activeChat) {
+          snapshot.chatId = activeChat.id;
+          snapshot.chatMessages = JSON.parse(JSON.stringify(activeChat.messages));
+        }
+      }
 
       // 清空本轮操作和体力
       actionLogs = [];
@@ -3173,18 +3237,20 @@
       if (!config.apiKey) {
         alert('未配置 API Key，请先在系统设置中配置。');
         setLLMProcessing(false);
+        await rollbackSnapshot(snapshot);
         return;
       }
 
       // 组装 SillyTavern 提示词
       let messages = [{ role: 'user', content: userInput }];
       let apiParams = { temperature: 0.85, max_tokens: 2048, top_p: 0.9, frequency_penalty: 0.2, presence_penalty: 0.3 };
+      let preset = null;
 
       let fullRawResponse = '';
 
       try {
         const store = window.sillyTavernStore;
-        let settings, preset, activeBooks;
+        let settings, activeBooks;
         if (store) {
           settings = store.getState().settings;
           preset = store.getActivePreset();
@@ -3221,6 +3287,12 @@
         });
         messages = assembled.messages;
 
+        console.log('=== [Prompt] 发送的完整提示词 ===', {
+          model: preset?.modelOverride || config.model,
+          messages,
+          parameters: { stream: true, ...apiParams }
+        });
+
         // Save user message to active chat
         if (store) {
           const activeChat = store.getActiveChat();
@@ -3242,7 +3314,7 @@
             'Authorization': `Bearer ${config.apiKey}`
           },
           body: JSON.stringify({
-            model: config.model,
+            model: preset?.modelOverride || config.model,
             messages,
             stream: true,
             ...apiParams
@@ -3280,11 +3352,14 @@
             }
           }
         }
+
+        console.log('=== [LLM Raw] 返回的完整原始信息 ===', fullRawResponse);
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('LLM 请求失败:', err);
           alert('天道运转受阻：' + err.message);
         }
+        await rollbackSnapshot(snapshot);
       } finally {
         setLLMProcessing(false);
         llmAbortController = null;
