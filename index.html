@@ -2961,7 +2961,6 @@
         tbody.appendChild(tr);
       });
     }
-    renderMembers();
 
     function openMemberDetail(name) {
       const m = window.gameStateManager.state.members[name];
@@ -3067,7 +3066,6 @@
         list.appendChild(card);
       });
     }
-    renderFactions();
 
     // ====== WORLD DATA ======
     function switchWorldTab(type, btn) {
@@ -3114,8 +3112,6 @@
         grid.appendChild(card);
       });
     }
-    renderBuildings();
-    renderRegions();
 
     // ====== ACTION LOG SYSTEM ======
     let stamina = { current: 5, max: 5 };
