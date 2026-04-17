@@ -760,8 +760,9 @@ function attachLorebookListeners(state, store) {
   });
 
   body.querySelector('#st-import-book')?.addEventListener('click', async () => {
-    const data = await importJsonFile();
-    if (!data) return;
+    const result = await importJsonFile();
+    if (!result) return;
+    const { data, fileName } = result;
     try {
       let rawBook = null;
       // SillyTavern native exports entries as an object; our format uses an array
@@ -875,8 +876,9 @@ function attachPresetListeners(state, store) {
   });
 
   body.querySelector('#st-import-preset')?.addEventListener('click', async () => {
-    const data = await importJsonFile();
-    if (!data) return;
+    const result = await importJsonFile();
+    if (!result) return;
+    const { data, fileName } = result;
     try {
       let rawPreset = null;
       const isPreset =
@@ -893,7 +895,7 @@ function attachPresetListeners(state, store) {
         rawPreset = data.presets[0];
       }
       if (!rawPreset) throw new Error('无法识别的文件格式');
-      const preset = await importPreset(rawPreset);
+      const preset = await importPreset(rawPreset, fileName);
       await store.savePreset(preset);
       store.setState({ selectedPresetId: preset.id });
       store.showToast('预设导入成功');

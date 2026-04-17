@@ -256,6 +256,39 @@ function resolveRole(b) {
   return 'system';
 }
 
+// Map SillyTavern prompt identifiers to our internal block IDs
+const SILLYTAVERN_ID_MAP = {
+  main: 'system',
+  nsfw: 'system',
+  jailbreak: 'system',
+  dialogueExamples: 'example_messages',
+  chatHistory: 'history',
+  worldInfoBefore: 'world_info',
+  worldInfoAfter: 'world_info',
+  charDescription: 'character',
+  enhanceDefinitions: 'character',
+  charPersonality: 'character',
+  scenario: 'scenario',
+  personaDescription: 'system',
+  userInfo: 'system',
+  authorsNote: 'system',
+  // Fallbacks for common variants
+  world_info_before: 'world_info',
+  world_info_after: 'world_info',
+  char_description: 'character',
+  char_personality: 'character',
+  persona_description: 'system',
+  user_info: 'system',
+  authors_note: 'system',
+  enhance_definitions: 'character',
+  dialogue_examples: 'example_messages',
+  chat_history: 'history'
+};
+
+function mapSillyTavernId(identifier) {
+  return SILLYTAVERN_ID_MAP[identifier] || identifier;
+}
+
 function buildPromptOrder(promptsRepo, orderIndex) {
   // promptsRepo: array of prompt definitions (content repo)
   // orderIndex: ordering entries in various SillyTavern formats
@@ -302,7 +335,7 @@ function buildPromptOrder(promptsRepo, orderIndex) {
       if (!prompt) continue;
       const roleStr = resolveRole(prompt);
       result.push({
-        id: identifier,
+        id: mapSillyTavernId(identifier),
         name: prompt.name || identifier,
         content: prompt.content || '',
         enabled: entry.enabled ?? true,
@@ -319,7 +352,7 @@ function buildPromptOrder(promptsRepo, orderIndex) {
       if (!identifier) continue;
       const roleStr = resolveRole(prompt);
       result.push({
-        id: identifier,
+        id: mapSillyTavernId(identifier),
         name: prompt.name || identifier,
         content: prompt.content || '',
         enabled: prompt.enabled ?? true,
@@ -334,8 +367,11 @@ function buildPromptOrder(promptsRepo, orderIndex) {
   return result;
 }
 
-export async function importPreset(data) {
+export async function importPreset(data, fileName) {
   const id = crypto.randomUUID();
+
+  // Derive preset name: explicit field > filename without extension > default
+  const derivedName = data.name || (fileName ? fileName.replace(/\.json$/i, '') : null) || '导入的预设';
 
   // SillyTavern native format:
   // - data.prompts = content repository (array of prompt objects with identifier, name, content, role...)
@@ -369,7 +405,7 @@ export async function importPreset(data) {
 
   return {
     id,
-    name: data.name || '导入的预设',
+    name: derivedName,
     description: data.description || '',
     promptOrder,
     parameters: {
@@ -396,7 +432,7 @@ export async function importJsonFile() {
       if (!file) { resolve(null); return; }
       try {
         const text = await file.text();
-        resolve(JSON.parse(text));
+        resolve({ data: JSON.parse(text), fileName: file.name });
       } catch {
         resolve(null);
       }

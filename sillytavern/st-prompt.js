@@ -16,6 +16,31 @@ export const DEFAULT_PROMPT_BLOCKS = {
   USER_INPUT: 'user_input'
 };
 
+// SillyTavern aliases that our assembler should recognize
+const SILLYTAVERN_ALIASES = {
+  chatHistory: 'history',
+  dialogueExamples: 'example_messages',
+  worldInfoBefore: 'world_info',
+  worldInfoAfter: 'world_info',
+  main: 'system',
+  nsfw: 'system',
+  jailbreak: 'system',
+  charDescription: 'character',
+  charPersonality: 'character',
+  enhanceDefinitions: 'character',
+  personaDescription: 'system',
+  userInfo: 'system',
+  authorsNote: 'system'
+};
+
+function getBlockType(block) {
+  if (!block || !block.id) return null;
+  // Direct match with internal IDs or DEFAULT_PROMPT_BLOCKS values
+  if (Object.values(DEFAULT_PROMPT_BLOCKS).includes(block.id)) return block.id;
+  // Check aliases
+  return SILLYTAVERN_ALIASES[block.id] || block.id;
+}
+
 function estimateTokens(text) {
   if (!text) return 0;
   // Better approximation: 1 token ~= 0.6 Chinese chars or ~= 0.25 English words
@@ -85,14 +110,16 @@ export function assemblePrompt(options) {
   };
 
   for (const block of sortedBlocks) {
+    const blockType = getBlockType(block);
+
     // Handle special blocks
-    if (block.id === 'history' || block.id === DEFAULT_PROMPT_BLOCKS.CHAT_HISTORY) {
+    if (blockType === 'history' || blockType === DEFAULT_PROMPT_BLOCKS.CHAT_HISTORY) {
       flushSystem();
       assembledMessages.push(...recentHistory);
       continue;
     }
 
-    if (block.id === 'user_input' || block.id === DEFAULT_PROMPT_BLOCKS.USER_INPUT) {
+    if (blockType === 'user_input' || blockType === DEFAULT_PROMPT_BLOCKS.USER_INPUT) {
       flushSystem();
       assembledMessages.push({ role: 'user', content: userInput });
       continue;
@@ -102,7 +129,7 @@ export function assemblePrompt(options) {
     content = replaceMacros(content, { userName, characterName, userInput, variables });
 
     // World info injection
-    if (block.id === 'world_info' || block.id === DEFAULT_PROMPT_BLOCKS.WORLD_INFO) {
+    if (blockType === 'world_info' || blockType === DEFAULT_PROMPT_BLOCKS.WORLD_INFO) {
       worldInfoInserted = true;
       const worldInfoContent = uniqueEntries.map(e => e.entry.content).join('\n\n');
       if (worldInfoContent) {
@@ -113,12 +140,12 @@ export function assemblePrompt(options) {
     }
 
     // Character description
-    if (block.id === 'character' || block.id === DEFAULT_PROMPT_BLOCKS.CHARACTER_DESCRIPTION) {
+    if (blockType === 'character' || blockType === DEFAULT_PROMPT_BLOCKS.CHARACTER_DESCRIPTION) {
       charDescInserted = true;
     }
 
     // Scenario
-    if (block.id === 'scenario' || block.id === DEFAULT_PROMPT_BLOCKS.SCENARIO) {
+    if (blockType === 'scenario' || blockType === DEFAULT_PROMPT_BLOCKS.SCENARIO) {
       scenarioInserted = true;
       if (scenario) {
         content = scenario;
@@ -128,7 +155,7 @@ export function assemblePrompt(options) {
     }
 
     // Example messages
-    if (block.id === 'example_messages' || block.id === DEFAULT_PROMPT_BLOCKS.EXAMPLE_MESSAGES) {
+    if (blockType === 'example_messages' || blockType === DEFAULT_PROMPT_BLOCKS.EXAMPLE_MESSAGES) {
       exampleInserted = true;
       if (exampleMessages && exampleMessages.length > 0) {
         flushSystem();
@@ -164,9 +191,10 @@ export function assemblePrompt(options) {
   flushSystem();
 
   // Safety: ensure history exists if not explicitly placed
-  const hasHistoryBlock = sortedBlocks.some(b =>
-    b.id === 'history' || b.id === DEFAULT_PROMPT_BLOCKS.CHAT_HISTORY
-  );
+  const hasHistoryBlock = sortedBlocks.some(b => {
+    const type = getBlockType(b);
+    return type === 'history' || type === DEFAULT_PROMPT_BLOCKS.CHAT_HISTORY;
+  });
   if (!hasHistoryBlock && recentHistory.length > 0) {
     const userIdx = assembledMessages.findIndex(m => m.role === 'user');
     if (userIdx === -1) {
@@ -177,9 +205,10 @@ export function assemblePrompt(options) {
   }
 
   // Safety: ensure user input exists if not explicitly placed
-  const hasUserInputBlock = sortedBlocks.some(b =>
-    b.id === 'user_input' || b.id === DEFAULT_PROMPT_BLOCKS.USER_INPUT
-  );
+  const hasUserInputBlock = sortedBlocks.some(b => {
+    const type = getBlockType(b);
+    return type === 'user_input' || type === DEFAULT_PROMPT_BLOCKS.USER_INPUT;
+  });
   if (!hasUserInputBlock) {
     const lastAssistant = assembledMessages.length - 1 - assembledMessages.slice().reverse().findIndex(m => m.role === 'assistant');
     if (lastAssistant >= 0 && lastAssistant < assembledMessages.length) {
