@@ -2096,23 +2096,19 @@
             <div class="event-list">
               <div class="event-item" onclick="switchPage('story')">
                 <div class="event-dot urgent"></div>
-                <div class="event-text">苍梧山散修求见，携密信一封，称事关宗门存亡</div>
-                <div class="event-time">刚刚</div>
+                <div class="event-text" style="line-height:1.6">时间：刚刚 | 事件：苍梧山散修求见，携密信一封，称事关宗门存亡</div>
               </div>
               <div class="event-item" onclick="switchPage('members')">
                 <div class="event-dot normal"></div>
-                <div class="event-text">成员「林淮安」整理藏经阁时发现一卷失传古籍</div>
-                <div class="event-time">一炷香前</div>
+                <div class="event-text" style="line-height:1.6">时间：一炷香前 | 事件：成员「林淮安」整理藏经阁时发现一卷失传古籍</div>
               </div>
               <div class="event-item" onclick="switchPage('diplomacy')">
                 <div class="event-dot info"></div>
-                <div class="event-text">天剑宗送来拜帖，邀请参加三月后的论剑大会</div>
-                <div class="event-time">半日前</div>
+                <div class="event-text" style="line-height:1.6">时间：半日前 | 事件：天剑宗送来拜帖，邀请参加三月后的论剑大会</div>
               </div>
               <div class="event-item" onclick="switchPage('treasury')">
                 <div class="event-dot normal"></div>
-                <div class="event-text">炼器峰新铸「碧落剑」一柄，品质上佳，待入库</div>
-                <div class="event-time">一日前</div>
+                <div class="event-text" style="line-height:1.6">时间：一日前 | 事件：炼器峰新铸「碧落剑」一柄，品质上佳，待入库</div>
               </div>
             </div>
           </div>
@@ -3152,13 +3148,20 @@
         container.innerHTML = '';
         return;
       }
-      container.innerHTML = recentEvents.map(ev => `
-        <div class="event-item" onclick="switchPage('story')">
-          <div class="event-dot ${ev.type || 'normal'}"></div>
-          <div class="event-text">${escapeHtml(ev.text)}</div>
-          <div class="event-time">${escapeHtml(ev.time)}</div>
-        </div>
-      `).join('');
+      container.innerHTML = recentEvents.map(ev => {
+        const parts = [];
+        if (ev.time) parts.push(`时间：${ev.time}`);
+        if (ev.location) parts.push(`地点：${ev.location}`);
+        if (ev.people) parts.push(`人物：${ev.people}`);
+        if (ev.text) parts.push(`事件：${ev.text}`);
+        const displayText = parts.join(' | ');
+        return `
+          <div class="event-item" onclick="switchPage('story')">
+            <div class="event-dot ${ev.type || 'normal'}"></div>
+            <div class="event-text" style="line-height:1.6">${escapeHtml(displayText)}</div>
+          </div>
+        `;
+      }).join('');
     }
 
     function processStreamChunk(chunk) {
