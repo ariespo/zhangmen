@@ -157,13 +157,21 @@ export async function initDatabase() {
 }
 
 // ===== Import / Export =====
+function normalizeLorebookEntries(rawEntries) {
+  // SillyTavern exports entries as an object keyed by uid, not an array
+  if (!rawEntries) return [];
+  const entriesArray = Array.isArray(rawEntries)
+    ? rawEntries
+    : Object.values(rawEntries);
+  return entriesArray.filter(e => e && !e.disable && !e.excluded);
+}
+
 export function importLorebook(data) {
   return {
     id: crypto.randomUUID(),
     name: data.name || '导入的世界书',
     description: data.description || '',
-    entries: (data.entries || [])
-      .filter(e => !e.disable && !e.excluded)
+    entries: normalizeLorebookEntries(data.entries)
       .map(e => ({
         id: crypto.randomUUID(),
         keys: e.key || [],
@@ -179,9 +187,9 @@ export function importLorebook(data) {
         addMemo: e.addMemo ?? false,
         comment: e.comment || ''
       })),
-    recursiveScanning: data.settings?.recursive_scanning ?? false,
-    caseSensitive: data.settings?.case_sensitive ?? false,
-    matchWholeWords: data.settings?.match_whole_words ?? false,
+    recursiveScanning: data.settings?.recursive_scanning ?? data.recursive_scanning ?? false,
+    caseSensitive: data.settings?.case_sensitive ?? data.case_sensitive ?? false,
+    matchWholeWords: data.settings?.match_whole_words ?? data.match_whole_words ?? false,
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
@@ -242,6 +250,8 @@ export function exportPreset(preset) {
 
 export async function importPreset(data) {
   const id = crypto.randomUUID();
+
+  // Try to read prompt order from advanced formatting / tavernlike format
   const promptOrder = (data.prompt_order || data.promptOrder || []).map(b => ({
     id: b.identifier || b.id || crypto.randomUUID(),
     name: b.name || '未命名块',
@@ -253,26 +263,37 @@ export async function importPreset(data) {
     description: b.description || ''
   }));
 
+  // Fallback to default prompt blocks if none provided (native SillyTavern preset)
   if (promptOrder.length === 0) {
     DEFAULT_PRESET.promptOrder.forEach(b => {
       promptOrder.push({ ...b, id: crypto.randomUUID() });
     });
   }
 
-  const srcParams = data.gen_params || data.parameters || {};
+  // Native SillyTavern presets are flat objects; tavernlike uses nested gen_params/parameters
+  const p = data.gen_params || data.parameters || data;
+  const temperature = p.temperature ?? p.temp ?? 0.85;
+  const maxTokens = p.max_tokens ?? p.maxTokens ?? p.max_length ?? p.genamt ?? 2048;
+  const topP = p.top_p ?? p.topP ?? 0.9;
+  const frequencyPenalty = p.frequency_penalty ?? p.frequencyPenalty ?? p.rep_pen ?? 0.0;
+  const presencePenalty = p.presence_penalty ?? p.presencePenalty ?? 0.0;
+
+  // Context length: look for various common keys
+  const contextLength = data.contextLength ?? data.context_length ?? data.truncation_length ?? 4096;
+
   return {
     id,
     name: data.name || '导入的预设',
     description: data.description || '',
     promptOrder,
     parameters: {
-      temperature: srcParams.temperature ?? 0.85,
-      maxTokens: srcParams.max_tokens ?? srcParams.maxTokens ?? 2048,
-      topP: srcParams.top_p ?? srcParams.topP ?? 0.9,
-      frequencyPenalty: srcParams.frequency_penalty ?? srcParams.frequencyPenalty ?? 0.2,
-      presencePenalty: srcParams.presence_penalty ?? srcParams.presencePenalty ?? 0.3
+      temperature,
+      maxTokens,
+      topP,
+      frequencyPenalty,
+      presencePenalty
     },
-    contextLength: data.contextLength ?? data.context_length ?? 4096,
+    contextLength,
     createdAt: Date.now(),
     updatedAt: Date.now()
   };

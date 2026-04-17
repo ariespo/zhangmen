@@ -764,7 +764,8 @@ function attachLorebookListeners(state, store) {
     if (!data) return;
     try {
       let rawBook = null;
-      if (Array.isArray(data.entries)) {
+      // SillyTavern native exports entries as an object; our format uses an array
+      if (data.entries && (Array.isArray(data.entries) || typeof data.entries === 'object')) {
         rawBook = data;
       } else if (Array.isArray(data.data?.lorebooks) && data.data.lorebooks.length > 0) {
         rawBook = data.data.lorebooks[0];
@@ -878,7 +879,12 @@ function attachPresetListeners(state, store) {
     if (!data) return;
     try {
       let rawPreset = null;
-      if (data.prompt_order || data.gen_params || data.parameters || data.promptOrder) {
+      const isNativePreset =
+        data.prompt_order || data.gen_params || data.parameters || data.promptOrder ||
+        data.temp !== undefined || data.temperature !== undefined ||
+        data.top_p !== undefined || data.max_length !== undefined || data.max_tokens !== undefined ||
+        data.rep_pen !== undefined || data.presence_penalty !== undefined;
+      if (isNativePreset) {
         rawPreset = data;
       } else if (Array.isArray(data.data?.presets) && data.data.presets.length > 0) {
         rawPreset = data.data.presets[0];
