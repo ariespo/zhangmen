@@ -640,6 +640,8 @@ function renderSettingsModal(state, store) {
 }
 
 function renderApiSettings(state) {
+  const modelList = state.apiModelList;
+  const hasList = modelList && modelList.length > 0;
   return `
     <div style="max-width:500px">
       <div class="st-form-group">
@@ -649,7 +651,12 @@ function renderApiSettings(state) {
       <div class="st-form-group">
         <label class="st-label">模型名称</label>
         <input type="text" class="st-input" id="st-model" value="${escapeHtml(state.settings.api.model)}" placeholder="gpt-3.5-turbo">
-        <div id="st-model-select-container" style="margin-top:8px;display:none"></div>
+        ${hasList ? `
+          <select class="st-input" id="st-model-select" style="margin-top:8px;background:rgba(0,0,0,0.3)">
+            <option value="">-- 选择模型 --</option>
+            ${modelList.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('')}
+          </select>
+        ` : ''}
       </div>
       <div class="st-form-group">
         <label class="st-label">API基础URL</label>
@@ -953,12 +960,12 @@ function attachLorebookListeners(state, store) {
       depth: document.getElementById('st-entry-depth')?.value ? Number(document.getElementById('st-entry-depth').value) : undefined,
       enabled: document.getElementById('st-entry-enabled')?.checked !== false,
       selective: document.getElementById('st-entry-selective')?.checked || false,
-      selectiveLogic: 'or',
+      selectiveLogic: document.getElementById('st-entry-selectiveLogic')?.value || 'not_all',
       constant: document.getElementById('st-entry-constant')?.checked || false,
       probability: Math.min(100, Math.max(0, Number(document.getElementById('st-entry-probability')?.value) || 100)),
-      role: 'system',
+      role: document.getElementById('st-entry-role')?.value || 'system',
       addMemo: false,
-      comment: ''
+      comment: (document.getElementById('st-entry-comment')?.value || '').trim()
     };
 
     if (entryId) {
@@ -1018,12 +1025,17 @@ function attachPresetListeners(state, store) {
       } else if (Array.isArray(data.presets) && data.presets.length > 0) {
         rawPreset = data.presets[0];
       }
-      if (!rawPreset) throw new Error('无法识别的文件格式');
+      if (!rawPreset) {
+        console.error('[Import Preset] Unrecognized format. Keys:', Object.keys(data));
+        throw new Error('无法识别的文件格式（缺少 prompts、prompt_order 或生成参数字段）');
+      }
       const preset = await importPreset(rawPreset, fileName);
       await store.savePreset(preset);
+      await store.saveSettings({ activePresetId: preset.id });
       store.setState({ selectedPresetId: preset.id });
-      store.showToast('预设导入成功');
+      store.showToast('预设导入成功并已激活');
     } catch (err) {
+      console.error('[Import Preset] Error:', err);
       alert('导入失败: ' + err.message);
     }
   });
@@ -1216,7 +1228,6 @@ function attachSettingsListeners(state, store) {
   body.querySelector('#st-fetch-models')?.addEventListener('click', async () => {
     const baseUrl = (document.getElementById('st-base-url')?.value || '').trim().replace(/\/$/, '');
     let apiKey = (document.getElementById('st-api-key')?.value || '').trim();
-    const container = document.getElementById('st-model-select-container');
     if (!baseUrl) {
       alert('请先填写 API 基础 URL');
       return;
@@ -1251,39 +1262,21 @@ function attachSettingsListeners(state, store) {
     }
 
     if (models.length > 0) {
-      const select = document.createElement('select');
-      select.className = 'st-input';
-      select.style.background = 'rgba(0,0,0,0.3)';
-      select.innerHTML = `<option value="">-- 选择模型 --</option>` + models.map(m =>
-        `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`
-      ).join('');
-      select.addEventListener('change', () => {
-        const modelInput = document.getElementById('st-model');
-        if (modelInput && select.value) modelInput.value = select.value;
-      });
-      container.innerHTML = '';
-      container.appendChild(select);
-      container.style.display = 'block';
+      store.setState({ apiModelList: models });
       store.showToast(`已获取 ${models.length} 个模型`);
       return;
     }
 
     // Fallback: show common models based on URL hints
     const fallbackModels = getCommonModels(baseUrl);
-    const select = document.createElement('select');
-    select.className = 'st-input';
-    select.style.background = 'rgba(0,0,0,0.3)';
-    select.innerHTML = `<option value="">-- ${fallbackModels.label} --</option>` + fallbackModels.list.map(m =>
-      `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`
-    ).join('');
-    select.addEventListener('change', () => {
-      const modelInput = document.getElementById('st-model');
-      if (modelInput && select.value) modelInput.value = select.value;
-    });
-    container.innerHTML = '';
-    container.appendChild(select);
-    container.style.display = 'block';
+    store.setState({ apiModelList: fallbackModels.list });
     alert(`获取模型列表失败 (${lastErr?.message || 'Unknown'})，已显示常用模型供选择。`);
+  });
+
+  body.querySelector('#st-model-select')?.addEventListener('change', () => {
+    const select = document.getElementById('st-model-select');
+    const modelInput = document.getElementById('st-model');
+    if (select && modelInput && select.value) modelInput.value = select.value;
   });
 
   body.querySelector('#st-save-profile')?.addEventListener('click', async () => {
