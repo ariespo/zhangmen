@@ -879,12 +879,13 @@ function attachPresetListeners(state, store) {
     if (!data) return;
     try {
       let rawPreset = null;
-      const isNativePreset =
-        data.prompt_order || data.gen_params || data.parameters || data.promptOrder ||
+      const isPreset =
+        data.prompts || data.prompt_order || data.gen_params || data.parameters || data.promptOrder ||
         data.temp !== undefined || data.temperature !== undefined ||
         data.top_p !== undefined || data.max_length !== undefined || data.max_tokens !== undefined ||
+        data.openai_max_context !== undefined || data.openai_max_tokens !== undefined ||
         data.rep_pen !== undefined || data.presence_penalty !== undefined;
-      if (isNativePreset) {
+      if (isPreset) {
         rawPreset = data;
       } else if (Array.isArray(data.data?.presets) && data.data.presets.length > 0) {
         rawPreset = data.data.presets[0];

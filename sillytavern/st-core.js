@@ -248,38 +248,44 @@ export function exportPreset(preset) {
   };
 }
 
-export async function importPreset(data) {
-  const id = crypto.randomUUID();
-
-  // Try to read prompt order from advanced formatting / tavernlike format
-  const promptOrder = (data.prompt_order || data.promptOrder || []).map(b => ({
+function mapPromptBlock(b) {
+  const roleStr = typeof b.role === 'string' ? b.role.toLowerCase() : (b.role === 1 ? 'user' : b.role === 2 ? 'assistant' : 'system');
+  return {
     id: b.identifier || b.id || crypto.randomUUID(),
     name: b.name || '未命名块',
     content: b.system_prompt || b.content || '',
     enabled: b.enabled ?? true,
-    position: b.position ?? 0,
-    insertionType: b.role === 1 ? 'user' : b.role === 2 ? 'assistant' : 'system',
-    role: b.role === 1 ? 'user' : b.role === 2 ? 'assistant' : 'system',
+    position: b.injection_order ?? b.position ?? 0,
+    insertionType: roleStr,
+    role: roleStr,
     description: b.description || ''
-  }));
+  };
+}
 
-  // Fallback to default prompt blocks if none provided (native SillyTavern preset)
+export async function importPreset(data) {
+  const id = crypto.randomUUID();
+
+  // Support multiple prompt array formats
+  let rawPrompts = data.prompts || data.prompt_order || data.promptOrder || data.prompt_entries || [];
+  let promptOrder = rawPrompts.map(mapPromptBlock);
+
+  // Fallback to default prompt blocks if none provided
   if (promptOrder.length === 0) {
     DEFAULT_PRESET.promptOrder.forEach(b => {
       promptOrder.push({ ...b, id: crypto.randomUUID() });
     });
   }
 
-  // Native SillyTavern presets are flat objects; tavernlike uses nested gen_params/parameters
+  // Parameters may be nested or flat
   const p = data.gen_params || data.parameters || data;
   const temperature = p.temperature ?? p.temp ?? 0.85;
-  const maxTokens = p.max_tokens ?? p.maxTokens ?? p.max_length ?? p.genamt ?? 2048;
+  const maxTokens = p.openai_max_tokens ?? p.max_tokens ?? p.maxTokens ?? p.max_length ?? p.genamt ?? 2048;
   const topP = p.top_p ?? p.topP ?? 0.9;
   const frequencyPenalty = p.frequency_penalty ?? p.frequencyPenalty ?? p.rep_pen ?? 0.0;
   const presencePenalty = p.presence_penalty ?? p.presencePenalty ?? 0.0;
 
-  // Context length: look for various common keys
-  const contextLength = data.contextLength ?? data.context_length ?? data.truncation_length ?? 4096;
+  // Context length: various common keys across formats
+  const contextLength = data.openai_max_context ?? data.contextLength ?? data.context_length ?? data.truncation_length ?? 4096;
 
   return {
     id,
