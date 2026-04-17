@@ -763,12 +763,16 @@ function attachLorebookListeners(state, store) {
     const data = await importJsonFile();
     if (!data) return;
     try {
-      const book = data.name && data.entries
-        ? importLorebook(data)
-        : data.data?.lorebooks?.[0]
-          ? { ...data.data.lorebooks[0], id: crypto.randomUUID() }
-          : null;
-      if (!book) throw new Error('无法识别的文件格式');
+      let rawBook = null;
+      if (Array.isArray(data.entries)) {
+        rawBook = data;
+      } else if (Array.isArray(data.data?.lorebooks) && data.data.lorebooks.length > 0) {
+        rawBook = data.data.lorebooks[0];
+      } else if (Array.isArray(data.lorebooks) && data.lorebooks.length > 0) {
+        rawBook = data.lorebooks[0];
+      }
+      if (!rawBook) throw new Error('无法识别的文件格式');
+      const book = importLorebook(rawBook);
       await store.saveLorebook(book);
       store.setState({ selectedBookId: book.id });
       store.showToast('世界书导入成功');
@@ -873,7 +877,16 @@ function attachPresetListeners(state, store) {
     const data = await importJsonFile();
     if (!data) return;
     try {
-      const preset = await importPreset(data);
+      let rawPreset = null;
+      if (data.prompt_order || data.gen_params || data.parameters || data.promptOrder) {
+        rawPreset = data;
+      } else if (Array.isArray(data.data?.presets) && data.data.presets.length > 0) {
+        rawPreset = data.data.presets[0];
+      } else if (Array.isArray(data.presets) && data.presets.length > 0) {
+        rawPreset = data.presets[0];
+      }
+      if (!rawPreset) throw new Error('无法识别的文件格式');
+      const preset = await importPreset(rawPreset);
       await store.savePreset(preset);
       store.setState({ selectedPresetId: preset.id });
       store.showToast('预设导入成功');

@@ -242,7 +242,7 @@ export function exportPreset(preset) {
 
 export async function importPreset(data) {
   const id = crypto.randomUUID();
-  const promptOrder = (data.prompt_order || []).map(b => ({
+  const promptOrder = (data.prompt_order || data.promptOrder || []).map(b => ({
     id: b.identifier || b.id || crypto.randomUUID(),
     name: b.name || '未命名块',
     content: b.system_prompt || b.content || '',
@@ -259,19 +259,20 @@ export async function importPreset(data) {
     });
   }
 
+  const srcParams = data.gen_params || data.parameters || {};
   return {
     id,
     name: data.name || '导入的预设',
     description: data.description || '',
     promptOrder,
     parameters: {
-      temperature: data.gen_params?.temperature ?? 0.85,
-      maxTokens: data.gen_params?.max_tokens ?? 2048,
-      topP: data.gen_params?.top_p ?? 0.9,
-      frequencyPenalty: data.gen_params?.frequency_penalty ?? 0.2,
-      presencePenalty: data.gen_params?.presence_penalty ?? 0.3
+      temperature: srcParams.temperature ?? 0.85,
+      maxTokens: srcParams.max_tokens ?? srcParams.maxTokens ?? 2048,
+      topP: srcParams.top_p ?? srcParams.topP ?? 0.9,
+      frequencyPenalty: srcParams.frequency_penalty ?? srcParams.frequencyPenalty ?? 0.2,
+      presencePenalty: srcParams.presence_penalty ?? srcParams.presencePenalty ?? 0.3
     },
-    contextLength: data.gen_params?.max_tokens ? data.gen_params.max_tokens * 2 : 4096,
+    contextLength: data.contextLength ?? data.context_length ?? 4096,
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
