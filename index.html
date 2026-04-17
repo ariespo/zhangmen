@@ -1405,6 +1405,35 @@
       color: rgba(168,230,230,0.5);
       margin-left: 8px;
     }
+    .building-card {
+      cursor: pointer;
+    }
+    .building-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      justify-content: flex-end;
+    }
+    .region-explore-btn {
+      margin-top: 12px;
+      width: 100%;
+      padding: 8px 0;
+      background: rgba(110,207,207,0.12);
+      border: 1px solid rgba(110,207,207,0.3);
+      border-radius: 8px;
+      color: var(--jade-glow);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .region-explore-btn:hover {
+      background: rgba(110,207,207,0.2);
+    }
+    .region-explore-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
     /* === LIBRARY PAGE === */
     .skill-filters {
@@ -1761,6 +1790,8 @@
     body.llm-processing .treasury-tab,
     body.llm-processing .world-tab,
     body.llm-processing .skill-filter,
+    body.llm-processing .building-card,
+    body.llm-processing .region-explore-btn,
     body.llm-processing .modal-close,
     body.llm-processing .action-log-close,
     body.llm-processing .search-box,
@@ -2461,6 +2492,9 @@
             <button class="world-tab" onclick="switchWorldTab('regions', this)">疆域舆图</button>
           </div>
           <div class="world-panel active" id="buildings-panel">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+              <button class="action-btn-sm" onclick="openAddBuildingModal()">+ 新增建筑</button>
+            </div>
             <div class="building-grid" id="building-grid"></div>
           </div>
           <div class="world-panel" id="regions-panel">
@@ -3080,9 +3114,10 @@
       if (!grid) return;
       grid.innerHTML = '';
       const buildings = window.gameStateManager?.state?.world?.buildings || [];
-      buildings.forEach(b => {
+      buildings.forEach((b, idx) => {
         const card = document.createElement('div');
         card.className = 'building-card' + (b.unlocked ? '' : ' locked');
+        card.onclick = () => openBuildingDetail(idx);
         card.innerHTML = `
           <div class="building-header">
             <div class="building-name">${b.name}${b.unlocked ? '' : '<span class="locked-badge">未解锁</span>'}</div>
@@ -3099,7 +3134,7 @@
       if (!grid) return;
       grid.innerHTML = '';
       const regions = window.gameStateManager?.state?.world?.regions || [];
-      regions.forEach(r => {
+      regions.forEach((r, idx) => {
         const card = document.createElement('div');
         card.className = 'region-card' + (r.unlocked ? '' : ' locked');
         card.innerHTML = `
@@ -3108,9 +3143,120 @@
           </div>
           <div class="region-desc">${r.unlocked ? '已探索' : '尚未探索此区域'}</div>
           <div class="region-controller">掌控势力：${r.controlledBy || '未知'}</div>
+          ${r.unlocked ? '' : `<button class="region-explore-btn" onclick="event.stopPropagation();exploreRegion(${idx})">派遣探索</button>`}
         `;
         grid.appendChild(card);
       });
+    }
+
+    function openBuildingDetail(idx) {
+      const buildings = window.gameStateManager?.state?.world?.buildings || [];
+      const b = buildings[idx];
+      if (!b) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <path d="M3 21h18M5 21v-8l7-4 7 4v8M9 21v-4h6v4"/>
+        </svg> ${b.name}
+      `;
+      document.getElementById('modal-body').innerHTML = `
+        <div class="sect-info-grid">
+          <div class="info-block"><h4>当前等级</h4><div class="info-value text-gold">Lv.${b.level}</div></div>
+          <div class="info-block"><h4>状态</h4><div class="info-value">${b.unlocked ? '正常运作' : '未解锁'}</div></div>
+        </div>
+        <div class="info-block full-width" style="margin-top:12px">
+          <h4>建筑描述</h4>
+          <div class="info-value" style="font-size:13px;line-height:1.8">${b.description || '暂无描述'}</div>
+        </div>
+        <div class="building-actions">
+          <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
+          <button class="opportunity-btn primary" onclick="upgradeBuilding(${idx});closeModal();">升级</button>
+          <button class="opportunity-btn secondary" style="color:var(--lotus-pink);border-color:rgba(212,114,140,0.4)" onclick="demolishBuilding(${idx});closeModal();">拆卸</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function upgradeBuilding(idx) {
+      const buildings = window.gameStateManager?.state?.world?.buildings;
+      if (!buildings || !buildings[idx]) return;
+      const b = buildings[idx];
+      if (b.level >= 10) {
+        alert('该建筑已达到最高等级');
+        return;
+      }
+      window.gameStateManager.applyPatch([{
+        op: 'replace',
+        path: '/world/buildings/' + idx + '/level',
+        value: b.level + 1
+      }]);
+    }
+
+    function demolishBuilding(idx) {
+      const buildings = window.gameStateManager?.state?.world?.buildings;
+      if (!buildings || !buildings[idx]) return;
+      if (!confirm('确定要拆卸「' + buildings[idx].name + '」吗？此操作不可撤销。')) return;
+      window.gameStateManager.applyPatch([{
+        op: 'remove',
+        path: '/world/buildings/' + idx
+      }]);
+    }
+
+    function openAddBuildingModal() {
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <path d="M12 5v14M5 12h14"/>
+        </svg> 新增建筑
+      `;
+      document.getElementById('modal-body').innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <label style="display:block;font-size:12px;color:rgba(168,230,230,0.6);margin-bottom:6px">建筑名称</label>
+            <input type="text" id="new-building-name" class="search-box" style="width:100%" placeholder="例如：灵兽园" />
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:rgba(168,230,230,0.6);margin-bottom:6px">建筑描述</label>
+            <input type="text" id="new-building-desc" class="search-box" style="width:100%" placeholder="简述用途..." />
+          </div>
+        </div>
+        <div class="building-actions">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+          <button class="opportunity-btn primary" onclick="submitAddBuilding()">确认新增</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+      setTimeout(() => document.getElementById('new-building-name')?.focus(), 50);
+    }
+
+    function submitAddBuilding() {
+      const name = document.getElementById('new-building-name')?.value.trim();
+      const desc = document.getElementById('new-building-desc')?.value.trim();
+      if (!name) {
+        alert('请输入建筑名称');
+        return;
+      }
+      window.gameStateManager.applyPatch([{
+        op: 'insert',
+        path: '/world/buildings/-',
+        value: { name, level: 1, unlocked: true, description: desc || '暂无描述' }
+      }]);
+      closeModal();
+    }
+
+    function exploreRegion(idx) {
+      const regions = window.gameStateManager?.state?.world?.regions;
+      if (!regions || !regions[idx]) return;
+      const r = regions[idx];
+      if (r.unlocked) {
+        alert('该区域已探索');
+        return;
+      }
+      window.gameStateManager.applyPatch([{
+        op: 'replace',
+        path: '/world/regions/' + idx + '/unlocked',
+        value: true
+      }]);
     }
 
     // ====== ACTION LOG SYSTEM ======
