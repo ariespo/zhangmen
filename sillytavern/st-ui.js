@@ -202,8 +202,9 @@ function renderBookDetail(book, state) {
 }
 
 function renderEntryCard(entry, bookId) {
+  const isDisabled = entry.enabled === false;
   return `
-    <div class="st-entry-card" data-entry-id="${entry.id}">
+    <div class="st-entry-card ${isDisabled ? 'disabled' : ''}" data-entry-id="${entry.id}">
       <div class="st-entry-header">
         <div class="st-entry-keys">
           ${entry.keys.slice(0, 6).map(k => `<span class="st-tag">${escapeHtml(k)}</span>`).join('')}
@@ -211,15 +212,21 @@ function renderEntryCard(entry, bookId) {
           ${entry.constant ? `<span class="st-tag pink">常时</span>` : ''}
           ${entry.selective ? `<span class="st-tag cyan">筛选</span>` : ''}
           ${entry.probability < 100 ? `<span class="st-tag orange">${entry.probability}%</span>` : ''}
+          ${isDisabled ? `<span class="st-tag" style="background:rgba(150,150,150,0.2);color:#aaa">禁用</span>` : ''}
+          ${entry.depth !== undefined && entry.depth !== null ? `<span class="st-tag" style="background:rgba(110,207,207,0.1);color:#6ecfcf">深度${entry.depth}</span>` : ''}
+          ${entry.role && entry.role !== 'system' ? `<span class="st-tag" style="background:rgba(139,126,200,0.15);color:#8b7ec8">${entry.role}</span>` : ''}
         </div>
-        <div style="display:flex;gap:6px">
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="checkbox" class="st-checkbox st-entry-toggle"
+            ${!isDisabled ? 'checked' : ''}
+            data-book-id="${bookId}" data-entry-id="${entry.id}" title="启用/禁用">
           <button class="st-btn-secondary st-edit-entry" data-book-id="${bookId}" data-entry-id="${entry.id}" style="padding:4px 10px;font-size:12px">编辑</button>
           <button class="st-btn-danger st-delete-entry" data-book-id="${bookId}" data-entry-id="${entry.id}" style="padding:4px 10px;font-size:12px">删除</button>
         </div>
       </div>
       <div class="st-entry-content">${escapeHtml(entry.content)}</div>
       <div class="st-entry-meta">
-        顺序:${entry.order} · 位置:${POSITION_NAMES[entry.position] || entry.position}${entry.depth !== undefined ? `(深度${entry.depth})` : ''}
+        顺序:${entry.order} · 位置:${POSITION_NAMES[entry.position] || entry.position}${entry.depth !== undefined && entry.depth !== null ? ` · 深度:${entry.depth}` : ''}${entry.role && entry.role !== 'system' ? ` · 角色:${entry.role}` : ''}
       </div>
     </div>
   `;
@@ -277,6 +284,10 @@ function renderEntryEditor(entry, book) {
       </div>
 
       <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+        <label class="st-checkbox-label">
+          <input type="checkbox" id="st-entry-enabled" ${e.enabled !== false ? 'checked' : ''}>
+          <span>启用条目</span>
+        </label>
         <label class="st-checkbox-label">
           <input type="checkbox" id="st-entry-selective" ${e.selective ? 'checked' : ''}>
           <span>启用二次筛选</span>
@@ -429,11 +440,14 @@ function renderPresetBlocks(preset) {
         ${blocks.map((b, idx) => `
           <div class="st-block-item" data-block-index="${idx}">
             <div class="st-block-header">
-              <div style="display:flex;align-items:center;gap:10px">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                 <input type="checkbox" class="st-block-enabled" data-index="${idx}" ${b.enabled ? 'checked' : ''} title="启用">
                 <span class="st-block-name">${escapeHtml(b.name)}</span>
                 <span class="st-block-id">${b.id}</span>
                 <span class="st-block-role">${b.role || 'system'}</span>
+                ${b.marker ? `<span class="st-tag pink" style="padding:1px 6px;font-size:10px">标记</span>` : ''}
+                ${b.injectionPosition !== undefined ? `<span class="st-tag cyan" style="padding:1px 6px;font-size:10px">注入位${b.injectionPosition}</span>` : ''}
+                ${b.injectionDepth !== undefined ? `<span class="st-tag orange" style="padding:1px 6px;font-size:10px">深度${b.injectionDepth}</span>` : ''}
               </div>
               <div style="display:flex;align-items:center;gap:8px">
                 <input type="number" class="st-input st-block-position" data-index="${idx}" value="${b.position}" style="width:70px;padding:4px 8px;font-size:12px;margin:0" title="位置">
@@ -815,6 +829,18 @@ function attachLorebookListeners(state, store) {
     });
   });
 
+  body.querySelectorAll('.st-entry-toggle').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const book = state.lorebooks.find(b => b.id === cb.dataset.bookId);
+      if (!book) return;
+      const entry = book.entries.find(e => e.id === cb.dataset.entryId);
+      if (entry) {
+        entry.enabled = cb.checked;
+        await store.saveLorebook(book);
+      }
+    });
+  });
+
   body.querySelector('#st-save-entry')?.addEventListener('click', async () => {
     const bookId = body.querySelector('#st-save-entry')?.dataset.bookId;
     const entryId = body.querySelector('#st-save-entry')?.dataset.entryId;
@@ -829,10 +855,12 @@ function attachLorebookListeners(state, store) {
       order: Number(document.getElementById('st-entry-order')?.value) || 100,
       position: document.getElementById('st-entry-position')?.value || 'after_char',
       depth: document.getElementById('st-entry-depth')?.value ? Number(document.getElementById('st-entry-depth').value) : undefined,
+      enabled: document.getElementById('st-entry-enabled')?.checked !== false,
       selective: document.getElementById('st-entry-selective')?.checked || false,
       selectiveLogic: 'or',
       constant: document.getElementById('st-entry-constant')?.checked || false,
       probability: Math.min(100, Math.max(0, Number(document.getElementById('st-entry-probability')?.value) || 100)),
+      role: 'system',
       addMemo: false,
       comment: ''
     };

@@ -163,7 +163,8 @@ function normalizeLorebookEntries(rawEntries) {
   const entriesArray = Array.isArray(rawEntries)
     ? rawEntries
     : Object.values(rawEntries);
-  return entriesArray.filter(e => e && !e.disable && !e.excluded);
+  // Keep disabled entries so users can toggle them in the UI
+  return entriesArray.filter(e => e);
 }
 
 export function importLorebook(data) {
@@ -178,12 +179,14 @@ export function importLorebook(data) {
         secondaryKeys: e.keysecondary || [],
         content: e.content || '',
         order: e.order ?? 100,
-        position: POSITION_MAP[e.position ?? 1],
+        position: POSITION_MAP[e.position ?? 1] || 'after_char',
         depth: e.depth,
         selective: e.selective ?? false,
         selectiveLogic: LOGIC_MAP[e.selectiveLogic ?? 1],
         constant: e.constant ?? false,
-        probability: e.useProbability ? (e.probability ?? 100) : 100,
+        probability: e.probability ?? 100,
+        enabled: !e.disable,
+        role: e.role === 1 ? 'user' : e.role === 2 ? 'assistant' : 'system',
         addMemo: e.addMemo ?? false,
         comment: e.comment || ''
       })),
@@ -210,13 +213,14 @@ export function exportLorebook(book) {
       selectiveLogic: (e.selectiveLogic === 'and' ? 0 : 1),
       addMemo: e.addMemo,
       order: e.order,
-      position: REVERSE_POSITION_MAP[e.position],
-      disable: false,
-      probability: e.probability,
+      position: REVERSE_POSITION_MAP[e.position] ?? 1,
+      disable: e.enabled === false,
+      probability: e.probability ?? 100,
       depth: e.depth ?? 4,
       group: '',
-      useProbability: e.probability < 100,
-      excluded: false
+      useProbability: (e.probability ?? 100) < 100,
+      excluded: false,
+      role: e.role === 'user' ? 1 : e.role === 'assistant' ? 2 : 0
     })),
     settings: {
       recursive_scanning: book.recursiveScanning,
@@ -289,6 +293,31 @@ function mapSillyTavernId(identifier) {
   return SILLYTAVERN_ID_MAP[identifier] || identifier;
 }
 
+// Default sort positions for SillyTavern structural blocks when injection_order is absent
+const DEFAULT_BLOCK_POSITIONS = {
+  system: 0,
+  main: 0,
+  nsfw: 100,
+  jailbreak: 999,
+  character: 200,
+  scenario: 250,
+  example_messages: 280,
+  history: 300,
+  world_info: 100,
+  user_input: 400
+};
+
+function getSortPosition(prompt, mappedId) {
+  // injection_order is the numeric sort priority in SillyTavern
+  if (prompt.injection_order !== undefined && prompt.injection_order !== null) {
+    return prompt.injection_order;
+  }
+  if (prompt.position !== undefined && prompt.position !== null) {
+    return prompt.position;
+  }
+  return DEFAULT_BLOCK_POSITIONS[mappedId] ?? 500;
+}
+
 function buildPromptOrder(promptsRepo, orderIndex) {
   // promptsRepo: array of prompt definitions (content repo)
   // orderIndex: ordering entries in various SillyTavern formats
@@ -333,16 +362,20 @@ function buildPromptOrder(promptsRepo, orderIndex) {
       if (!identifier) continue;
       const prompt = promptMap.get(identifier);
       if (!prompt) continue;
+      const mappedId = mapSillyTavernId(identifier);
       const roleStr = resolveRole(prompt);
       result.push({
-        id: mapSillyTavernId(identifier),
+        id: mappedId,
         name: prompt.name || identifier,
         content: prompt.content || '',
         enabled: entry.enabled ?? true,
-        position: prompt.injection_order ?? prompt.position ?? prompt.injectionPosition ?? 0,
+        position: getSortPosition(prompt, mappedId),
         insertionType: roleStr,
         role: roleStr,
-        description: prompt.description || ''
+        description: prompt.description || '',
+        marker: prompt.marker || false,
+        injectionPosition: prompt.injection_position,
+        injectionDepth: prompt.injection_depth
       });
     }
   } else if (promptsRepo.length > 0) {
@@ -350,16 +383,20 @@ function buildPromptOrder(promptsRepo, orderIndex) {
     for (const prompt of promptsRepo) {
       const identifier = prompt.identifier || prompt.id;
       if (!identifier) continue;
+      const mappedId = mapSillyTavernId(identifier);
       const roleStr = resolveRole(prompt);
       result.push({
-        id: mapSillyTavernId(identifier),
+        id: mappedId,
         name: prompt.name || identifier,
         content: prompt.content || '',
         enabled: prompt.enabled ?? true,
-        position: prompt.injection_order ?? prompt.position ?? prompt.injectionPosition ?? 0,
+        position: getSortPosition(prompt, mappedId),
         insertionType: roleStr,
         role: roleStr,
-        description: prompt.description || ''
+        description: prompt.description || '',
+        marker: prompt.marker || false,
+        injectionPosition: prompt.injection_position,
+        injectionDepth: prompt.injection_depth
       });
     }
   }

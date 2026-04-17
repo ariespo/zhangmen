@@ -353,6 +353,12 @@
   background: rgba(0, 0, 0, 0.28);
 }
 
+.st-entry-card.disabled {
+  opacity: 0.55;
+  border-color: rgba(110, 207, 207, 0.05);
+  background: rgba(0, 0, 0, 0.15);
+}
+
 .st-entry-header {
   display: flex;
   justify-content: space-between;

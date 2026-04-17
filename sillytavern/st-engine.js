@@ -17,6 +17,8 @@ export class LorebookEngine {
     const matched = [];
 
     for (const entry of this.lorebook.entries) {
+      if (entry.enabled === false) continue;
+
       if (entry.constant) {
         matched.push({ entry, score: -9999, matchedKeywords: ['constant'] });
         continue;
