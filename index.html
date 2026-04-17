@@ -2881,6 +2881,8 @@
     // ====== ACTION LOG SYSTEM ======
     let stamina = { current: 5, max: 5 };
     let actionLogs = [];
+    let recentEvents = [];
+    let capturedSumText = '';
     let currentSkillTypeFilter = 'all';
     let currentSkillRankFilter = 'all';
 
@@ -3040,6 +3042,7 @@
       capturedMainText = '';
       capturedOptionText = '';
       capturedThinkText = '';
+      capturedSumText = '';
       currentMainParagraph = null;
       updateThinkButton();
     }
@@ -3108,6 +3111,56 @@
       if (panel) panel.classList.remove('active');
     }
 
+    function parseSumAndAddEvent(sumText) {
+      const raw = sumText.trim();
+      if (!raw) return;
+      // 格式: 时间：XXX | 地点：XXX | 人物：XXX、xxx | 事件：XXXX
+      // 也可能是: 时间XXX|地点:XXX|人物:XXX、xxx、xxx|事件：XXXX
+      const parts = raw.split(/\s*\|\s*/);
+      let timeStr = '';
+      let locationStr = '';
+      let peopleStr = '';
+      let eventStr = '';
+      for (const part of parts) {
+        const p = part.trim();
+        if (p.startsWith('时间')) {
+          timeStr = p.replace(/^时间[：:]?\s*/, '').trim();
+        } else if (p.startsWith('地点')) {
+          locationStr = p.replace(/^地点[：:]?\s*/, '').trim();
+        } else if (p.startsWith('人物')) {
+          peopleStr = p.replace(/^人物[：:]?\s*/, '').trim();
+        } else if (p.startsWith('事件')) {
+          eventStr = p.replace(/^事件[：:]?\s*/, '').trim();
+        }
+      }
+      // 如果没匹配到事件字段，但整段文本不为空，就把整段当作事件
+      if (!eventStr && raw) eventStr = raw;
+      recentEvents.unshift({
+        text: eventStr,
+        time: timeStr || '刚刚',
+        location: locationStr,
+        people: peopleStr,
+        type: 'urgent'
+      });
+      renderEvents();
+    }
+
+    function renderEvents() {
+      const container = document.querySelector('.event-list');
+      if (!container) return;
+      if (recentEvents.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      container.innerHTML = recentEvents.map(ev => `
+        <div class="event-item" onclick="switchPage('story')">
+          <div class="event-dot ${ev.type || 'normal'}"></div>
+          <div class="event-text">${escapeHtml(ev.text)}</div>
+          <div class="event-time">${escapeHtml(ev.time)}</div>
+        </div>
+      `).join('');
+    }
+
     function processStreamChunk(chunk) {
       streamBuffer += chunk;
       while (streamBuffer.length > 0) {
@@ -3174,14 +3227,19 @@
         if (currentCaptureTag === null) {
           const mainStart = remaining.indexOf('<maintext>');
           const optionStart = remaining.indexOf('<option>');
-          if (mainStart !== -1 && (optionStart === -1 || mainStart < optionStart)) {
-            remaining = remaining.slice(mainStart + 10);
-            currentCaptureTag = 'maintext';
-            capturedMainText = '';
-          } else if (optionStart !== -1) {
-            remaining = remaining.slice(optionStart + 8);
-            currentCaptureTag = 'option';
-            capturedOptionText = '';
+          const sumStart = remaining.indexOf('<sum>');
+          const candidates = [];
+          if (mainStart !== -1) candidates.push({ start: mainStart, len: 10, tag: 'maintext' });
+          if (optionStart !== -1) candidates.push({ start: optionStart, len: 8, tag: 'option' });
+          if (sumStart !== -1) candidates.push({ start: sumStart, len: 5, tag: 'sum' });
+          if (candidates.length > 0) {
+            candidates.sort((a, b) => a.start - b.start);
+            const first = candidates[0];
+            remaining = remaining.slice(first.start + first.len);
+            currentCaptureTag = first.tag;
+            if (first.tag === 'maintext') capturedMainText = '';
+            if (first.tag === 'option') capturedOptionText = '';
+            if (first.tag === 'sum') capturedSumText = '';
           } else {
             // 保留可能的不完整起始标签后缀（最长 <maintext> = 10）
             const keepLen = 10;
@@ -3204,6 +3262,21 @@
             const processLen = Math.max(0, remaining.length - keepLen);
             capturedMainText += remaining.slice(0, processLen);
             updateLiveMain(capturedMainText);
+            return remaining.slice(processLen);
+          }
+        } else if (currentCaptureTag === 'sum') {
+          const sumEnd = remaining.indexOf('</sum>');
+          if (sumEnd !== -1) {
+            capturedSumText += remaining.slice(0, sumEnd);
+            parseSumAndAddEvent(capturedSumText);
+            remaining = remaining.slice(sumEnd + 6);
+            currentCaptureTag = null;
+            capturedSumText = '';
+          } else {
+            // 保留可能的不完整结束标签后缀（最长 </sum> = 6）
+            const keepLen = 6;
+            const processLen = Math.max(0, remaining.length - keepLen);
+            capturedSumText += remaining.slice(0, processLen);
             return remaining.slice(processLen);
           }
         } else if (currentCaptureTag === 'option') {
@@ -3825,6 +3898,15 @@
     // 初始化红点显示和体力条
     updateNotificationDots();
     updateStaminaSegments();
+
+    // 初始化近日要事
+    recentEvents = [
+      { text: '苍梧山散修求见，携密信一封，称事关宗门存亡', time: '刚刚', type: 'urgent' },
+      { text: '成员「林淮安」整理藏经阁时发现一卷失传古籍', time: '一炷香前', type: 'normal' },
+      { text: '天剑宗送来拜帖，邀请参加三月后的论剑大会', time: '半日前', type: 'info' },
+      { text: '炼器峰新铸「碧落剑」一柄，品质上佳，待入库', time: '一日前', type: 'normal' }
+    ];
+    renderEvents();
   </script>
   <script type="module">
     import { initSillyTavernEnhancer, addChatMessage, getActiveChat } from './sillytavern/st-integration.js';
