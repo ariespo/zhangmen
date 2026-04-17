@@ -10,6 +10,26 @@ import {
 import { previewPrompt } from './st-prompt.js';
 import { extractVariables, formatVariablesForPrompt } from './st-variables.js';
 
+function getCommonModels(baseUrl) {
+  const url = baseUrl.toLowerCase();
+  if (url.includes('deepseek')) {
+    return { label: '常用 DeepSeek 模型', list: ['deepseek-chat', 'deepseek-reasoner'] };
+  }
+  if (url.includes('moonshot') || url.includes('kimi')) {
+    return { label: '常用 Moonshot 模型', list: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'] };
+  }
+  if (url.includes('qwen') || url.includes('dashscope') || url.includes('tongyi')) {
+    return { label: '常用通义千问模型', list: ['qwen-turbo', 'qwen-plus', 'qwen-max'] };
+  }
+  if (url.includes('openai') || url.includes('api.openai.com')) {
+    return { label: '常用 OpenAI 模型', list: ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-turbo', 'gpt-4o'] };
+  }
+  if (url.includes('gemini') || url.includes('google')) {
+    return { label: '常用 Gemini 模型', list: ['gemini-1.5-flash', 'gemini-1.5-pro'] };
+  }
+  return { label: '常用模型', list: ['gpt-3.5-turbo', 'gpt-4', 'deepseek-chat', 'qwen-turbo'] };
+}
+
 // ===== Modal Rendering =====
 export function renderModal(state, store) {
   const overlay = document.getElementById('st-modal-overlay') || createModalOverlay();
@@ -294,6 +314,30 @@ function renderEntryEditor(entry, book) {
         </div>
       </div>
 
+      <div class="st-form-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+        <div>
+          <label class="st-label">二次筛选逻辑</label>
+          <select class="st-input" id="st-entry-selectiveLogic" style="background:rgba(0,0,0,0.3)">
+            <option value="and_any" ${e.selectiveLogic === 'and_any' ? 'selected' : ''}>AND 任意</option>
+            <option value="not_all" ${e.selectiveLogic === 'not_all' ? 'selected' : ''}>NOT 全部</option>
+            <option value="not_any" ${e.selectiveLogic === 'not_any' ? 'selected' : ''}>NOT 任意</option>
+            <option value="and_all" ${e.selectiveLogic === 'and_all' ? 'selected' : ''}>AND 全部</option>
+          </select>
+        </div>
+        <div>
+          <label class="st-label">角色</label>
+          <select class="st-input" id="st-entry-role" style="background:rgba(0,0,0,0.3)">
+            <option value="system" ${e.role === 'system' || e.role === 0 || e.role === undefined ? 'selected' : ''}>System</option>
+            <option value="user" ${e.role === 'user' || e.role === 1 ? 'selected' : ''}>User</option>
+            <option value="assistant" ${e.role === 'assistant' || e.role === 2 ? 'selected' : ''}>Assistant</option>
+          </select>
+        </div>
+        <div>
+          <label class="st-label">概率 %</label>
+          <input type="number" class="st-input" id="st-entry-probability" value="${e.probability ?? 100}" min="0" max="100">
+        </div>
+      </div>
+
       <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
         <label class="st-checkbox-label">
           <input type="checkbox" id="st-entry-enabled" ${e.enabled !== false ? 'checked' : ''}>
@@ -307,6 +351,11 @@ function renderEntryEditor(entry, book) {
           <input type="checkbox" id="st-entry-constant" ${e.constant ? 'checked' : ''}>
           <span>始终插入</span>
         </label>
+      </div>
+
+      <div class="st-form-group">
+        <label class="st-label">注释/标题（显示在列表中）</label>
+        <input type="text" class="st-input" id="st-entry-comment" value="${escapeHtml(e.comment || '')}" placeholder="简短注释，方便在列表中识别此条目">
       </div>
 
       <div class="st-form-group">
@@ -1165,24 +1214,43 @@ function attachSettingsListeners(state, store) {
   });
 
   body.querySelector('#st-fetch-models')?.addEventListener('click', async () => {
-    const baseUrl = (document.getElementById('st-base-url')?.value || '').replace(/\/$/, '');
-    const apiKey = document.getElementById('st-api-key')?.value || '';
+    const baseUrl = (document.getElementById('st-base-url')?.value || '').trim().replace(/\/$/, '');
+    let apiKey = (document.getElementById('st-api-key')?.value || '').trim();
     const container = document.getElementById('st-model-select-container');
     if (!baseUrl) {
       alert('请先填写 API 基础 URL');
       return;
     }
-    try {
+
+    async function tryFetch(authHeaders) {
       const res = await fetch(`${baseUrl}/models`, {
-        headers: apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}
+        headers: {
+          'Accept': 'application/json',
+          ...authHeaders
+        }
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const models = (data.data || []).map(m => m.id).filter(Boolean).sort();
-      if (models.length === 0) {
-        alert('未获取到模型列表');
-        return;
+      return (data.data || []).map(m => m.id).filter(Boolean).sort();
+    }
+
+    let models = [];
+    let lastErr = null;
+
+    try {
+      // 1. Standard OpenAI format
+      models = await tryFetch(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {});
+    } catch (err1) {
+      lastErr = err1;
+      try {
+        // 2. Azure / some proxy format (api-key header without Bearer)
+        models = await tryFetch(apiKey ? { 'api-key': apiKey } : {});
+      } catch (err2) {
+        lastErr = err2;
       }
+    }
+
+    if (models.length > 0) {
       const select = document.createElement('select');
       select.className = 'st-input';
       select.style.background = 'rgba(0,0,0,0.3)';
@@ -1197,9 +1265,25 @@ function attachSettingsListeners(state, store) {
       container.appendChild(select);
       container.style.display = 'block';
       store.showToast(`已获取 ${models.length} 个模型`);
-    } catch (err) {
-      alert('获取模型列表失败: ' + err.message);
+      return;
     }
+
+    // Fallback: show common models based on URL hints
+    const fallbackModels = getCommonModels(baseUrl);
+    const select = document.createElement('select');
+    select.className = 'st-input';
+    select.style.background = 'rgba(0,0,0,0.3)';
+    select.innerHTML = `<option value="">-- ${fallbackModels.label} --</option>` + fallbackModels.list.map(m =>
+      `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`
+    ).join('');
+    select.addEventListener('change', () => {
+      const modelInput = document.getElementById('st-model');
+      if (modelInput && select.value) modelInput.value = select.value;
+    });
+    container.innerHTML = '';
+    container.appendChild(select);
+    container.style.display = 'block';
+    alert(`获取模型列表失败 (${lastErr?.message || 'Unknown'})，已显示常用模型供选择。`);
   });
 
   body.querySelector('#st-save-profile')?.addEventListener('click', async () => {
