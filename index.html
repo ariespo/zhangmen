@@ -979,6 +979,23 @@
       font-weight: 500;
     }
 
+    .story-dialogue {
+      color: #fad689;
+      font-weight: 500;
+    }
+
+    .story-thought {
+      color: #a8e6e6;
+      font-style: italic;
+      opacity: 0.92;
+    }
+
+    .story-skill {
+      color: #f4a8c8;
+      font-weight: 600;
+      text-shadow: 0 0 8px rgba(244, 168, 200, 0.25);
+    }
+
     @keyframes fadeIn {
       to { opacity: 1; }
     }
@@ -3113,6 +3130,27 @@
       updateThinkButton();
     }
 
+    function formatStoryText(text) {
+      let html = text.trim()
+        .replace(/\*\*([^*]+?)\*\*/g, '%%THOUGHT_START%%$1%%THOUGHT_END%%')
+        .replace(/《([^》]+?)》/g, '%%SKILL_START%%$1%%SKILL_END%%')
+        .replace(/"([^"]+?)"/g, '%%DIALOGUE_START%%$1%%DIALOGUE_END%%')
+        .replace(/“([^”]+?)”/g, '%%DIALOGUE_START%%$1%%DIALOGUE_END%%');
+
+      html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      html = html
+        .replace(/%%THOUGHT_START%%/g, '<span class="story-thought">')
+        .replace(/%%THOUGHT_END%%/g, '</span>')
+        .replace(/%%SKILL_START%%/g, '<span class="story-skill">')
+        .replace(/%%SKILL_END%%/g, '</span>')
+        .replace(/%%DIALOGUE_START%%/g, '<span class="story-dialogue">')
+        .replace(/%%DIALOGUE_END%%/g, '</span>')
+        .replace(/\n/g, '<br>');
+
+      return html;
+    }
+
     function ensureMainParagraph() {
       if (!currentMainParagraph) {
         const container = document.getElementById('story-content');
@@ -3129,7 +3167,7 @@
     function updateLiveMain(text) {
       const p = ensureMainParagraph();
       if (!p) return;
-      p.innerHTML = escapeHtml(text.trim()).replace(/\n/g, '<br>');
+      p.innerHTML = formatStoryText(text);
       const area = document.getElementById('story-text-area');
       if (area) area.scrollTop = area.scrollHeight;
     }
@@ -4018,6 +4056,15 @@
       { text: '炼器峰新铸「碧落剑」一柄，品质上佳，待入库', time: '一日前', location: '炼器峰', people: '炼器长老', type: 'normal' }
     ];
     renderEvents();
+
+    // 为静态剧情段落应用富文本格式
+    document.querySelectorAll('.story-paragraph').forEach(p => {
+      if (p.querySelector('span') || p.classList.contains('narrator')) return;
+      const originalText = p.textContent || '';
+      if (originalText.trim()) {
+        p.innerHTML = formatStoryText(originalText);
+      }
+    });
   </script>
   <script type="module">
     import { initSillyTavernEnhancer, addChatMessage, getActiveChat } from './sillytavern/st-integration.js';
