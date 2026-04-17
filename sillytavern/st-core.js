@@ -248,28 +248,96 @@ export function exportPreset(preset) {
   };
 }
 
-function mapPromptBlock(b) {
-  const roleStr = typeof b.role === 'string' ? b.role.toLowerCase() : (b.role === 1 ? 'user' : b.role === 2 ? 'assistant' : 'system');
-  return {
-    id: b.identifier || b.id || crypto.randomUUID(),
-    name: b.name || '未命名块',
-    content: b.system_prompt || b.content || '',
-    enabled: b.enabled ?? true,
-    position: b.injection_order ?? b.position ?? 0,
-    insertionType: roleStr,
-    role: roleStr,
-    description: b.description || ''
-  };
+function resolveRole(b) {
+  if (typeof b.role === 'string' && b.role) return b.role.toLowerCase();
+  if (b.role === 1) return 'user';
+  if (b.role === 2) return 'assistant';
+  if (b.system_prompt === true) return 'system';
+  return 'system';
+}
+
+function buildPromptOrder(promptsRepo, orderIndex) {
+  // promptsRepo: array of prompt definitions (content repo)
+  // orderIndex: array of {identifier, enabled} ordering entries
+  if (!Array.isArray(promptsRepo)) promptsRepo = [];
+
+  const promptMap = new Map();
+  for (const p of promptsRepo) {
+    const id = p.identifier || p.id;
+    if (id) promptMap.set(id, p);
+  }
+
+  let orderEntries = [];
+  if (Array.isArray(orderIndex)) {
+    orderEntries = orderIndex;
+  } else if (orderIndex && typeof orderIndex === 'object') {
+    // SillyTavern sometimes wraps prompt_order under API keys like {openai: [...], claude: [...]}
+    // Pick the first non-empty array we find
+    for (const key of Object.keys(orderIndex)) {
+      if (Array.isArray(orderIndex[key]) && orderIndex[key].length > 0) {
+        orderEntries = orderIndex[key];
+        break;
+      }
+    }
+  }
+
+  const result = [];
+  if (orderEntries.length > 0) {
+    for (const entry of orderEntries) {
+      const identifier = entry.identifier || entry.id;
+      if (!identifier) continue;
+      const prompt = promptMap.get(identifier);
+      if (!prompt) continue;
+      const roleStr = resolveRole(prompt);
+      result.push({
+        id: identifier,
+        name: prompt.name || identifier,
+        content: prompt.content || prompt.system_prompt || '',
+        enabled: entry.enabled ?? true,
+        position: prompt.injection_order ?? prompt.position ?? 0,
+        insertionType: roleStr,
+        role: roleStr,
+        description: prompt.description || ''
+      });
+    }
+  } else {
+    // No order index: use all prompts in their natural order
+    for (const prompt of promptsRepo) {
+      const identifier = prompt.identifier || prompt.id;
+      if (!identifier) continue;
+      const roleStr = resolveRole(prompt);
+      result.push({
+        id: identifier,
+        name: prompt.name || identifier,
+        content: prompt.content || prompt.system_prompt || '',
+        enabled: prompt.enabled ?? true,
+        position: prompt.injection_order ?? prompt.position ?? 0,
+        insertionType: roleStr,
+        role: roleStr,
+        description: prompt.description || ''
+      });
+    }
+  }
+
+  return result;
 }
 
 export async function importPreset(data) {
   const id = crypto.randomUUID();
 
-  // Support multiple prompt array formats
-  let rawPrompts = data.prompts || data.prompt_order || data.promptOrder || data.prompt_entries || [];
-  let promptOrder = rawPrompts.map(mapPromptBlock);
+  // SillyTavern native format:
+  // - data.prompts = content repository (array of prompt objects with identifier, name, content, role...)
+  // - data.prompt_order = sorting/enabled index (array of {identifier, enabled})
+  // Tavernlike format:
+  // - data.prompt_order or data.promptOrder = combined array with content
+  let promptOrder = [];
+  if (Array.isArray(data.prompts) || Array.isArray(data.prompt_order) || Array.isArray(data.promptOrder)) {
+    const promptsRepo = data.prompts || data.prompt_order || data.promptOrder || [];
+    const orderIndex = data.prompt_order || data.promptOrder || undefined;
+    promptOrder = buildPromptOrder(promptsRepo, orderIndex);
+  }
 
-  // Fallback to default prompt blocks if none provided
+  // Fallback to default prompt blocks if nothing was resolved
   if (promptOrder.length === 0) {
     DEFAULT_PRESET.promptOrder.forEach(b => {
       promptOrder.push({ ...b, id: crypto.randomUUID() });
