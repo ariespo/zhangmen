@@ -203,30 +203,38 @@ function renderBookDetail(book, state) {
 
 function renderEntryCard(entry, bookId) {
   const isDisabled = entry.enabled === false;
+  const displayName = entry.comment || (entry.keys.length > 0 ? entry.keys.slice(0, 3).join(', ') + (entry.keys.length > 3 ? '...' : '') : (entry.content ? entry.content.slice(0, 30) + (entry.content.length > 30 ? '...' : '') : '未命名条目'));
   return `
     <div class="st-entry-card ${isDisabled ? 'disabled' : ''}" data-entry-id="${entry.id}">
-      <div class="st-entry-header">
-        <div class="st-entry-keys">
-          ${entry.keys.slice(0, 6).map(k => `<span class="st-tag">${escapeHtml(k)}</span>`).join('')}
-          ${entry.keys.length > 6 ? `<span class="st-tag purple">+${entry.keys.length - 6}</span>` : ''}
-          ${entry.constant ? `<span class="st-tag pink">常时</span>` : ''}
-          ${entry.selective ? `<span class="st-tag cyan">筛选</span>` : ''}
-          ${entry.probability < 100 ? `<span class="st-tag orange">${entry.probability}%</span>` : ''}
-          ${isDisabled ? `<span class="st-tag" style="background:rgba(150,150,150,0.2);color:#aaa">禁用</span>` : ''}
-          ${entry.depth !== undefined && entry.depth !== null ? `<span class="st-tag" style="background:rgba(110,207,207,0.1);color:#6ecfcf">深度${entry.depth}</span>` : ''}
-          ${entry.role && entry.role !== 'system' ? `<span class="st-tag" style="background:rgba(139,126,200,0.15);color:#8b7ec8">${entry.role}</span>` : ''}
+      <div class="st-entry-row">
+        <div class="st-entry-title">
+          <span class="st-entry-arrow">▸</span>
+          <span class="st-entry-name">${escapeHtml(displayName)}</span>
+          ${entry.constant ? `<span class="st-tag pink" style="padding:1px 6px;font-size:10px">常时</span>` : ''}
+          ${entry.probability < 100 ? `<span class="st-tag orange" style="padding:1px 6px;font-size:10px">${entry.probability}%</span>` : ''}
         </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input type="checkbox" class="st-checkbox st-entry-toggle"
-            ${!isDisabled ? 'checked' : ''}
-            data-book-id="${bookId}" data-entry-id="${entry.id}" title="启用/禁用">
-          <button class="st-btn-secondary st-edit-entry" data-book-id="${bookId}" data-entry-id="${entry.id}" style="padding:4px 10px;font-size:12px">编辑</button>
-          <button class="st-btn-danger st-delete-entry" data-book-id="${bookId}" data-entry-id="${entry.id}" style="padding:4px 10px;font-size:12px">删除</button>
+        <div class="st-entry-actions">
+          <button class="st-icon-btn st-delete-entry" data-book-id="${bookId}" data-entry-id="${entry.id}" title="删除">×</button>
+          <label class="st-toggle-switch" title="启用">
+            <input type="checkbox" class="st-checkbox st-entry-toggle" ${!isDisabled ? 'checked' : ''} data-book-id="${bookId}" data-entry-id="${entry.id}">
+            <span class="st-toggle-slider"></span>
+          </label>
         </div>
       </div>
-      <div class="st-entry-content">${escapeHtml(entry.content)}</div>
-      <div class="st-entry-meta">
-        顺序:${entry.order} · 位置:${POSITION_NAMES[entry.position] || entry.position}${entry.depth !== undefined && entry.depth !== null ? ` · 深度:${entry.depth}` : ''}${entry.role && entry.role !== 'system' ? ` · 角色:${entry.role}` : ''}
+      <div class="st-entry-details">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+          ${entry.keys.slice(0, 8).map(k => `<span class="st-tag">${escapeHtml(k)}</span>`).join('')}
+          ${entry.keys.length > 8 ? `<span class="st-tag purple">+${entry.keys.length - 8}</span>` : ''}
+          ${entry.selective ? `<span class="st-tag cyan">筛选</span>` : ''}
+          ${entry.depth !== undefined && entry.depth !== null ? `<span class="st-tag" style="background:rgba(110,207,207,0.1);color:#6ecfcf">深度${entry.depth}</span>` : ''}
+          ${entry.role && entry.role !== 'system' ? `<span class="st-tag" style="background:rgba(139,126,200,0.15);color:#8b7ec8">${entry.role}</span>` : ''}
+          <span class="st-tag" style="background:rgba(0,0,0,0.25);color:rgba(168,230,230,0.5)">顺序:${entry.order}</span>
+          <span class="st-tag" style="background:rgba(0,0,0,0.25);color:rgba(168,230,230,0.5)">位置:${POSITION_NAMES[entry.position] || entry.position}</span>
+        </div>
+        <div class="st-entry-content" style="margin-bottom:8px">${escapeHtml(entry.content)}</div>
+        <div style="display:flex;gap:8px">
+          <button class="st-btn-secondary st-edit-entry" data-book-id="${bookId}" data-entry-id="${entry.id}" style="padding:4px 12px;font-size:12px">编辑条目</button>
+        </div>
       </div>
     </div>
   `;
@@ -237,7 +245,10 @@ const POSITION_NAMES = {
   after_char: '角色后',
   before_example: '示例前',
   after_example: '示例后',
-  at_depth: '指定深度'
+  at_depth: '指定深度',
+  example_msg_top: '示例顶',
+  example_msg_bottom: '示例底',
+  outlet: '出口'
 };
 
 function renderEntryEditor(entry, book) {
@@ -434,35 +445,46 @@ function renderPresetBlocks(preset) {
   return `
     <div style="max-height:420px;overflow-y:auto">
       <div style="margin-bottom:12px;font-size:12px;color:rgba(168,230,230,0.6)">
-        提示词块按顺序组装成最终发送给 AI 的消息。可启用/禁用、调整位置、修改内容。
+        提示词块按顺序组装成最终发送给 AI 的消息。点击条目展开详情。
       </div>
       <div id="st-block-list">
         ${blocks.map((b, idx) => `
           <div class="st-block-item" data-block-index="${idx}">
-            <div class="st-block-header">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                <input type="checkbox" class="st-block-enabled" data-index="${idx}" ${b.enabled ? 'checked' : ''} title="启用">
+            <div class="st-block-row">
+              <div class="st-block-title">
+                <span class="st-block-arrow">▸</span>
                 <span class="st-block-name">${escapeHtml(b.name)}</span>
+                ${b.marker ? `<span class="st-tag pink" style="padding:1px 6px;font-size:10px">标记</span>` : ''}
+              </div>
+              <div class="st-block-actions">
+                <button class="st-icon-btn st-delete-block" data-index="${idx}" title="删除">×</button>
+                <label class="st-toggle-switch" title="启用">
+                  <input type="checkbox" class="st-block-enabled" data-index="${idx}" ${b.enabled ? 'checked' : ''}>
+                  <span class="st-toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="st-block-details">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
                 <span class="st-block-id">${b.id}</span>
                 <span class="st-block-role">${b.role || 'system'}</span>
-                ${b.marker ? `<span class="st-tag pink" style="padding:1px 6px;font-size:10px">标记</span>` : ''}
                 ${b.injectionPosition !== undefined ? `<span class="st-tag cyan" style="padding:1px 6px;font-size:10px">注入位${b.injectionPosition}</span>` : ''}
                 ${b.injectionDepth !== undefined ? `<span class="st-tag orange" style="padding:1px 6px;font-size:10px">深度${b.injectionDepth}</span>` : ''}
               </div>
-              <div style="display:flex;align-items:center;gap:8px">
-                <input type="number" class="st-input st-block-position" data-index="${idx}" value="${b.position}" style="width:70px;padding:4px 8px;font-size:12px;margin:0" title="位置">
-                <button class="st-btn-secondary st-move-block-up" data-index="${idx}" style="padding:2px 6px;font-size:12px">▲</button>
-                <button class="st-btn-secondary st-move-block-down" data-index="${idx}" style="padding:2px 6px;font-size:12px">▼</button>
-                <button class="st-btn-danger st-delete-block" data-index="${idx}" style="padding:2px 8px;font-size:12px">×</button>
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                <span style="font-size:12px;color:rgba(168,230,230,0.6)">位置</span>
+                <input type="number" class="st-input st-block-position" data-index="${idx}" value="${b.position}" style="width:80px;padding:4px 8px;font-size:12px;margin:0">
+                <button class="st-btn-secondary st-move-block-up" data-index="${idx}" style="padding:2px 8px;font-size:12px">▲</button>
+                <button class="st-btn-secondary st-move-block-down" data-index="${idx}" style="padding:2px 8px;font-size:12px">▼</button>
               </div>
+              ${b.id !== 'history' && b.id !== 'user_input' && b.id !== 'world_info' ? `
+                <textarea class="st-input st-block-content" data-index="${idx}" rows="4" style="font-size:13px;background:rgba(0,0,0,0.2);margin:0">${escapeHtml(b.content || '')}</textarea>
+              ` : `
+                <div style="font-size:12px;color:rgba(168,230,230,0.4);font-style:italic;padding:8px 0">
+                  ${b.id === 'history' ? '此块自动插入聊天历史' : b.id === 'user_input' ? '此块自动插入当前用户输入' : '此块自动插入匹配的世界书条目'}
+                </div>
+              `}
             </div>
-            ${b.id !== 'history' && b.id !== 'user_input' && b.id !== 'world_info' ? `
-              <textarea class="st-input st-block-content" data-index="${idx}" rows="3" style="margin:8px 0 0 0;font-size:13px;background:rgba(0,0,0,0.2)">${escapeHtml(b.content || '')}</textarea>
-            ` : `
-              <div style="margin:8px 0 0 0;font-size:12px;color:rgba(168,230,230,0.4);font-style:italic">
-                ${b.id === 'history' ? '此块自动插入聊天历史' : b.id === 'user_input' ? '此块自动插入当前用户输入' : '此块自动插入匹配的世界书条目'}
-              </div>
-            `}
           </div>
         `).join('')}
       </div>
@@ -775,7 +797,10 @@ function attachLorebookListeners(state, store) {
 
   body.querySelector('#st-import-book')?.addEventListener('click', async () => {
     const result = await importJsonFile();
-    if (!result) return;
+    if (!result) {
+      alert('导入失败: 无法读取文件（可能不是有效的 JSON）');
+      return;
+    }
     const { data, fileName } = result;
     try {
       let rawBook = null;
@@ -787,12 +812,16 @@ function attachLorebookListeners(state, store) {
       } else if (Array.isArray(data.lorebooks) && data.lorebooks.length > 0) {
         rawBook = data.lorebooks[0];
       }
-      if (!rawBook) throw new Error('无法识别的文件格式');
+      if (!rawBook) {
+        console.error('[Import Book] Unrecognized format. Keys:', Object.keys(data));
+        throw new Error('无法识别的文件格式（缺少 entries 或 lorebooks 字段）');
+      }
       const book = importLorebook(rawBook);
       await store.saveLorebook(book);
       store.setState({ selectedBookId: book.id });
       store.showToast('世界书导入成功');
     } catch (err) {
+      console.error('[Import Book] Error:', err);
       alert('导入失败: ' + err.message);
     }
   });
@@ -815,11 +844,15 @@ function attachLorebookListeners(state, store) {
   });
 
   body.querySelectorAll('.st-edit-entry').forEach(btn => {
-    btn.addEventListener('click', () => store.setState({ editingEntryId: btn.dataset.entryId }));
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      store.setState({ editingEntryId: btn.dataset.entryId });
+    });
   });
 
   body.querySelectorAll('.st-delete-entry').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       if (!confirm('确定删除此条目？')) return;
       const book = state.lorebooks.find(b => b.id === btn.dataset.bookId);
       if (book) {
@@ -830,7 +863,8 @@ function attachLorebookListeners(state, store) {
   });
 
   body.querySelectorAll('.st-entry-toggle').forEach(cb => {
-    cb.addEventListener('change', async () => {
+    cb.addEventListener('change', async (e) => {
+      e.stopPropagation();
       const book = state.lorebooks.find(b => b.id === cb.dataset.bookId);
       if (!book) return;
       const entry = book.entries.find(e => e.id === cb.dataset.entryId);
@@ -838,6 +872,15 @@ function attachLorebookListeners(state, store) {
         entry.enabled = cb.checked;
         await store.saveLorebook(book);
       }
+    });
+  });
+
+  // Entry expand/collapse
+  body.querySelectorAll('.st-entry-card').forEach(card => {
+    const row = card.querySelector('.st-entry-row');
+    row?.addEventListener('click', (e) => {
+      if (e.target.closest('.st-entry-actions') || e.target.closest('.st-icon-btn') || e.target.closest('.st-toggle-switch')) return;
+      card.classList.toggle('expanded');
     });
   });
 
@@ -978,7 +1021,19 @@ function attachPresetListeners(state, store) {
     btn.addEventListener('click', () => moveBlock(state, store, Number(btn.dataset.index), 1));
   });
   body.querySelectorAll('.st-delete-block').forEach(btn => {
-    btn.addEventListener('click', () => deleteBlock(state, store, Number(btn.dataset.index)));
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteBlock(state, store, Number(btn.dataset.index));
+    });
+  });
+
+  // Block expand/collapse
+  body.querySelectorAll('.st-block-item').forEach(item => {
+    const row = item.querySelector('.st-block-row');
+    row?.addEventListener('click', (e) => {
+      if (e.target.closest('.st-block-actions') || e.target.closest('.st-icon-btn') || e.target.closest('.st-toggle-switch')) return;
+      item.classList.toggle('expanded');
+    });
   });
 
   body.querySelector('#st-add-block')?.addEventListener('click', () => {
