@@ -356,12 +356,15 @@ function buildPromptOrder(promptsRepo, orderIndex) {
   }
 
   const result = [];
+  const processedIds = new Set();
+
   if (flatOrder.length > 0) {
     for (const entry of flatOrder) {
       const identifier = entry.identifier || entry.id;
       if (!identifier) continue;
       const prompt = promptMap.get(identifier);
       if (!prompt) continue;
+      processedIds.add(identifier);
       const mappedId = mapSillyTavernId(identifier);
       const roleStr = resolveRole(prompt);
       result.push({
@@ -378,27 +381,29 @@ function buildPromptOrder(promptsRepo, orderIndex) {
         injectionDepth: prompt.injection_depth
       });
     }
-  } else if (promptsRepo.length > 0) {
-    // No valid order index: use all prompts in their natural order
-    for (const prompt of promptsRepo) {
-      const identifier = prompt.identifier || prompt.id;
-      if (!identifier) continue;
-      const mappedId = mapSillyTavernId(identifier);
-      const roleStr = resolveRole(prompt);
-      result.push({
-        id: mappedId,
-        name: prompt.name || identifier,
-        content: prompt.content || '',
-        enabled: prompt.enabled ?? true,
-        position: getSortPosition(prompt, mappedId),
-        insertionType: roleStr,
-        role: roleStr,
-        description: prompt.description || '',
-        marker: prompt.marker || false,
-        injectionPosition: prompt.injection_position,
-        injectionDepth: prompt.injection_depth
-      });
-    }
+  }
+
+  // Append any prompts from the repo that were NOT listed in the order index.
+  // These are typically custom user prompts; default them to disabled since
+  // they weren't part of the active preset order.
+  for (const prompt of promptsRepo) {
+    const identifier = prompt.identifier || prompt.id;
+    if (!identifier || processedIds.has(identifier)) continue;
+    const mappedId = mapSillyTavernId(identifier);
+    const roleStr = resolveRole(prompt);
+    result.push({
+      id: mappedId,
+      name: prompt.name || identifier,
+      content: prompt.content || '',
+      enabled: prompt.enabled ?? false,
+      position: getSortPosition(prompt, mappedId),
+      insertionType: roleStr,
+      role: roleStr,
+      description: prompt.description || '',
+      marker: prompt.marker || false,
+      injectionPosition: prompt.injection_position,
+      injectionDepth: prompt.injection_depth
+    });
   }
 
   return result;
