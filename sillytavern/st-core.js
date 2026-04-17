@@ -130,7 +130,10 @@ export const POSITION_MAP = {
   1: 'after_char',
   2: 'before_example',
   3: 'after_example',
-  4: 'at_depth'
+  4: 'at_depth',
+  5: 'example_msg_top',
+  6: 'example_msg_bottom',
+  7: 'outlet'
 };
 
 export const REVERSE_POSITION_MAP = {
@@ -138,10 +141,13 @@ export const REVERSE_POSITION_MAP = {
   after_char: 1,
   before_example: 2,
   after_example: 3,
-  at_depth: 4
+  at_depth: 4,
+  example_msg_top: 5,
+  example_msg_bottom: 6,
+  outlet: 7
 };
 
-export const LOGIC_MAP = { 0: 'and', 1: 'or' };
+export const LOGIC_MAP = { 0: 'and_any', 1: 'not_all', 2: 'not_any', 3: 'and_all' };
 
 // ===== Initialization =====
 export async function initDatabase() {
@@ -167,29 +173,38 @@ function normalizeLorebookEntries(rawEntries) {
   return entriesArray.filter(e => e);
 }
 
-export function importLorebook(data) {
+export function importLorebook(data, fileName) {
+  const derivedName = data.name || (fileName ? fileName.replace(/\.json$/i, '') : null) || '导入的世界书';
   return {
     id: crypto.randomUUID(),
-    name: data.name || '导入的世界书',
+    name: derivedName,
     description: data.description || '',
     entries: normalizeLorebookEntries(data.entries)
-      .map(e => ({
-        id: crypto.randomUUID(),
-        keys: e.key || [],
-        secondaryKeys: e.keysecondary || [],
-        content: e.content || '',
-        order: e.order ?? 100,
-        position: POSITION_MAP[e.position ?? 1] || 'after_char',
-        depth: e.depth,
-        selective: e.selective ?? false,
-        selectiveLogic: LOGIC_MAP[e.selectiveLogic ?? 1],
-        constant: e.constant ?? false,
-        probability: e.probability ?? 100,
-        enabled: !e.disable,
-        role: e.role === 1 ? 'user' : e.role === 2 ? 'assistant' : 'system',
-        addMemo: e.addMemo ?? false,
-        comment: e.comment || ''
-      })),
+      .map(e => {
+        const keys = Array.isArray(e.key) ? e.key : Array.isArray(e.keys) ? e.keys : [];
+        const secondaryKeys = Array.isArray(e.keysecondary)
+          ? e.keysecondary
+          : Array.isArray(e.secondary_keys)
+          ? e.secondary_keys
+          : [];
+        return {
+          id: crypto.randomUUID(),
+          keys,
+          secondaryKeys,
+          content: e.content || '',
+          order: e.order ?? 100,
+          position: POSITION_MAP[e.position ?? 1] || 'after_char',
+          depth: e.depth,
+          selective: e.selective ?? false,
+          selectiveLogic: LOGIC_MAP[e.selectiveLogic ?? 1] || 'not_all',
+          constant: e.constant ?? false,
+          probability: e.probability ?? 100,
+          enabled: !e.disable,
+          role: e.role === 1 ? 'user' : e.role === 2 ? 'assistant' : 'system',
+          addMemo: e.addMemo ?? false,
+          comment: e.comment || ''
+        };
+      }),
     recursiveScanning: data.settings?.recursive_scanning ?? data.recursive_scanning ?? false,
     caseSensitive: data.settings?.case_sensitive ?? data.case_sensitive ?? false,
     matchWholeWords: data.settings?.match_whole_words ?? data.match_whole_words ?? false,
@@ -210,7 +225,7 @@ export function exportLorebook(book) {
       content: e.content,
       constant: e.constant,
       selective: e.selective,
-      selectiveLogic: (e.selectiveLogic === 'and' ? 0 : 1),
+      selectiveLogic: (e.selectiveLogic === 'and_any' ? 0 : e.selectiveLogic === 'not_all' ? 1 : e.selectiveLogic === 'not_any' ? 2 : 3),
       addMemo: e.addMemo,
       order: e.order,
       position: REVERSE_POSITION_MAP[e.position] ?? 1,
@@ -406,7 +421,7 @@ function buildPromptOrder(promptsRepo, orderIndex) {
     });
   }
 
-  return result;
+  return result.sort((a, b) => a.position - b.position);
 }
 
 export async function importPreset(data, fileName) {
@@ -473,9 +488,20 @@ export async function importJsonFile() {
       const file = e.target.files?.[0];
       if (!file) { resolve(null); return; }
       try {
-        const text = await file.text();
+        let text;
+        if (typeof file.text === 'function') {
+          text = await file.text();
+        } else {
+          text = await new Promise((res, rej) => {
+            const reader = new FileReader();
+            reader.onload = () => res(reader.result);
+            reader.onerror = () => rej(reader.error);
+            reader.readAsText(file);
+          });
+        }
         resolve({ data: JSON.parse(text), fileName: file.name });
-      } catch {
+      } catch (err) {
+        console.error('[importJsonFile] failed:', err);
         resolve(null);
       }
     };

@@ -816,7 +816,7 @@ function attachLorebookListeners(state, store) {
         console.error('[Import Book] Unrecognized format. Keys:', Object.keys(data));
         throw new Error('无法识别的文件格式（缺少 entries 或 lorebooks 字段）');
       }
-      const book = importLorebook(rawBook);
+      const book = importLorebook(rawBook, fileName);
       await store.saveLorebook(book);
       store.setState({ selectedBookId: book.id });
       store.showToast('世界书导入成功');
