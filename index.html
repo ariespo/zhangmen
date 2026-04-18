@@ -1047,9 +1047,11 @@
       border-color: rgba(110, 207, 207, 0.4);
     }
     .tag.selected {
-      background: rgba(110, 207, 207, 0.15);
+      background: linear-gradient(135deg, rgba(110, 207, 207, 0.25), rgba(110, 207, 207, 0.12));
       border-color: var(--jade-glow);
       color: var(--jade-glow);
+      box-shadow: 0 0 12px rgba(110, 207, 207, 0.25), inset 0 0 8px rgba(110, 207, 207, 0.08);
+      transform: scale(1.05);
     }
     .card-select-group {
       display: grid;
@@ -2655,18 +2657,6 @@
               </select>
             </div>
           </div>
-          <div class="form-group">
-            <label>灵根</label>
-            <select id="c-spirit-root">
-              <option value="金灵根">金灵根</option>
-              <option value="木灵根">木灵根</option>
-              <option value="水灵根">水灵根</option>
-              <option value="火灵根">火灵根</option>
-              <option value="土灵根">土灵根</option>
-              <option value="天灵根">天灵根</option>
-              <option value="变异灵根">变异灵根</option>
-            </select>
-          </div>
           <div class="form-group full-width">
             <label>性格标签（可多选）</label>
             <div class="tag-group" id="c-personality">
@@ -2678,6 +2668,14 @@
               <span class="tag" data-value="勇猛">勇猛</span>
               <span class="tag" data-value="谨慎">谨慎</span>
               <span class="tag" data-value="豁达">豁达</span>
+              <span class="tag" data-value="偏执">偏执</span>
+              <span class="tag" data-value="圆滑">圆滑</span>
+              <span class="tag" data-value="孤傲">孤傲</span>
+              <span class="tag" data-value="多疑">多疑</span>
+              <span class="tag" data-value="懒散">懒散</span>
+              <span class="tag" data-value="勤勉">勤勉</span>
+              <span class="tag" data-value="腹黑">腹黑</span>
+              <span class="tag" data-value="随性">随性</span>
             </div>
           </div>
           <div class="form-group full-width">
@@ -2690,12 +2688,23 @@
               <span class="tag" data-value="儒雅">儒雅</span>
               <span class="tag" data-value="粗犷">粗犷</span>
               <span class="tag" data-value="温润">温润</span>
-              <span class="tag" data-value="孤傲">孤傲</span>
+              <span class="tag" data-value="邪魅">邪魅</span>
+              <span class="tag" data-value="仙风道骨">仙风道骨</span>
+              <span class="tag" data-value="鹤发童颜">鹤发童颜</span>
+              <span class="tag" data-value="剑眉星目">剑眉星目</span>
+              <span class="tag" data-value="面如冠玉">面如冠玉</span>
+              <span class="tag" data-value="丰神俊逸">丰神俊逸</span>
+              <span class="tag" data-value="不修边幅">不修边幅</span>
+              <span class="tag" data-value="少年老成">少年老成</span>
+              <span class="tag" data-value="风华绝代">风华绝代</span>
             </div>
           </div>
           <div class="form-group">
-            <label>担任掌门时间（年）</label>
-            <input type="number" id="c-years" min="0" max="999" value="0">
+            <label>年龄</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="number" id="c-age" min="1" max="150" value="25" style="flex:1">
+              <span id="c-lifespan-hint" style="font-size:12px;color:var(--jade-glow);white-space:nowrap">寿元上限：150</span>
+            </div>
           </div>
         </div>
       </div>
@@ -2713,7 +2722,7 @@
             <select id="c-path">
               <option value="道修">道修 — 顺应天道，万法自然</option>
               <option value="神修">神修 — 香火成神，信仰之力</option>
-              <option value="魔修">魔修 — 逆天而行，以力证道</option>
+              <option value="魔修">魔修 — 弱肉强食，百无禁忌</option>
               <option value="体修">体修 — 淬炼肉身，金刚不坏</option>
               <option value="旁门左道">旁门左道 — 另辟蹊径，出奇制胜</option>
             </select>
@@ -5559,6 +5568,15 @@
     })();
 
     // ====== CHARACTER CREATION ======
+    const realmLifespan = {
+      '练气期': 150,
+      '筑基期': 250,
+      '金丹期': 500,
+      '元婴期': 2000,
+      '化神期': Infinity,
+      '道祖': Infinity
+    };
+
     (function initCreation() {
       let currentStep = 1;
       const creationData = {};
@@ -5612,6 +5630,24 @@
         if (currentStep === 3) renderConfirm();
       }
 
+      function updateAgeHint() {
+        const realm = document.getElementById('c-realm-level').value;
+        const maxAge = realmLifespan[realm];
+        const hint = document.getElementById('c-lifespan-hint');
+        const ageInput = document.getElementById('c-age');
+        if (maxAge === Infinity) {
+          hint.textContent = '寿元上限：无上限';
+          ageInput.max = 99999;
+        } else {
+          hint.textContent = '寿元上限：' + maxAge;
+          ageInput.max = maxAge;
+          if (parseInt(ageInput.value) > maxAge) ageInput.value = maxAge;
+        }
+      }
+
+      document.getElementById('c-realm-level').addEventListener('change', updateAgeHint);
+      updateAgeHint();
+
       function collectData() {
         const personality = [];
         document.querySelectorAll('#c-personality .tag.selected').forEach(t => personality.push(t.dataset.value));
@@ -5624,10 +5660,9 @@
           gender: document.querySelector('input[name="c-gender"]:checked')?.value || '男',
           realmLevel: document.getElementById('c-realm-level').value,
           realmStage: document.getElementById('c-realm-stage').value,
-          spiritRoot: document.getElementById('c-spirit-root').value,
+          age: parseInt(document.getElementById('c-age').value) || 25,
           personality,
           appearance,
-          years: parseInt(document.getElementById('c-years').value) || 0,
           sectName: document.getElementById('c-sect-name').value.trim() || '无名宗门',
           path: document.getElementById('c-path').value,
           specialty: document.getElementById('c-specialty').value,
@@ -5651,10 +5686,9 @@
           <div class="confirm-item"><div class="confirm-label">名字</div><div class="confirm-value">${escapeHtml(d.name)}</div></div>
           <div class="confirm-item"><div class="confirm-label">境界</div><div class="confirm-value">${escapeHtml(d.realmLevel)}${d.realmStage ? ' · ' + d.realmStage : ''}</div></div>
           <div class="confirm-item"><div class="confirm-label">性别</div><div class="confirm-value">${escapeHtml(d.gender)}</div></div>
-          <div class="confirm-item"><div class="confirm-label">灵根</div><div class="confirm-value">${escapeHtml(d.spiritRoot)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">年龄</div><div class="confirm-value">${d.age} 岁</div></div>
           <div class="confirm-item"><div class="confirm-label">性格</div><div class="confirm-value">${d.personality.join('、') || '—'}</div></div>
           <div class="confirm-item"><div class="confirm-label">外貌</div><div class="confirm-value">${d.appearance.join('、') || '—'}</div></div>
-          <div class="confirm-item"><div class="confirm-label">掌门时间</div><div class="confirm-value">${d.years} 年</div></div>
           <div class="confirm-item"><div class="confirm-label">宗门名称</div><div class="confirm-value">${escapeHtml(d.sectName)}</div></div>
           <div class="confirm-item"><div class="confirm-label">修行法门</div><div class="confirm-value">${escapeHtml(d.path)}</div></div>
           <div class="confirm-item"><div class="confirm-label">宗门专长</div><div class="confirm-value">${escapeHtml(d.specialty)}</div></div>
@@ -5733,10 +5767,10 @@
         color: 'gold',
         stats: { 杀伐: 75, 防御: 70, 身法: 65 },
         baseStats: { 杀伐: 75, 防御: 70, 身法: 65 },
-        lifespan: { current: 500, max: 1200 },
+        lifespan: { current: data.age || 25, max: realmLifespan[data.realmLevel] || 150 },
         loyalty: 100,
         mood: 80,
-        skills: [`${data.spiritRoot} · 基础心法`],
+        skills: ['基础心法'],
         equipment: []
       };
 
@@ -5781,8 +5815,7 @@
         crisis: data.crisis,
         personality: data.personality,
         appearance: data.appearance,
-        years: data.years,
-        spiritRoot: data.spiritRoot
+        age: data.age
       };
 
       // Refresh UI
