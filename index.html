@@ -649,7 +649,7 @@
       top: 0; left: 0;
       width: 100vw; height: 100vh;
       z-index: 100;
-      background: #000;
+      background: radial-gradient(ellipse at center, #0a1212 0%, #020404 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -671,37 +671,41 @@
       position: relative;
       z-index: 2;
       font-family: 'ZCOOL XiaoWei', serif;
-      font-size: 64px;
-      letter-spacing: 12px;
+      font-size: 72px;
+      letter-spacing: 16px;
       color: var(--gold-bright);
-      text-shadow: 0 0 40px rgba(200,168,110,0.4), 0 0 80px rgba(200,168,110,0.2);
+      text-shadow:
+        0 0 60px rgba(200,168,110,0.25),
+        0 0 120px rgba(200,168,110,0.1);
       opacity: 0;
-      transform: scale(0.9);
+      transform: scale(0.95);
+      font-weight: 400;
     }
     .opening-title.show {
-      animation: titleReveal 1.2s ease forwards;
+      animation: titleReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
     @keyframes titleReveal {
-      0% { opacity: 0; transform: scale(0.9); filter: blur(8px); }
-      60% { opacity: 1; transform: scale(1.02); filter: blur(0); }
+      0% { opacity: 0; transform: scale(0.95); filter: blur(12px); }
+      50% { opacity: 0.6; transform: scale(1.01); filter: blur(2px); }
       100% { opacity: 1; transform: scale(1); filter: blur(0); }
     }
     .opening-subtitle {
       position: relative;
       z-index: 2;
       font-family: 'Noto Serif SC', serif;
-      font-size: 18px;
-      letter-spacing: 6px;
-      color: var(--jade-pale);
-      margin-top: 16px;
+      font-size: 16px;
+      letter-spacing: 8px;
+      color: rgba(168, 230, 230, 0.5);
+      margin-top: 20px;
       opacity: 0;
+      font-weight: 300;
     }
     .opening-subtitle.show {
-      animation: subtitleFadeIn 1s ease 0.3s forwards;
+      animation: subtitleFadeIn 1.2s ease 0.4s forwards;
     }
     @keyframes subtitleFadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(8px); letter-spacing: 12px; }
+      to { opacity: 1; transform: translateY(0); letter-spacing: 8px; }
     }
     .title-menu {
       position: relative;
@@ -772,7 +776,7 @@
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(26,58,58,0.3) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(26,58,58,0.15) 0%, transparent 60%);
       pointer-events: none;
       z-index: 1;
     }
@@ -4860,73 +4864,154 @@
       resizeInkCanvas();
       window.addEventListener('resize', resizeInkCanvas);
 
-      // Ink particles
-      const inks = [];
-      function createInk(x, y, radius, growth, fade, opacity) {
-        return { x, y, r: radius, g: growth, f: fade, o: opacity, life: 1 };
+      const W = inkCanvas.width;
+      const H = inkCanvas.height;
+      const cx = W / 2;
+      const cy = H / 2;
+
+      // ---- Ink layer system ----
+      // Each layer is a group of overlapping soft ellipses
+      // to create an organic, irregular ink blob.
+      function createInkSpot(x, y, maxR, opacity, delay, spotCount) {
+        const spots = [];
+        for (let i = 0; i < spotCount; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const d = Math.random() * maxR * 0.35;
+          spots.push({
+            x: x + Math.cos(a) * d,
+            y: y + Math.sin(a) * d,
+            r: maxR * (0.5 + Math.random() * 0.5),
+            blur: 18 + Math.random() * 30,
+            opacity: opacity * (0.4 + Math.random() * 0.6),
+            aspect: 0.7 + Math.random() * 0.5,
+            rotation: Math.random() * Math.PI
+          });
+        }
+        return { spots, delay, age: 0, done: false };
       }
 
-      // Spawn initial ink burst
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      for (let i = 0; i < 30; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = Math.random() * 60;
-        inks.push(createInk(
-          cx + Math.cos(angle) * dist,
-          cy + Math.sin(angle) * dist,
-          10 + Math.random() * 40,
-          0.3 + Math.random() * 0.8,
-          0.002 + Math.random() * 0.004,
-          0.15 + Math.random() * 0.25
+      const inkLayers = [];
+
+      // 1. Central heavy ink (dense, dark, appears first)
+      inkLayers.push(createInkSpot(cx, cy, Math.min(W, H) * 0.28, 0.65, 0, 6));
+
+      // 2. Medium satellite inks
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2 + Math.random() * 0.4;
+        const d = Math.min(W, H) * 0.1 * (0.6 + Math.random() * 0.7);
+        inkLayers.push(createInkSpot(
+          cx + Math.cos(a) * d,
+          cy + Math.sin(a) * d,
+          Math.min(W, H) * 0.13 * (0.5 + Math.random() * 0.6),
+          0.25 + Math.random() * 0.2,
+          12 + i * 8,
+          3
         ));
       }
 
-      let inkDone = false;
-
-      function drawInk() {
-        inkCtx.clearRect(0, 0, inkCanvas.width, inkCanvas.height);
-
-        let alive = 0;
-        for (const ink of inks) {
-          if (ink.life <= 0) continue;
-          alive++;
-          ink.r += ink.g;
-          ink.life -= ink.f;
-          if (ink.life < 0) ink.life = 0;
-
-          const grad = inkCtx.createRadialGradient(ink.x, ink.y, 0, ink.x, ink.y, ink.r);
-          const alpha = ink.o * ink.life;
-          // Ink color: dark teal-grey with soft edges
-          grad.addColorStop(0, `rgba(40,70,70,${alpha})`);
-          grad.addColorStop(0.3, `rgba(30,55,55,${alpha * 0.8})`);
-          grad.addColorStop(0.6, `rgba(20,40,40,${alpha * 0.4})`);
-          grad.addColorStop(1, `rgba(10,25,25,0)`);
-
-          inkCtx.fillStyle = grad;
-          inkCtx.beginPath();
-          inkCtx.arc(ink.x, ink.y, ink.r, 0, Math.PI * 2);
-          inkCtx.fill();
-        }
-
-        if (alive > 0 && !inkDone) {
-          requestAnimationFrame(drawInk);
-        } else {
-          inkDone = true;
-        }
+      // 3. Light washes (faint, wide, appear later)
+      for (let i = 0; i < 6; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const d = Math.min(W, H) * 0.12 * Math.random();
+        inkLayers.push(createInkSpot(
+          cx + Math.cos(a) * d,
+          cy + Math.sin(a) * d,
+          Math.min(W, H) * 0.22 * (0.7 + Math.random() * 0.5),
+          0.08 + Math.random() * 0.08,
+          35 + i * 12,
+          2
+        ));
       }
 
-      // Timeline
-      setTimeout(() => { drawInk(); }, 300);
-      setTimeout(() => { if (titleEl) titleEl.classList.add('show'); }, 1200);
-      setTimeout(() => { if (subtitleEl) subtitleEl.classList.add('show'); }, 2200);
+      // 4. Fly-specks: tiny dry-brush texture dots
+      const specks = [];
+      for (let i = 0; i < 80; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const d = Math.random() * Math.min(W, H) * 0.38;
+        specks.push({
+          x: cx + Math.cos(a) * d,
+          y: cy + Math.sin(a) * d,
+          rx: 0.8 + Math.random() * 5,
+          ry: 0.4 + Math.random() * 2.5,
+          rot: Math.random() * Math.PI,
+          delay: 25 + Math.random() * 120,
+          life: 0,
+          maxLife: 60 + Math.random() * 100,
+          opacity: 0.02 + Math.random() * 0.06
+        });
+      }
+
+      function drawLayer(layer) {
+        if (layer.age < layer.delay) { layer.age++; return false; }
+        const p = Math.min((layer.age - layer.delay) / 220, 1);
+        const ease = 1 - Math.pow(1 - p, 2.5);
+        if (p >= 1) { layer.done = true; return true; }
+        layer.age++;
+
+        for (const s of layer.spots) {
+          const curR = s.r * ease;
+          const alpha = s.opacity * (1 - p * 0.15);
+
+          inkCtx.save();
+          inkCtx.filter = `blur(${s.blur * (1 - ease * 0.4)}px)`;
+
+          // True ink black — very dark, near-pure black with slight warmth
+          const g = inkCtx.createRadialGradient(s.x, s.y, 0, s.x, s.y, curR);
+          g.addColorStop(0, `rgba(2,2,3,${alpha})`);
+          g.addColorStop(0.35, `rgba(3,3,4,${alpha * 0.75})`);
+          g.addColorStop(0.65, `rgba(4,4,5,${alpha * 0.35})`);
+          g.addColorStop(1, `rgba(5,5,6,0)`);
+
+          inkCtx.fillStyle = g;
+          inkCtx.beginPath();
+          inkCtx.ellipse(s.x, s.y, curR, curR * s.aspect, s.rotation, 0, Math.PI * 2);
+          inkCtx.fill();
+          inkCtx.restore();
+        }
+        return false;
+      }
+
+      function animate() {
+        inkCtx.clearRect(0, 0, W, H);
+        let allDone = true;
+
+        for (const layer of inkLayers) {
+          const done = drawLayer(layer);
+          if (!done && !layer.done) allDone = false;
+        }
+
+        for (const s of specks) {
+          if (s.life < s.delay) { s.life++; allDone = false; continue; }
+          const p = (s.life - s.delay) / s.maxLife;
+          if (p >= 1) continue;
+          allDone = false;
+          const a = Math.sin(p * Math.PI) * s.opacity;
+          inkCtx.save();
+          inkCtx.translate(s.x, s.y);
+          inkCtx.rotate(s.rot);
+          inkCtx.filter = 'blur(0.8px)';
+          inkCtx.fillStyle = `rgba(3,3,4,${a})`;
+          inkCtx.beginPath();
+          inkCtx.ellipse(0, 0, s.rx, s.ry, 0, 0, Math.PI * 2);
+          inkCtx.fill();
+          inkCtx.restore();
+          s.life++;
+        }
+
+        if (!allDone) requestAnimationFrame(animate);
+      }
+
+      // Timeline: slower, more contemplative
+      setTimeout(() => { animate(); }, 200);
+      setTimeout(() => { if (titleEl) titleEl.classList.add('show'); }, 2000);
+      setTimeout(() => { if (subtitleEl) subtitleEl.classList.add('show'); }, 3200);
       setTimeout(() => {
         if (menuEl) menuEl.classList.add('show');
         if (inkCanvas) {
-          inkCanvas.style.transition = 'opacity 2s ease';
+          inkCanvas.style.transition = 'opacity 3s ease';
           inkCanvas.style.opacity = '0';
         }
-      }, 3500);
+      }, 5000);
     })();
 
     window.startNewGame = function() {
