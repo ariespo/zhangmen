@@ -806,6 +806,77 @@
       filter: blur(0.6px);
       will-change: transform, opacity;
     }
+
+    /* === LANDSCAPE SCROLL OPENING === */
+    .scroll-frame {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      clip-path: inset(0 50% 0 50%);
+    }
+    .landscape-svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      opacity: 0;
+    }
+    .mountain-far,
+    .mountain-near,
+    .mountain-peak {
+      opacity: 0;
+    }
+    .mountain-far-stroke,
+    .mountain-near-stroke,
+    .mountain-peak-stroke {
+      stroke-dasharray: 3000;
+      stroke-dashoffset: 3000;
+      opacity: 0;
+    }
+    .cloud {
+      opacity: 0;
+      filter: blur(8px);
+    }
+    .crane-wrapper {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .crane {
+      position: absolute;
+      width: 80px; height: 46px;
+      transform-origin: center center;
+    }
+    .scroll-edge {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 24px;
+      background: linear-gradient(90deg, #d4c4a8 0%, #c8b898 40%, #b8a888 100%);
+      z-index: 5;
+    }
+    .scroll-edge::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #a08060 0%, #8a6e4e 50%, #a08060 100%);
+    }
+    .scroll-left {
+      left: 0;
+      transform: translateX(-100%);
+      border-radius: 0 12px 12px 0;
+    }
+    .scroll-left::after { right: 0; }
+    .scroll-right {
+      right: 0;
+      transform: translateX(100%);
+      border-radius: 12px 0 0 12px;
+      background: linear-gradient(-90deg, #d4c4a8 0%, #c8b898 40%, #b8a888 100%);
+    }
+    .scroll-right::after { left: 0; }
+
     #app.game-active {
       display: flex !important;
     }
@@ -2204,8 +2275,51 @@
 
   <!-- TITLE SCREEN / OPENING -->
   <div id="title-screen">
-    <canvas id="ink-canvas"></canvas>
-    <div class="title-bg-glow"></div>
+    <div class="scroll-frame" id="scroll-frame">
+      <svg class="landscape-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="ink-far" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(120,120,120,0.35)"/>
+            <stop offset="100%" stop-color="rgba(160,160,160,0.08)"/>
+          </linearGradient>
+          <linearGradient id="ink-near" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(40,40,40,0.85)"/>
+            <stop offset="60%" stop-color="rgba(60,60,60,0.55)"/>
+            <stop offset="100%" stop-color="rgba(80,80,80,0.15)"/>
+          </linearGradient>
+        </defs>
+        <!-- 远山层 -->
+        <path class="mountain-far" fill="url(#ink-far)"
+          d="M-100,700 Q150,450 350,550 T700,480 T1050,520 T1400,460 T1750,500 T2100,420 V1080 H-100 Z"/>
+        <path class="mountain-far-stroke" fill="none" stroke="rgba(140,140,140,0.25)" stroke-width="1.5"
+          d="M-100,700 Q150,450 350,550 T700,480 T1050,520 T1400,460 T1750,500 T2100,420"/>
+        <!-- 近山层 -->
+        <path class="mountain-near" fill="url(#ink-near)"
+          d="M-100,1080 L-100,820 Q200,580 450,720 T950,650 T1450,750 T1950,680 V1080 Z"/>
+        <path class="mountain-near-stroke" fill="none" stroke="rgba(30,30,30,0.6)" stroke-width="2.5"
+          d="M-100,820 Q200,580 450,720 T950,650 T1450,750 T1950,680"/>
+        <!-- 主峰 -->
+        <path class="mountain-peak" fill="rgba(20,20,20,0.7)"
+          d="M700,1080 L850,520 Q900,480 950,520 L1100,1080 Z"/>
+        <path class="mountain-peak-stroke" fill="none" stroke="rgba(10,10,10,0.8)" stroke-width="3"
+          d="M700,1080 L850,520 Q900,480 950,520 L1100,1080"/>
+        <!-- 云雾 -->
+        <ellipse class="cloud cloud-1" cx="400" cy="620" rx="180" ry="30" fill="rgba(245,240,232,0.6)"/>
+        <ellipse class="cloud cloud-2" cx="1100" cy="580" rx="220" ry="35" fill="rgba(245,240,232,0.5)"/>
+        <ellipse class="cloud cloud-3" cx="1600" cy="650" rx="160" ry="25" fill="rgba(245,240,232,0.55)"/>
+      </svg>
+      <div class="crane-wrapper" id="crane-wrapper">
+        <svg class="crane" viewBox="0 0 120 70" fill="none">
+          <path d="M85,25 Q95,15 105,22 Q100,28 90,28 Z" fill="rgba(60,60,60,0.7)"/>
+          <ellipse cx="60" cy="32" rx="28" ry="14" fill="rgba(60,60,60,0.7)"/>
+          <path d="M35,30 Q15,25 5,32 Q15,38 35,34" fill="rgba(60,60,60,0.7)"/>
+          <path d="M60,46 L50,62 M60,46 L58,64 M60,46 L70,62" stroke="rgba(60,60,60,0.6)" stroke-width="1.5"/>
+          <path d="M32,28 Q40,18 50,24" stroke="rgba(60,60,60,0.5)" stroke-width="1" fill="none"/>
+        </svg>
+      </div>
+      <div class="scroll-edge scroll-left" id="scroll-left"></div>
+      <div class="scroll-edge scroll-right" id="scroll-right"></div>
+    </div>
     <div class="opening-title" id="opening-title">掌门模拟器</div>
     <div class="opening-subtitle" id="opening-subtitle">云璃仙宗 · 天道酬勤</div>
     <div class="title-menu" id="title-menu">
@@ -4875,147 +4989,120 @@
     if (typeof renderOpportunities === 'function') renderOpportunities();
     if (typeof renderQuests === 'function') renderQuests();
 
-    // ====== OPENING ANIMATION (GSAP) ======
+    // ====== OPENING ANIMATION — Landscape Scroll (GSAP) ======
     (function initOpening() {
-      const container = document.getElementById('title-screen');
-      const W = window.innerWidth;
-      const H = window.innerHeight;
-      const cx = W / 2;
-      const cy = H / 2;
+      const tl = gsap.timeline({ delay: 0.3 });
 
-      function createBlob(size, x, y, type) {
-        const el = document.createElement('div');
-        el.className = 'ink-blob ' + type;
-        el.style.width = size + 'px';
-        el.style.height = size + 'px';
-        el.style.left = (x - size/2) + 'px';
-        el.style.top = (y - size/2) + 'px';
-        el.style.opacity = '0';
-        el.style.transform = 'scale(0)';
-        const r1 = 55 + Math.random() * 15;
-        const r2 = 35 + Math.random() * 15;
-        const r3 = 50 + Math.random() * 15;
-        const r4 = 40 + Math.random() * 15;
-        const core = document.createElement('div');
-        core.className = 'blob-core';
-        core.style.borderRadius = `${r1}% ${100-r1}% ${r3}% ${100-r3}% / ${r2}% ${100-r2}% ${r4}% ${100-r4}%`;
-        el.appendChild(core);
-        container.appendChild(el);
-        return el;
-      }
-
-      function createSpeck(x, y, rx, ry) {
-        const el = document.createElement('div');
-        el.className = 'ink-speck';
-        el.style.width = rx + 'px';
-        el.style.height = ry + 'px';
-        el.style.left = x + 'px';
-        el.style.top = y + 'px';
-        el.style.opacity = '0';
-        el.style.transform = 'scale(0)';
-        container.appendChild(el);
-        return el;
-      }
-
-      // 1. Central heavy ink
-      const centerBlob = createBlob(Math.min(W, H) * 0.45, cx, cy, 'center');
-
-      // 2. Satellite inks
-      const satelliteBlobs = [];
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2 + Math.random() * 0.6;
-        const d = Math.min(W, H) * 0.16 * (0.5 + Math.random() * 0.8);
-        const size = Math.min(W, H) * 0.20 * (0.5 + Math.random() * 0.6);
-        satelliteBlobs.push(createBlob(size, cx + Math.cos(a) * d, cy + Math.sin(a) * d, 'satellite'));
-      }
-
-      // 3. Light washes
-      const washBlobs = [];
-      for (let i = 0; i < 7; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const d = Math.min(W, H) * 0.20 * Math.random();
-        const size = Math.min(W, H) * 0.36 * (0.7 + Math.random() * 0.5);
-        washBlobs.push(createBlob(size, cx + Math.cos(a) * d, cy + Math.sin(a) * d, 'wash'));
-      }
-
-      // 4. Fly-specks
-      const specks = [];
-      for (let i = 0; i < 90; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const d = Math.random() * Math.min(W, H) * 0.44;
-        specks.push(createSpeck(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 1.5 + Math.random() * 5, 0.8 + Math.random() * 2.5));
-      }
-
-      const tl = gsap.timeline({ delay: 0.2 });
-
-      // Phase 1: Center ink drops from above and spreads
-      tl.fromTo(centerBlob, {
-        scale: 0, opacity: 0, y: -100, filter: 'blur(30px)'
-      }, {
-        scale: 1, opacity: 0.88, y: 0, filter: 'blur(8px)',
-        duration: 1.0, ease: 'power3.out'
+      // Phase 1: Scroll unrolls from center
+      tl.to('#scroll-frame', {
+        clipPath: 'inset(0 0% 0 0%)',
+        duration: 1.6,
+        ease: 'power2.inOut'
       });
 
-      // Center ink continues to wash out
-      tl.to(centerBlob, {
-        scale: 1.4, opacity: 0.50, filter: 'blur(20px)',
-        duration: 2.8, ease: 'power1.out'
-      }, '-=0.4');
+      // Phase 2: Landscape fades in
+      tl.to('.landscape-svg', {
+        opacity: 1,
+        duration: 1.0,
+        ease: 'power1.out'
+      }, '-=0.8');
 
-      // Phase 2: Satellite inks bloom
-      tl.fromTo(satelliteBlobs, {
-        scale: 0, opacity: 0, filter: 'blur(22px)'
-      }, {
-        scale: 1, opacity: 0.62, filter: 'blur(6px)',
-        duration: 1.6, ease: 'power2.out', stagger: 0.1
-      }, '-=2.4');
+      // Phase 3: Far mountain stroke draw
+      tl.to('.mountain-far-stroke', {
+        strokeDashoffset: 0,
+        opacity: 1,
+        duration: 2.2,
+        ease: 'power1.inOut'
+      }, '-=0.6');
 
-      // Phase 3: Light washes
-      tl.fromTo(washBlobs, {
-        scale: 0, opacity: 0, filter: 'blur(30px)'
-      }, {
-        scale: 1, opacity: 0.28, filter: 'blur(14px)',
-        duration: 2.2, ease: 'power1.out', stagger: 0.12
-      }, '-=2.2');
+      // Phase 4: Far mountain fill washes in
+      tl.to('.mountain-far', {
+        opacity: 1,
+        duration: 1.8,
+        ease: 'power1.out'
+      }, '-=1.4');
 
-      // Phase 4: Specks pop
-      tl.fromTo(specks, {
-        scale: 0, opacity: 0
-      }, {
-        scale: 1, opacity: () => 0.25 + Math.random() * 0.35,
-        duration: 0.5, ease: 'back.out(1.4)',
-        stagger: { amount: 1.0, from: 'center' }
-      }, '-=2.0');
+      // Phase 5: Near mountain stroke draw
+      tl.to('.mountain-near-stroke', {
+        strokeDashoffset: 0,
+        opacity: 1,
+        duration: 2.0,
+        ease: 'power2.inOut'
+      }, '-=1.6');
 
-      // Phase 5: Title
-      tl.fromTo('#opening-title', {
-        opacity: 0, y: 28, filter: 'blur(8px)', scale: 0.96
-      }, {
-        opacity: 1, y: 0, filter: 'blur(0px)', scale: 1,
-        duration: 1.5, ease: 'power3.out'
+      // Phase 6: Near mountain fill
+      tl.to('.mountain-near', {
+        opacity: 1,
+        duration: 1.6,
+        ease: 'power1.out'
+      }, '-=1.2');
+
+      // Phase 7: Peak stroke + fill
+      tl.to('.mountain-peak-stroke', {
+        strokeDashoffset: 0,
+        opacity: 1,
+        duration: 1.6,
+        ease: 'power2.inOut'
+      }, '-=1.4');
+      tl.to('.mountain-peak', {
+        opacity: 1,
+        duration: 1.2,
+        ease: 'power1.out'
       }, '-=1.0');
 
-      // Phase 6: Subtitle
+      // Phase 8: Clouds drift in with blur
+      tl.fromTo('.cloud', {
+        opacity: 0, x: -60, filter: 'blur(16px)'
+      }, {
+        opacity: 1, x: 0, filter: 'blur(8px)',
+        duration: 2.0, ease: 'power2.out', stagger: 0.2
+      }, '-=1.6');
+
+      // Phase 9: Crane flies across
+      tl.set('#crane-wrapper', { opacity: 1 });
+      tl.fromTo('.crane', {
+        x: -120, y: 180, rotation: -8, opacity: 0, scale: 0.7
+      }, {
+        x: window.innerWidth + 120, y: -40, rotation: 4, opacity: 0.85, scale: 1,
+        duration: 5.5, ease: 'none'
+      }, '-=2.5');
+
+      // Phase 10: Title reveal
+      tl.fromTo('#opening-title', {
+        opacity: 0, y: 30, filter: 'blur(10px)', scale: 0.95
+      }, {
+        opacity: 1, y: 0, filter: 'blur(0px)', scale: 1,
+        duration: 1.6, ease: 'power3.out'
+      }, '-=3.2');
+
+      // Phase 11: Subtitle
       tl.fromTo('#opening-subtitle', {
-        opacity: 0, y: 14, filter: 'blur(4px)'
+        opacity: 0, y: 16, filter: 'blur(5px)'
       }, {
         opacity: 1, y: 0, filter: 'blur(0px)',
-        duration: 1.1, ease: 'power2.out'
-      }, '-=1.1');
+        duration: 1.2, ease: 'power2.out'
+      }, '-=1.2');
 
-      // Phase 7: Menu buttons
+      // Phase 12: Menu buttons
       tl.fromTo('#title-menu', {
-        opacity: 0, y: 18
+        opacity: 0, y: 20
       }, {
         opacity: 1, y: 0,
-        duration: 0.7, ease: 'power2.out'
-      }, '-=0.7');
+        duration: 0.8, ease: 'power2.out'
+      }, '-=0.8');
 
-      // Phase 8: Ink fades into background
-      tl.to('.ink-blob, .ink-speck', {
-        opacity: (i, el) => gsap.getProperty(el, 'opacity') * 0.22,
-        duration: 2.2, ease: 'power1.out'
-      }, '-=0.2');
+      // Phase 13: Landscape settles into background
+      tl.to('.landscape-svg', {
+        opacity: 0.18,
+        filter: 'blur(2px)',
+        duration: 2.0,
+        ease: 'power1.out'
+      }, '-=0.4');
+      tl.to('.cloud', {
+        opacity: 0.10,
+        duration: 2.0,
+        ease: 'power1.out'
+      }, '<');
     })();
 
     window.startNewGame = function() {
