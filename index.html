@@ -5818,6 +5818,12 @@
         age: data.age
       };
 
+      // Generate opening story and show in story page
+      generateOpeningStory(data);
+
+      // Switch to story page as default
+      if (typeof switchPage === 'function') switchPage('story');
+
       // Refresh UI
       if (typeof renderMembers === 'function') renderMembers();
       if (typeof renderBuildings === 'function') renderBuildings();
@@ -5826,6 +5832,81 @@
       if (typeof renderSkills === 'function') renderSkills();
       if (typeof renderOpportunities === 'function') renderOpportunities();
       if (typeof renderQuests === 'function') renderQuests();
+    }
+
+    function generateOpeningStory(data) {
+      const realmFull = data.realmLevel === '道祖' ? '道祖' : data.realmLevel + (data.realmStage || '');
+      const personalityStr = data.personality.join('、') || '沉稳';
+      const appearanceStr = data.appearance.join('、') || '俊朗';
+
+      const crisisMap = {
+        '临危受命': `前任掌门陨落，整个宗门群龙无首。${data.name}临危受命，接下了这副千钧重担。`,
+        '白手起家': `${data.name}白手起家，从零开始。一砖一瓦，一草一木，皆需亲力亲为。`,
+        '仇敌环伺': `不久前，${data.name}亲手斩杀了一名魔道小头目。如今对方宗门已放出话来，誓要血债血偿。`,
+        '天降机缘': `近日，${data.name}在山门深处发现了一处上古遗迹。消息不胫而走，各方势力已闻风而动。`,
+        '宗门内乱': `宗门大长老对${data.name}执掌大权心怀不满，暗中拉拢了一批弟子，意图架空掌门。`
+      };
+      const crisisDesc = crisisMap[data.crisis] || crisisMap['白手起家'];
+
+      const statusDescMap = {
+        '毫无名气': '方圆百里之内，几乎无人知晓这个名号。',
+        '末流小派': '在附近几个村落中略有耳闻，但在真正的修仙界中微不足道。',
+        '三流小宗': '在方圆千里之内有些名气，偶尔会有散修前来投奔。',
+        '二流宗门': '在一洲之地颇有威望，与各大宗门皆有往来。',
+        '一流大宗': '天下皆知，万宗来朝，是这一方天地中最顶尖的势力之一。'
+      };
+      const statusDesc = statusDescMap[data.status] || statusDescMap['二流宗门'];
+
+      const pathDescMap = {
+        '道修': '顺应天道，万法自然',
+        '神修': '香火成神，信仰之力',
+        '魔修': '弱肉强食，百无禁忌',
+        '体修': '淬炼肉身，金刚不坏',
+        '旁门左道': '另辟蹊径，出奇制胜'
+      };
+      const pathDesc = pathDescMap[data.path] || data.path;
+
+      const specialtyDescMap = {
+        '剑': '以剑入道，杀伐无双',
+        '丹': '以丹入道，救死扶伤',
+        '炼器': '以器入道，攻守兼备',
+        '法阵': '以阵入道，困敌护山',
+        '符箓': '以符入道，变化万千'
+      };
+      const specialtyDesc = specialtyDescMap[data.specialty] || data.specialty;
+
+      const storyHTML = `
+        <div class="story-paragraph narrator" style="animation-delay:0s">
+          【天机台 · 序章 · 问道之始】
+        </div>
+        <div class="story-paragraph" style="animation-delay:0.15s">
+          ${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}
+        </div>
+        <div class="story-paragraph" style="animation-delay:0.3s">
+          ${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。
+        </div>
+        <div class="story-paragraph" style="animation-delay:0.45s">
+          ${crisisDesc}
+        </div>
+        <div class="story-paragraph narrator" style="animation-delay:0.6s">
+          风云际会，正是你书写传奇的时刻——
+        </div>
+      `;
+
+      const storyContent = document.getElementById('story-content');
+      if (storyContent) {
+        storyContent.innerHTML = storyHTML;
+      }
+
+      const storyChoices = document.getElementById('story-choices');
+      if (storyChoices) {
+        storyChoices.innerHTML = `
+          <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
+            <div class="choice-marker">壹</div>
+            <span>开始你的宗门之旅</span>
+          </button>
+        `;
+      }
     }
 
     window.loadGame = function() {
