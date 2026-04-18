@@ -515,6 +515,134 @@
       cursor: not-allowed;
     }
 
+    /* === QUESTS PAGE === */
+    .quest-section {
+      margin-bottom: 24px;
+    }
+    .quest-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--jade-pale);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .quest-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .quest-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 14px;
+      transition: all 0.3s;
+    }
+    .quest-card:hover {
+      border-color: rgba(110, 207, 207, 0.3);
+      transform: translateX(4px);
+    }
+    .quest-card.completed {
+      opacity: 0.5;
+    }
+    .quest-card.failed {
+      opacity: 0.5;
+      border-color: rgba(212, 114, 140, 0.3);
+    }
+    .quest-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .quest-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .quest-status {
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+    .quest-status-ongoing {
+      background: rgba(110,207,207,0.12);
+      color: var(--jade-glow);
+    }
+    .quest-status-completed {
+      background: rgba(110,207,207,0.08);
+      color: var(--jade-glow);
+    }
+    .quest-status-failed {
+      background: rgba(212,114,140,0.12);
+      color: var(--lotus-pink);
+    }
+    .quest-status-untriggered {
+      background: rgba(0,0,0,0.2);
+      color: rgba(168,230,230,0.5);
+    }
+    .quest-progress-bar {
+      height: 4px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .quest-progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.5s;
+      background: var(--jade-glow);
+    }
+    .quest-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(168,230,230,0.4);
+      font-size: 13px;
+    }
+    .main-quest-current {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .main-quest-label {
+      font-size: 11px;
+      color: var(--gold-spirit);
+      margin-bottom: 6px;
+    }
+    .main-quest-stage {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--cloud-white);
+    }
+    .main-quest-timeline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(110,207,207,0.08);
+      border: 1px solid rgba(110,207,207,0.15);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--jade-glow);
+    }
+    .timeline-item::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--jade-glow);
+      border-radius: 50%;
+    }
+
     /* === MAIN CONTENT === */
     #main-content {
       flex: 1;
@@ -2108,6 +2236,13 @@
           </svg>
           <span>宝库</span>
         </button>
+        <button class="nav-btn" data-page="quests" onclick="switchPage('quests')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+          </svg>
+          <span>任务</span>
+        </button>
         <button class="nav-btn" data-page="opportunity" onclick="switchPage('opportunity')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -2251,6 +2386,17 @@
               </div>
               <h3 class="text-pink">万宝阁</h3>
               <p>法器、丹药、灵材，宗门宝物尽在此处</p>
+            </div>
+            <div class="module-card" onclick="switchPage('quests')">
+              <div class="module-icon-wrap" style="background:rgba(110,207,207,0.08)">
+                <div class="module-icon-glow" style="background:var(--jade-glow)"></div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--jade-glow)" stroke-width="1.5">
+                  <path d="M9 11l3 3L22 4"/>
+                  <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+              </div>
+              <h3 style="color:var(--jade-glow)">任务阁</h3>
+              <p>主线因果、支线机缘，一揽无余</p>
             </div>
             <div class="module-card" onclick="switchPage('sectinfo')">
               <div class="module-icon-wrap" style="background:rgba(110,207,207,0.08)">
@@ -2555,6 +2701,40 @@
             <button class="treasury-tab" onclick="switchTreasury('accessory', this)">饰品</button>
           </div>
           <div class="item-grid" id="item-grid"></div>
+        </div>
+
+        <!-- QUESTS PAGE -->
+        <div id="quests-page" class="page-content">
+          <div class="page-header">
+            <h2>任务阁</h2>
+            <div style="font-size:12px;color:rgba(168,230,230,0.5)">天道循环，因果相续</div>
+          </div>
+
+          <!-- 主线 -->
+          <div class="quest-section">
+            <div class="quest-section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px;color:var(--gold-spirit)">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+              <span>主线剧情</span>
+            </div>
+            <div id="main-quest-container"></div>
+          </div>
+
+          <!-- 支线 -->
+          <div class="quest-section">
+            <div class="quest-section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px;color:var(--jade-glow)">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+              </svg>
+              <span>支线任务</span>
+            </div>
+            <div class="quest-list" id="side-quest-list"></div>
+            <div id="side-quest-empty" class="quest-empty" style="display:none">暂无支线任务</div>
+          </div>
         </div>
 
         <!-- OPPORTUNITY PAGE -->
@@ -4195,6 +4375,71 @@
 
     renderOpportunities();
 
+    // ====== QUESTS ======
+    function renderQuests() {
+      const quests = window.gameStateManager?.state?.quests;
+      if (!quests) return;
+
+      // 主线
+      const mainContainer = document.getElementById('main-quest-container');
+      if (mainContainer) {
+        const main = quests.main || {};
+        const completed = main.completedStages || [];
+        let html = '';
+        if (main.currentStage) {
+          html += `
+            <div class="main-quest-current">
+              <div class="main-quest-label">当前阶段</div>
+              <div class="main-quest-stage">${escapeHtml(main.currentStage)}</div>
+            </div>
+          `;
+        }
+        if (completed.length > 0) {
+          html += `
+            <div style="font-size:12px;color:rgba(168,230,230,0.5);margin-bottom:8px">已完成阶段</div>
+            <div class="main-quest-timeline">
+              ${completed.map(s => `<span class="timeline-item">${escapeHtml(s)}</span>`).join('')}
+            </div>
+          `;
+        }
+        mainContainer.innerHTML = html;
+      }
+
+      // 支线
+      const sideList = document.getElementById('side-quest-list');
+      const sideEmpty = document.getElementById('side-quest-empty');
+      const side = quests.side || [];
+      if (sideList) {
+        if (side.length === 0) {
+          sideList.innerHTML = '';
+          if (sideEmpty) sideEmpty.style.display = 'block';
+        } else {
+          if (sideEmpty) sideEmpty.style.display = 'none';
+          sideList.innerHTML = side.map(q => {
+            const statusClass = q.status === '进行中' ? 'quest-status-ongoing' :
+              q.status === '已完成' ? 'quest-status-completed' :
+              q.status === '已失败' ? 'quest-status-failed' : 'quest-status-untriggered';
+            const cardClass = q.status === '已完成' ? 'quest-card completed' :
+              q.status === '已失败' ? 'quest-card failed' : 'quest-card';
+            return `
+              <div class="${cardClass}">
+                <div class="quest-header">
+                  <div class="quest-name">${escapeHtml(q.name)}</div>
+                  <span class="quest-status ${statusClass}">${q.status}</span>
+                </div>
+                ${q.status === '进行中' ? `
+                  <div class="quest-progress-bar">
+                    <div class="quest-progress-fill" style="width:${q.progress || 0}%"></div>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    }
+    renderQuests();
+
     // ====== TREASURY ======
     const itemSvgs = {
       weapon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14.5 3.5l6 6-11 11-6-6z"/><path d="M9.5 14.5l-5 5"/><path d="M18 2l4 4"/></svg>',
@@ -4436,6 +4681,9 @@
     gameStateManager.subscribe('/opportunities', () => {
       if (typeof renderOpportunities === 'function') renderOpportunities();
     });
+    gameStateManager.subscribe('/quests', () => {
+      if (typeof renderQuests === 'function') renderQuests();
+    });
     // 首次手动刷新各页面（后续由 LLM patch 触发变更后自动重渲染）
     if (typeof renderMembers === 'function') renderMembers();
     if (typeof renderFactions === 'function') renderFactions();
@@ -4444,6 +4692,7 @@
     if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
     if (typeof renderSkills === 'function') renderSkills();
     if (typeof renderOpportunities === 'function') renderOpportunities();
+    if (typeof renderQuests === 'function') renderQuests();
   </script>
 </body>
 </html>
