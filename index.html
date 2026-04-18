@@ -643,6 +643,143 @@
       border-radius: 50%;
     }
 
+    /* === OPENING / TITLE SCREEN === */
+    #title-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 100;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #title-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1.2s ease;
+    }
+    #ink-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      opacity: 0.85;
+    }
+    .opening-title {
+      position: relative;
+      z-index: 2;
+      font-family: 'ZCOOL XiaoWei', serif;
+      font-size: 64px;
+      letter-spacing: 12px;
+      color: var(--gold-bright);
+      text-shadow: 0 0 40px rgba(200,168,110,0.4), 0 0 80px rgba(200,168,110,0.2);
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    .opening-title.show {
+      animation: titleReveal 1.2s ease forwards;
+    }
+    @keyframes titleReveal {
+      0% { opacity: 0; transform: scale(0.9); filter: blur(8px); }
+      60% { opacity: 1; transform: scale(1.02); filter: blur(0); }
+      100% { opacity: 1; transform: scale(1); filter: blur(0); }
+    }
+    .opening-subtitle {
+      position: relative;
+      z-index: 2;
+      font-family: 'Noto Serif SC', serif;
+      font-size: 18px;
+      letter-spacing: 6px;
+      color: var(--jade-pale);
+      margin-top: 16px;
+      opacity: 0;
+    }
+    .opening-subtitle.show {
+      animation: subtitleFadeIn 1s ease 0.3s forwards;
+    }
+    @keyframes subtitleFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .title-menu {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      margin-top: 60px;
+      opacity: 0;
+    }
+    .title-menu.show {
+      animation: menuFadeIn 0.8s ease forwards;
+    }
+    @keyframes menuFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .title-btn {
+      width: 220px;
+      padding: 14px 0;
+      background: transparent;
+      border: 1px solid rgba(200,168,110,0.3);
+      border-radius: 4px;
+      color: var(--gold-spirit);
+      font-family: 'Noto Serif SC', serif;
+      font-size: 16px;
+      letter-spacing: 4px;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .title-btn::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: rgba(200,168,110,0.1);
+      transition: left 0.4s ease;
+    }
+    .title-btn:hover::before {
+      left: 0;
+    }
+    .title-btn:hover {
+      border-color: rgba(200,168,110,0.6);
+      color: var(--gold-bright);
+      text-shadow: 0 0 12px rgba(200,168,110,0.3);
+    }
+    .title-btn.primary {
+      border-color: rgba(110,207,207,0.4);
+      color: var(--jade-glow);
+    }
+    .title-btn.primary::before {
+      background: rgba(110,207,207,0.1);
+    }
+    .title-btn.primary:hover {
+      border-color: rgba(110,207,207,0.7);
+      color: var(--jade-pale);
+      text-shadow: 0 0 12px rgba(110,207,207,0.3);
+    }
+    .title-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .title-bg-glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(26,58,58,0.3) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    #app.game-active {
+      display: flex !important;
+    }
+
     /* === MAIN CONTENT === */
     #main-content {
       flex: 1;
@@ -2035,7 +2172,20 @@
 <body>
   <canvas id="bg-canvas"></canvas>
 
-  <div id="app">
+  <!-- TITLE SCREEN / OPENING -->
+  <div id="title-screen">
+    <canvas id="ink-canvas"></canvas>
+    <div class="title-bg-glow"></div>
+    <div class="opening-title" id="opening-title">掌门模拟器</div>
+    <div class="opening-subtitle" id="opening-subtitle">云璃仙宗 · 天道酬勤</div>
+    <div class="title-menu" id="title-menu">
+      <button class="title-btn primary" id="btn-new-game" onclick="startNewGame()">开始新游戏</button>
+      <button class="title-btn" id="btn-load-game" onclick="loadGame()">读取游戏</button>
+      <button class="title-btn" id="btn-settings" onclick="openTitleSettings()">设置</button>
+    </div>
+  </div>
+
+  <div id="app" style="display:none">
     <!-- TOP BAR -->
     <header id="top-bar">
       <div class="logo-area">
@@ -4694,6 +4844,108 @@
     if (typeof renderSkills === 'function') renderSkills();
     if (typeof renderOpportunities === 'function') renderOpportunities();
     if (typeof renderQuests === 'function') renderQuests();
+
+    // ====== OPENING ANIMATION ======
+    (function initOpening() {
+      const inkCanvas = document.getElementById('ink-canvas');
+      const inkCtx = inkCanvas.getContext('2d');
+      const titleEl = document.getElementById('opening-title');
+      const subtitleEl = document.getElementById('opening-subtitle');
+      const menuEl = document.getElementById('title-menu');
+
+      function resizeInkCanvas() {
+        inkCanvas.width = window.innerWidth;
+        inkCanvas.height = window.innerHeight;
+      }
+      resizeInkCanvas();
+      window.addEventListener('resize', resizeInkCanvas);
+
+      // Ink particles
+      const inks = [];
+      function createInk(x, y, radius, growth, fade, opacity) {
+        return { x, y, r: radius, g: growth, f: fade, o: opacity, life: 1 };
+      }
+
+      // Spawn initial ink burst
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      for (let i = 0; i < 30; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * 60;
+        inks.push(createInk(
+          cx + Math.cos(angle) * dist,
+          cy + Math.sin(angle) * dist,
+          10 + Math.random() * 40,
+          0.3 + Math.random() * 0.8,
+          0.002 + Math.random() * 0.004,
+          0.15 + Math.random() * 0.25
+        ));
+      }
+
+      let inkDone = false;
+
+      function drawInk() {
+        inkCtx.clearRect(0, 0, inkCanvas.width, inkCanvas.height);
+
+        let alive = 0;
+        for (const ink of inks) {
+          if (ink.life <= 0) continue;
+          alive++;
+          ink.r += ink.g;
+          ink.life -= ink.f;
+          if (ink.life < 0) ink.life = 0;
+
+          const grad = inkCtx.createRadialGradient(ink.x, ink.y, 0, ink.x, ink.y, ink.r);
+          const alpha = ink.o * ink.life;
+          // Ink color: dark teal-grey with soft edges
+          grad.addColorStop(0, `rgba(40,70,70,${alpha})`);
+          grad.addColorStop(0.3, `rgba(30,55,55,${alpha * 0.8})`);
+          grad.addColorStop(0.6, `rgba(20,40,40,${alpha * 0.4})`);
+          grad.addColorStop(1, `rgba(10,25,25,0)`);
+
+          inkCtx.fillStyle = grad;
+          inkCtx.beginPath();
+          inkCtx.arc(ink.x, ink.y, ink.r, 0, Math.PI * 2);
+          inkCtx.fill();
+        }
+
+        if (alive > 0 && !inkDone) {
+          requestAnimationFrame(drawInk);
+        } else {
+          inkDone = true;
+        }
+      }
+
+      // Timeline
+      setTimeout(() => { drawInk(); }, 300);
+      setTimeout(() => { if (titleEl) titleEl.classList.add('show'); }, 1200);
+      setTimeout(() => { if (subtitleEl) subtitleEl.classList.add('show'); }, 2200);
+      setTimeout(() => {
+        if (menuEl) menuEl.classList.add('show');
+        if (inkCanvas) {
+          inkCanvas.style.transition = 'opacity 2s ease';
+          inkCanvas.style.opacity = '0';
+        }
+      }, 3500);
+    })();
+
+    window.startNewGame = function() {
+      const titleScreen = document.getElementById('title-screen');
+      const app = document.getElementById('app');
+      if (titleScreen) titleScreen.classList.add('hidden');
+      if (app) {
+        app.style.display = 'flex';
+        setTimeout(() => { if (typeof resizeCanvas === 'function') resizeCanvas(); }, 100);
+      }
+    };
+
+    window.loadGame = function() {
+      alert('读取游戏功能即将上线');
+    };
+
+    window.openTitleSettings = function() {
+      alert('设置功能即将上线');
+    };
   </script>
 </body>
 </html>
