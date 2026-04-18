@@ -3328,9 +3328,16 @@
         const log = actionLogs[index];
         restoreStamina(log.cost);
         // 恢复机缘状态
-        if (log.opportunityId && log.opportunityType && opportunities[log.opportunityType]) {
-          const opp = opportunities[log.opportunityType].find(o => o.id === log.opportunityId);
-          if (opp) opp.completed = false;
+        if (log.opportunityId) {
+          const all = window.gameStateManager?.state?.opportunities || [];
+          const idx = all.findIndex(o => String(o.id) === String(log.opportunityId));
+          if (idx !== -1) {
+            window.gameStateManager.applyPatch([{
+              op: 'replace',
+              path: '/opportunities/' + idx + '/completed',
+              value: false
+            }]);
+          }
         }
         actionLogs.splice(index, 1);
         renderActionLogs();
@@ -4024,38 +4031,36 @@
     }
 
     // ====== LIBRARY / SKILLS ======
-    const skills = [
-      { name: '太虚真解', type: '道修', rank: '天阶上品', rankLevel: '天', desc: '宗门根本功法，可贯通天地灵气，攻守兼备，修炼至大成可触摸天道门槛', color: 'jade', rankBg: 'rgba(110,207,207,0.2)', rankColor: 'var(--jade-glow)' },
-      { name: '紫霄神雷诀', type: '道修', rank: '地阶上品', rankLevel: '地', desc: '雷法秘术，引天雷入体，威力惊人，修炼者需承受雷霆淬体之痛', color: 'purple', rankBg: 'rgba(139,126,200,0.15)', rankColor: 'var(--mist-purple)' },
-      { name: '天罡剑诀', type: '道修', rank: '地阶中品', rankLevel: '地', desc: '上古剑法，凝聚天罡之力，一剑可破万法，剑修必修之术', color: 'gold', rankBg: 'rgba(200,168,110,0.15)', rankColor: 'var(--gold-spirit)' },
-      { name: '碧波心经', type: '道修', rank: '玄阶上品', rankLevel: '玄', desc: '水属性功法，可凝神静气，疗伤恢复，适合水木灵根修炼', color: 'jade', rankBg: 'rgba(110,207,207,0.12)', rankColor: 'var(--jade-glow)' },
-      { name: '基础剑术', type: '道修', rank: '黄阶', rankLevel: '黄', desc: '入门剑法，简单实用，外门成员必修的基础剑道之术', color: 'jade', rankBg: 'rgba(110,207,207,0.08)', rankColor: 'rgba(168,230,230,0.6)' },
-      { name: '神念九转', type: '神修', rank: '天阶下品', rankLevel: '天', desc: '以神识为根基，九转之后神念可覆盖千里，一念杀敌于无形', color: 'purple', rankBg: 'rgba(139,126,200,0.2)', rankColor: 'var(--mist-purple)' },
-      { name: '炼神诀', type: '神修', rank: '地阶上品', rankLevel: '地', desc: '锤炼神魂之法，可抵御心魔入侵，提升悟性', color: 'purple', rankBg: 'rgba(139,126,200,0.15)', rankColor: 'var(--mist-purple)' },
-      { name: '噬魂魔典', type: '魔修', rank: '天阶中品', rankLevel: '天', desc: '魔道至高功法，可吞噬他人魂魄提升修为，为正道所不容', color: 'pink', rankBg: 'rgba(212,114,140,0.2)', rankColor: 'var(--lotus-pink)' },
-      { name: '血煞大法', type: '魔修', rank: '地阶下品', rankLevel: '地', desc: '以血为引，激发潜能，短时间内战力倍增，但会损伤根基', color: 'pink', rankBg: 'rgba(212,114,140,0.15)', rankColor: 'var(--lotus-pink)' },
-      { name: '金刚不坏体', type: '体修', rank: '玄阶上品', rankLevel: '玄', desc: '体修功法，可大幅提升肉身防御力，刀枪不入，水火不侵', color: 'gold', rankBg: 'rgba(200,168,110,0.15)', rankColor: 'var(--gold-spirit)' },
-      { name: '龙象般若功', type: '体修', rank: '地阶中品', rankLevel: '地', desc: '搬运气血，淬炼肉身，修炼至大成可拥有龙象之力', color: 'gold', rankBg: 'rgba(200,168,110,0.15)', rankColor: 'var(--gold-spirit)' },
-      { name: '九转还丹术', type: '修行百艺', rank: '地阶上品', rankLevel: '地', desc: '高阶丹方集录，含筑基丹、金丹丹方等，丹道宗师必修', color: 'pink', rankBg: 'rgba(212,114,140,0.12)', rankColor: 'var(--lotus-pink)' },
-      { name: '玄天阵录', type: '修行百艺', rank: '地阶', rankLevel: '地', desc: '阵法宝典，囊括数十种攻防大阵的布置之法', color: 'purple', rankBg: 'rgba(139,126,200,0.15)', rankColor: 'var(--mist-purple)' },
-      { name: '灵药辨识经', type: '修行百艺', rank: '黄阶', rankLevel: '黄', desc: '记载千余种灵药特性，炼丹入门必读', color: 'pink', rankBg: 'rgba(212,114,140,0.08)', rankColor: 'rgba(232,160,180,0.7)' },
-      { name: '基础炼器诀', type: '修行百艺', rank: '凡阶', rankLevel: '凡', desc: '炼器入门之法，教授如何辨识材料、掌控火候', color: 'jade', rankBg: 'rgba(110,207,207,0.05)', rankColor: 'rgba(168,230,230,0.5)' }
-    ];
+    function getSkillStyle(skill) {
+      const rankLevel = skill.rank.charAt(0);
+      const opacityMap = { '天': 0.2, '地': 0.15, '玄': 0.12, '黄': 0.08, '凡': 0.05 };
+      const opacity = opacityMap[rankLevel] || 0.1;
+      const colorMap = {
+        jade: { bg: `rgba(110,207,207,${opacity})`, color: 'var(--jade-glow)' },
+        purple: { bg: `rgba(139,126,200,${opacity})`, color: 'var(--mist-purple)' },
+        pink: { bg: `rgba(212,114,140,${opacity})`, color: 'var(--lotus-pink)' },
+        gold: { bg: `rgba(200,168,110,${opacity})`, color: 'var(--gold-spirit)' }
+      };
+      return { rankLevel, ...colorMap[skill.color] };
+    }
 
     function renderSkills() {
       const grid = document.getElementById('skill-grid');
       grid.innerHTML = '';
+      const skills = window.gameStateManager?.state?.library || [];
       const filtered = skills.filter(s => {
+        const style = getSkillStyle(s);
         const typeMatch = currentSkillTypeFilter === 'all' || s.type === currentSkillTypeFilter;
-        const rankMatch = currentSkillRankFilter === 'all' || s.rankLevel === currentSkillRankFilter;
+        const rankMatch = currentSkillRankFilter === 'all' || style.rankLevel === currentSkillRankFilter;
         return typeMatch && rankMatch;
       });
       filtered.forEach(s => {
+        const style = getSkillStyle(s);
         const card = document.createElement('div');
         card.className = 'skill-card';
         card.onclick = () => showSkillDetail(s);
         card.innerHTML = `
-          <span class="skill-rank" style="background:${s.rankBg};color:${s.rankColor}">${s.rank}</span>
+          <span class="skill-rank" style="background:${style.bg};color:${style.color}">${s.rank}</span>
           <h4>${s.name}</h4>
           <div class="skill-type">${s.type}</div>
           <div class="skill-desc">${s.desc}</div>
@@ -4080,6 +4085,7 @@
     }
 
     function showSkillDetail(skill) {
+      const style = getSkillStyle(skill);
       const overlay = document.getElementById('modal-overlay');
       document.getElementById('modal-title').innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
@@ -4093,7 +4099,7 @@
         <div class="sect-info-grid">
           <div class="info-block">
             <h4>功法名称</h4>
-            <div class="info-value" style="font-size:16px;color:${skill.rankColor}">${skill.name}</div>
+            <div class="info-value" style="font-size:16px;color:${style.color}">${skill.name}</div>
           </div>
           <div class="info-block">
             <h4>流派</h4>
@@ -4101,7 +4107,7 @@
           </div>
           <div class="info-block">
             <h4>品阶</h4>
-            <div class="info-value" style="color:${skill.rankColor}">${skill.rank}</div>
+            <div class="info-value" style="color:${style.color}">${skill.rank}</div>
           </div>
           <div class="info-block full-width">
             <h4>功法介绍</h4>
@@ -4113,29 +4119,14 @@
     }
 
     // ====== OPPORTUNITY SYSTEM ======
-    const opportunities = {
-      tianshi: [
-        { id: 1, title: '九星连珠', desc: '天地剧变，星辰移位，未来三百年内气运之子出现概率大幅度增加，正是广收门徒的最佳时机', cost: 1, completed: false },
-        { id: 2, title: '灵气复苏', desc: '沉寂万年的上古灵脉开始苏醒，各大宗门都在寻找新出现的灵地，机不可失', cost: 1, completed: false }
-      ],
-      dili: [
-        { id: 3, title: '太古遗迹现世', desc: '据探子回报，东荒深处的「葬仙谷」有上古遗迹出世，传说其中有仙人遗留的传承', cost: 2, completed: false },
-        { id: 4, title: '论剑大会', desc: '天剑宗将于三个月后召开「万剑朝宗」论剑大会，邀请天下剑修共襄盛举', cost: 1, completed: false },
-        { id: 5, title: '青阳道人讲法', desc: '太玄学府的青阳居士将于下月在云梦泽开设法会，讲授「道法自然」之理', cost: 1, completed: false }
-      ],
-      renhe: [
-        { id: 6, title: '长老请愿', desc: '大长老沈万钧请求上调执法堂成员俸禄，称近年宗门收入增加，理应惠及门人', cost: 1, completed: false },
-        { id: 7, title: '成员纷争', desc: '成员林淮安与苏瑶因一处洞府归属产生激烈矛盾，请求掌门主持公道', cost: 1, completed: false },
-        { id: 8, title: '万象门求见', desc: '万象门特使携带厚礼求见，希望能够与我宗建立更深层次的战略合作关系', cost: 1, completed: false }
-      ]
-    };
-
     function renderOpportunities() {
+      const all = window.gameStateManager?.state?.opportunities || [];
       ['tianshi', 'dili', 'renhe'].forEach(type => {
         const list = document.getElementById(`${type === 'tianshi' ? 'tian' : type === 'dili' ? 'di' : 'ren'}-shi-list`);
         if (!list) return;
-        list.innerHTML = opportunities[type].map(opp => `
-          <div class="opportunity-item ${opp.completed ? 'completed' : ''}" onclick="openOpportunityDialog(${opp.id}, '${type}')">
+        const opps = all.filter(o => o.category === type);
+        list.innerHTML = opps.map(opp => `
+          <div class="opportunity-item ${opp.completed ? 'completed' : ''}" onclick="openOpportunityDialog('${opp.id}')">
             <div class="opportunity-title">${opp.title}</div>
             <div class="opportunity-desc">${opp.desc}</div>
             <div class="opportunity-cost">消耗体力：${opp.cost}</div>
@@ -4144,8 +4135,9 @@
       });
     }
 
-    function openOpportunityDialog(id, type) {
-      const opp = opportunities[type].find(o => o.id === id);
+    function openOpportunityDialog(id) {
+      const all = window.gameStateManager?.state?.opportunities || [];
+      const opp = all.find(o => o.id === id);
       if (!opp || opp.completed) return;
 
       const overlay = document.getElementById('modal-overlay');
@@ -4166,7 +4158,7 @@
           <textarea class="opportunity-input" id="opp-input-${opp.id}" placeholder="请输入你的应对之策..."></textarea>
           <div class="opportunity-actions">
             <button class="opportunity-btn secondary" onclick="closeModal()">再想想</button>
-            <button class="opportunity-btn primary" onclick="submitOpportunity(${opp.id}, '${type}')">就这么办</button>
+            <button class="opportunity-btn primary" onclick="submitOpportunity('${opp.id}')">就这么办</button>
           </div>
         </div>
       `;
@@ -4177,19 +4169,25 @@
       }, 100);
     }
 
-    function submitOpportunity(id, type) {
-      const opp = opportunities[type].find(o => o.id === id);
-      if (!opp) return;
+    function submitOpportunity(id) {
+      const all = window.gameStateManager?.state?.opportunities || [];
+      const idx = all.findIndex(o => o.id === id);
+      if (idx === -1) return;
+      const opp = all[idx];
       const input = document.getElementById(`opp-input-${id}`);
       const content = input ? input.value.trim() : '';
 
-      const typeName = type === 'tianshi' ? '天时' : type === 'dili' ? '地利' : '人和';
+      const typeName = opp.category === 'tianshi' ? '天时' : opp.category === 'dili' ? '地利' : '人和';
       const success = addActionLog(typeName, opp.title, content || '未输入具体策略', opp.cost, {
         opportunityId: id,
-        opportunityType: type
+        opportunityType: opp.category
       });
       if (success) {
-        opp.completed = true;
+        window.gameStateManager.applyPatch([{
+          op: 'replace',
+          path: '/opportunities/' + idx + '/completed',
+          value: true
+        }]);
         renderOpportunities();
         closeModal();
       }
@@ -4198,33 +4196,6 @@
     renderOpportunities();
 
     // ====== TREASURY ======
-    const sectTreasures = {
-      weapon: [
-        { id: 'w1', name: '霜华剑', type: '武器', rank: '上品灵器', rankLevel: '灵器', desc: '剑身如霜，挥剑时可凝冰气伤人', effects: { 杀伐: 45, 防御: 5, 身法: 8 }, owner: '清虚子', color: 'jade' },
-        { id: 'w2', name: '碧落剑', type: '武器', rank: '上品灵器', rankLevel: '灵器', desc: '通体碧绿，传闻可引动天地灵气', effects: { 杀伐: 42, 防御: 8, 身法: 10 }, owner: null, color: 'jade' },
-        { id: 'w3', name: '紫电鞭', type: '武器', rank: '中品灵器', rankLevel: '灵器', desc: '鞭身缠绕紫电，中者麻痹难动', effects: { 杀伐: 35, 防御: 0, 身法: 15 }, owner: '苏瑶', color: 'purple' },
-        { id: 'w4', name: '玄铁枪', type: '武器', rank: '中品灵器', rankLevel: '灵器', desc: '玄铁铸成，势大力沉，一往无前', effects: { 杀伐: 38, 防御: 12, 身法: -5 }, owner: null, color: 'gold' },
-        { id: 'w5', name: '青锋剑', type: '武器', rank: '下品灵器', rankLevel: '灵器', desc: '入门成员常用的制式飞剑', effects: { 杀伐: 22, 防御: 2, 身法: 5 }, owner: null, color: 'jade' },
-        { id: 'w6', name: '噬魂刃', type: '武器', rank: '上品灵器', rankLevel: '灵器', desc: '魔道凶器，可伤敌神魂', effects: { 杀伐: 50, 防御: 0, 身法: 12 }, owner: '周明远', color: 'pink' }
-      ],
-      armor: [
-        { id: 'a1', name: '玄龟甲', type: '护具', rank: '中品灵器', rankLevel: '灵器', desc: '仿上古玄龟背甲所铸，坚不可摧', effects: { 杀伐: 0, 防御: 40, 身法: -8 }, owner: '清虚子', color: 'jade' },
-        { id: 'a2', name: '冰蚕衣', type: '护具', rank: '上品灵器', rankLevel: '灵器', desc: '万年冰蚕丝织成，水火不侵', effects: { 杀伐: 5, 防御: 35, 身法: 10 }, owner: null, color: 'purple' },
-        { id: 'a3', name: '金丝软甲', type: '护具', rank: '中品灵器', rankLevel: '灵器', desc: '金丝编织，轻便柔韧，贴身无形', effects: { 杀伐: 0, 防御: 28, 身法: 5 }, owner: '沈万钧', color: 'gold' },
-        { id: 'a4', name: '护体符', type: '护具', rank: '法器', rankLevel: '法器', desc: '可激发护体灵光的防御符箓', effects: { 杀伐: 0, 防御: 15, 身法: 0 }, owner: null, color: 'pink' }
-      ],
-      escape: [
-        { id: 'e1', name: '遁空梭', type: '遁具', rank: '上品灵器', rankLevel: '灵器', desc: '可撕裂虚空，瞬息千里', effects: { 杀伐: 0, 防御: 5, 身法: 50 }, owner: null, color: 'purple' },
-        { id: 'e2', name: '踏云靴', type: '遁具', rank: '中品灵器', rankLevel: '灵器', desc: '穿上可踏云而行，速度大增', effects: { 杀伐: 0, 防御: 0, 身法: 30 }, owner: '赵长风', color: 'gold' },
-        { id: 'e3', name: '缩地符', type: '遁具', rank: '法器', rankLevel: '法器', desc: '一步可达十里之外', effects: { 杀伐: 0, 防御: 0, 身法: 18 }, owner: null, color: 'jade' }
-      ],
-      accessory: [
-        { id: 'ac1', name: '凝神玉佩', type: '饰品', rank: '上品灵器', rankLevel: '灵器', desc: '可凝神静气，抵御心魔', effects: { 杀伐: 8, 防御: 15, 身法: 5 }, owner: null, color: 'jade' },
-        { id: 'ac2', name: '储物戒指', type: '饰品', rank: '中品灵器', rankLevel: '灵器', desc: '内含独立空间，可储万物', effects: { 杀伐: 0, 防御: 5, 身法: 5 }, owner: '清虚子', color: 'gold' },
-        { id: 'ac3', name: '锁灵镯', type: '饰品', rank: '下品灵器', rankLevel: '灵器', desc: '可锁住周身灵气，隐匿身形', effects: { 杀伐: 0, 防御: 10, 身法: 12 }, owner: null, color: 'purple' }
-      ]
-    };
-
     const itemSvgs = {
       weapon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14.5 3.5l6 6-11 11-6-6z"/><path d="M9.5 14.5l-5 5"/><path d="M18 2l4 4"/></svg>',
       armor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 3L4 7v5c0 5 3.5 9.5 8 10.5 4.5-1 8-5.5 8-10.5V7l-8-4z"/></svg>',
@@ -4233,13 +4204,8 @@
     };
 
     function getMemberEquippedItems(memberName) {
-      const equipped = [];
-      for (const type in sectTreasures) {
-        sectTreasures[type].forEach(item => {
-          if (item.owner === memberName) equipped.push(item);
-        });
-      }
-      return equipped;
+      const items = window.gameStateManager?.state?.treasury?.items || [];
+      return items.filter(item => item.owner === memberName);
     }
 
     function getTotalStats(memberName) {
@@ -4256,8 +4222,9 @@
       return stats;
     }
 
-    function openAssignDialog(itemId, type) {
-      const item = sectTreasures[type].find(i => i.id === itemId);
+    function openAssignDialog(itemId) {
+      const items = window.gameStateManager?.state?.treasury?.items || [];
+      const item = items.find(i => i.id === itemId);
       if (!item) return;
       const overlay = document.getElementById('modal-overlay');
       document.getElementById('modal-title').innerHTML = `
@@ -4276,7 +4243,7 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto">
           ${options.map(opt => `
-            <button class="story-choice-btn" onclick="assignItem('${itemId}', '${type}', '${opt.name || ''}')" style="text-align:left">
+            <button class="story-choice-btn" onclick="assignItem('${itemId}', '${opt.name || ''}')" style="text-align:left">
               <span>${opt.label}</span>
             </button>
           `).join('')}
@@ -4285,17 +4252,23 @@
       overlay.classList.add('active');
     }
 
-    function assignItem(itemId, type, targetName) {
-      const item = sectTreasures[type].find(i => i.id === itemId);
-      if (item) {
-        item.owner = targetName || null;
-        renderTreasury(type);
+    function assignItem(itemId, targetName) {
+      const items = window.gameStateManager?.state?.treasury?.items || [];
+      const idx = items.findIndex(i => i.id === itemId);
+      if (idx !== -1) {
+        window.gameStateManager.applyPatch([{
+          op: 'replace',
+          path: '/treasury/items/' + idx + '/owner',
+          value: targetName || ''
+        }]);
+        renderTreasury(currentTreasuryType);
         closeModal();
       }
     }
 
-    function openItemDetail(itemId, type) {
-      const item = sectTreasures[type].find(i => i.id === itemId);
+    function openItemDetail(itemId) {
+      const items = window.gameStateManager?.state?.treasury?.items || [];
+      const item = items.find(i => i.id === itemId);
       if (!item) return;
       const overlay = document.getElementById('modal-overlay');
       document.getElementById('modal-title').innerHTML = `
@@ -4308,6 +4281,7 @@
       `;
       const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
       const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.12)' : item.color === 'purple' ? 'rgba(139,126,200,0.12)' : item.color === 'pink' ? 'rgba(212,114,140,0.12)' : 'rgba(200,168,110,0.12)';
+      const effects = item.effects || { 杀伐: 0, 防御: 0, 身法: 0 };
       document.getElementById('modal-body').innerHTML = `
         <div class="sect-info-grid">
           <div class="info-block">
@@ -4328,31 +4302,34 @@
           </div>
           <div class="info-block full-width">
             <h4>介绍</h4>
-            <div class="info-value" style="font-size:13px;line-height:1.8">${item.desc}</div>
+            <div class="info-value" style="font-size:13px;line-height:1.8">${item.description}</div>
           </div>
           <div class="info-block full-width">
             <h4>效果</h4>
             <div class="info-value" style="font-size:13px;line-height:2">
               <div style="display:flex;gap:16px;flex-wrap:wrap">
-                <span style="padding:4px 12px;background:${bgVar};border-radius:6px;color:${colorVar}">杀伐 ${item.effects.杀伐 >= 0 ? '+' : ''}${item.effects.杀伐}</span>
-                <span style="padding:4px 12px;background:${bgVar};border-radius:6px;color:${colorVar}">防御 ${item.effects.防御 >= 0 ? '+' : ''}${item.effects.防御}</span>
-                <span style="padding:4px 12px;background:${bgVar};border-radius:6px;color:${colorVar}">身法 ${item.effects.身法 >= 0 ? '+' : ''}${item.effects.身法}</span>
+                <span style="padding:4px 12px;background:${bgVar};border-radius:6px;color:${colorVar}">杀伐 ${effects.杀伐 >= 0 ? '+' : ''}${effects.杀伐}</span>
+                <span style="padding:4px 12px;background:${bgVar};border-radius:6px;color:${colorVar}">防御 ${effects.防御 >= 0 ? '+' : ''}${effects.防御}</span>
+                <span style="padding:4px 12px;background:${bgVar};border-radius:6px;color:${colorVar}">身法 ${effects.身法 >= 0 ? '+' : ''}${effects.身法}</span>
               </div>
             </div>
           </div>
           <div class="info-block full-width" style="display:flex;gap:10px;justify-content:flex-end;background:transparent;border:none;padding:8px 0 0 0">
             <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
-            <button class="opportunity-btn primary" onclick="closeModal();openAssignDialog('${item.id}', '${type}')">分配/收回</button>
+            <button class="opportunity-btn primary" onclick="closeModal();openAssignDialog('${item.id}')">分配/收回</button>
           </div>
         </div>
       `;
       overlay.classList.add('active');
     }
 
+    const treasuryTypeMap = { weapon: '武器', armor: '防具', escape: '遁具', accessory: '饰品' };
+
     function renderTreasury(type) {
       const grid = document.getElementById('item-grid');
       grid.innerHTML = '';
-      const items = sectTreasures[type] || [];
+      const targetType = treasuryTypeMap[type];
+      const items = (window.gameStateManager?.state?.treasury?.items || []).filter(i => i.type === targetType);
       items.forEach(item => {
         const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
         const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.12)' : item.color === 'purple' ? 'rgba(139,126,200,0.12)' : item.color === 'pink' ? 'rgba(212,114,140,0.12)' : 'rgba(200,168,110,0.12)';
@@ -4366,8 +4343,8 @@
           <div class="item-rarity" style="background:${bgVar};color:${colorVar}">${item.rank}</div>
           <div class="item-owner">${item.owner || '库房'}</div>
           <div style="margin-top:10px;display:flex;gap:6px;justify-content:center">
-            <button class="action-btn-sm" onclick="event.stopPropagation();openItemDetail('${item.id}', '${type}')">详情</button>
-            <button class="action-btn-sm" onclick="event.stopPropagation();openAssignDialog('${item.id}', '${type}')">分配</button>
+            <button class="action-btn-sm" onclick="event.stopPropagation();openItemDetail('${item.id}')">详情</button>
+            <button class="action-btn-sm" onclick="event.stopPropagation();openAssignDialog('${item.id}')">分配</button>
           </div>
         `;
         grid.appendChild(card);
@@ -4375,7 +4352,9 @@
     }
     renderTreasury('weapon');
 
+    let currentTreasuryType = 'weapon';
     function switchTreasury(type, btn) {
+      currentTreasuryType = type;
       document.querySelectorAll('.treasury-tab').forEach(t => t.classList.remove('active'));
       if (btn) btn.classList.add('active');
       renderTreasury(type);
@@ -4448,11 +4427,23 @@
     gameStateManager.subscribe('/world/regions', () => {
       if (typeof renderRegions === 'function') renderRegions();
     });
+    gameStateManager.subscribe('/treasury/items', () => {
+      if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
+    });
+    gameStateManager.subscribe('/library', () => {
+      if (typeof renderSkills === 'function') renderSkills();
+    });
+    gameStateManager.subscribe('/opportunities', () => {
+      if (typeof renderOpportunities === 'function') renderOpportunities();
+    });
     // 首次手动刷新各页面（后续由 LLM patch 触发变更后自动重渲染）
     if (typeof renderMembers === 'function') renderMembers();
     if (typeof renderFactions === 'function') renderFactions();
     if (typeof renderBuildings === 'function') renderBuildings();
     if (typeof renderRegions === 'function') renderRegions();
+    if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
+    if (typeof renderSkills === 'function') renderSkills();
+    if (typeof renderOpportunities === 'function') renderOpportunities();
   </script>
 </body>
 </html>
