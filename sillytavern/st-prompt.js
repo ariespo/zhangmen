@@ -49,8 +49,110 @@ function estimateTokens(text) {
   return Math.ceil(chineseChars * 0.6 + otherChars * 0.25);
 }
 
+function formatGameStateForPrompt(state) {
+  if (!state) return '';
+  const lines = [];
+
+  // Members
+  const members = state.members || {};
+  const memberEntries = Object.entries(members);
+  if (memberEntries.length > 0) {
+    lines.push('【成员】');
+    for (const [name, m] of memberEntries) {
+      lines.push(`  ${name} · ${m.daoName || ''} · ${m.realm || ''} · ${m.role || ''} · 状态:${m.status || ''} · 天赋:${m.talent || ''} · 寿元:${m.lifespan?.current || 0}/${m.lifespan?.max || 0} · 忠诚:${m.loyalty || 0} · 心情:${m.mood || 0} · 杀伐:${m.stats?.杀伐 || 0} 防御:${m.stats?.防御 || 0} 身法:${m.stats?.身法 || 0}`);
+      if (m.skills?.length) lines.push(`    功法:${m.skills.join('、')}`);
+    }
+  }
+
+  // Finance
+  const fin = state.finance || {};
+  lines.push('');
+  lines.push(`【财务】灵石:${fin.gold || 0} 月收入:${fin.income || 0} 月支出:${fin.expense || 0} 威望:${fin.prestige || 0} 位阶:${fin.realmTitle || ''}`);
+
+  // Treasury
+  const treasury = state.treasury || {};
+  const items = treasury.items || [];
+  if (items.length > 0) {
+    lines.push('');
+    lines.push('【宝库】');
+    for (const item of items) {
+      const ownerStr = item.owner ? ` · 持有者:${item.owner}` : '';
+      lines.push(`  ${item.name} · ${item.type} · ${item.rank} · 数量:${item.quantity || 1}${ownerStr}`);
+    }
+    lines.push(`  护山大阵:${treasury.arrayName || ''} · ${treasury.arrayRank || ''}`);
+  }
+
+  // Diplomacy
+  const diplo = state.diplomacy || {};
+  const factionEntries = Object.entries(diplo);
+  if (factionEntries.length > 0) {
+    lines.push('');
+    lines.push('【外交】');
+    for (const [name, f] of factionEntries) {
+      lines.push(`  ${name} · ${f.relation || ''} · 关系值:${f.value || 0} · 掌权者:${f.leader || ''}`);
+    }
+  }
+
+  // Quests
+  const quests = state.quests || {};
+  if (quests.main) {
+    lines.push('');
+    lines.push(`【主线】当前阶段:${quests.main.currentStage || ''}`);
+    if (quests.main.completedStages?.length) {
+      lines.push(`  已完成:${quests.main.completedStages.join(' → ')}`);
+    }
+  }
+  const sideQuests = quests.side || [];
+  if (sideQuests.length > 0) {
+    lines.push('  支线任务:');
+    for (const q of sideQuests) {
+      lines.push(`    ${q.name} · ${q.status} · 进度:${q.progress || 0}%`);
+    }
+  }
+
+  // World
+  const world = state.world || {};
+  const buildings = world.buildings || [];
+  if (buildings.length > 0) {
+    lines.push('');
+    lines.push('【建筑】');
+    for (const b of buildings) {
+      lines.push(`  ${b.name} · Lv.${b.level || 0}${b.unlocked ? '' : ' · [未解锁]'}`);
+    }
+  }
+  const regions = world.regions || [];
+  if (regions.length > 0) {
+    lines.push('');
+    lines.push('【疆域】');
+    for (const r of regions) {
+      lines.push(`  ${r.name} · ${r.unlocked ? '已探索' : '未探索'} · 掌控:${r.controlledBy || '未知'}`);
+    }
+  }
+
+  // Opportunities
+  const opps = state.opportunities || [];
+  const pendingOpps = opps.filter(o => !o.completed);
+  if (pendingOpps.length > 0) {
+    lines.push('');
+    lines.push('【待处理机遇】');
+    for (const o of pendingOpps) {
+      const catMap = { tianshi: '天时', dili: '地利', renhe: '人和' };
+      lines.push(`  [${catMap[o.category] || o.category}] ${o.title} · 消耗体力:${o.cost || 1}`);
+    }
+  }
+
+  // Library (just count)
+  const library = state.library || [];
+  if (library.length > 0) {
+    lines.push('');
+    lines.push(`【藏经阁】共藏功法 ${library.length} 部`);
+  }
+
+  return lines.join('\n');
+}
+
 export function assemblePrompt(options) {
-  const { userInput, history, preset, lorebooks, userName, characterName, variables, scenario, exampleMessages } = options;
+  const { userInput, history, preset, lorebooks, userName, characterName, variables, scenario, exampleMessages, gameState } = options;
 
   const effectivePreset = preset || DEFAULT_PRESET;
   const maxContextTokens = effectivePreset.contextLength || 4096;
@@ -186,6 +288,12 @@ export function assemblePrompt(options) {
   const variablesBlock = formatVariablesForPrompt(variables || {});
   if (variablesBlock) {
     addToSystem(variablesBlock);
+  }
+
+  // Add game state to system context
+  const gameStateBlock = formatGameStateForPrompt(gameState);
+  if (gameStateBlock) {
+    addToSystem('[当前宗门状态]\n' + gameStateBlock);
   }
 
   flushSystem();

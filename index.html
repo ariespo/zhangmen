@@ -4106,7 +4106,8 @@
           lorebooks: activeBooks || [],
           userName: settings?.userName || playerName,
           characterName: settings?.characterName || '云璃仙子',
-          variables: chat?.variables || {}
+          variables: chat?.variables || {},
+          gameState: window.gameStateManager?.state
         });
         messages = assembled.messages;
 
