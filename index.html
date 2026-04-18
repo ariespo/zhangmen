@@ -4303,7 +4303,7 @@
     function renderOpportunities() {
       const all = window.gameStateManager?.state?.opportunities || [];
       ['tianshi', 'dili', 'renhe'].forEach(type => {
-        const list = document.getElementById(`${type === 'tianshi' ? 'tian' : type === 'dili' ? 'di' : 'ren'}-shi-list`);
+        const list = document.getElementById(type === 'tianshi' ? 'tian-shi-list' : type === 'dili' ? 'di-li-list' : 'ren-he-list');
         if (!list) return;
         const opps = all.filter(o => o.category === type);
         list.innerHTML = opps.map(opp => `
