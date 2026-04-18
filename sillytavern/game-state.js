@@ -89,7 +89,7 @@ const MemberSchema = zObject({
   name: zString(),
   daoName: zString(),
   realm: zString('炼气期'),
-  role: zEnum(['掌门', '大长老', '执法首座', '丹峰长老', '藏经长老', '守山长老', '成员'], '成员'),
+  role: zEnum(['掌门', '大长老', '执法首座', '丹峰长老', '藏经长老', '守山长老', '内门弟子', '外门弟子', '成员'], '成员'),
   status: zEnum(['坐镇', '巡查', '炼丹', '研习', '闭关', '外出', '受伤'], '坐镇'),
   talent: zString('中'),
   color: zEnum(['jade', 'purple', 'pink', 'gold'], 'jade'),

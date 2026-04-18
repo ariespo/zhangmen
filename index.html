@@ -877,6 +877,275 @@
     }
     .scroll-right::after { left: 0; }
 
+    /* === CREATION PAGE === */
+    #creation-page {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 90;
+      background: linear-gradient(180deg, #0d1f1f 0%, #132b2b 50%, #0d1f1f 100%);
+      overflow-y: auto;
+      padding: 40px 20px;
+    }
+    .creation-container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .creation-header {
+      margin-bottom: 32px;
+    }
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.4;
+      transition: opacity 0.3s;
+    }
+    .step.active {
+      opacity: 1;
+    }
+    .step.completed {
+      opacity: 0.7;
+    }
+    .step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(110, 207, 207, 0.1);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--jade-pale);
+      font-family: 'ZCOOL XiaoWei', serif;
+    }
+    .step.active .step-num {
+      background: rgba(110, 207, 207, 0.2);
+      border-color: var(--jade-glow);
+      color: var(--jade-glow);
+    }
+    .step-label {
+      font-size: 12px;
+      color: rgba(168, 230, 230, 0.6);
+    }
+    .step.active .step-label {
+      color: var(--jade-pale);
+    }
+    .step-line {
+      width: 40px;
+      height: 1px;
+      background: var(--glass-border);
+    }
+    .creation-step {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .creation-step.active {
+      display: block;
+    }
+    .creation-title {
+      font-family: 'ZCOOL XiaoWei', serif;
+      font-size: 24px;
+      color: var(--jade-pale);
+      text-align: center;
+      margin-bottom: 28px;
+      letter-spacing: 4px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .form-group label {
+      font-size: 13px;
+      color: rgba(168, 230, 230, 0.7);
+      font-weight: 500;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group select {
+      padding: 10px 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--cloud-white);
+      font-family: 'Noto Serif SC', serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--jade-glow);
+    }
+    .form-group input::placeholder {
+      color: rgba(168, 230, 230, 0.3);
+    }
+    .select-row {
+      display: flex;
+      gap: 10px;
+    }
+    .select-row select {
+      flex: 1;
+    }
+    .radio-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: rgba(168, 230, 230, 0.8);
+      cursor: pointer;
+      padding: 8px 12px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    .radio-label:hover {
+      border-color: var(--jade-glow);
+    }
+    .radio-label input[type="radio"] {
+      accent-color: var(--jade-glow);
+    }
+    .tag-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      padding: 6px 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      font-size: 13px;
+      color: rgba(168, 230, 230, 0.7);
+      cursor: pointer;
+      transition: all 0.3s;
+      user-select: none;
+    }
+    .tag:hover {
+      border-color: rgba(110, 207, 207, 0.4);
+    }
+    .tag.selected {
+      background: rgba(110, 207, 207, 0.15);
+      border-color: var(--jade-glow);
+      color: var(--jade-glow);
+    }
+    .card-select-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .card-select {
+      padding: 16px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .card-select:hover {
+      border-color: rgba(110, 207, 207, 0.4);
+    }
+    .card-select.selected {
+      background: rgba(110, 207, 207, 0.1);
+      border-color: var(--jade-glow);
+    }
+    .card-title {
+      font-size: 15px;
+      color: var(--jade-pale);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: rgba(168, 230, 230, 0.5);
+      line-height: 1.5;
+    }
+    .creation-nav {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 32px;
+      padding-bottom: 40px;
+    }
+    .creation-btn {
+      padding: 12px 36px;
+      border-radius: 8px;
+      font-family: 'Noto Serif SC', serif;
+      font-size: 15px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: none;
+    }
+    .creation-btn.primary {
+      background: linear-gradient(135deg, var(--jade-mid), var(--jade-deep));
+      color: var(--jade-pale);
+      border: 1px solid var(--jade-light);
+    }
+    .creation-btn.primary:hover {
+      background: linear-gradient(135deg, var(--jade-light), var(--jade-mid));
+      box-shadow: 0 0 20px rgba(110, 207, 207, 0.2);
+    }
+    .creation-btn.secondary {
+      background: transparent;
+      color: rgba(168, 230, 230, 0.7);
+      border: 1px solid var(--glass-border);
+    }
+    .creation-btn.secondary:hover {
+      border-color: var(--jade-glow);
+      color: var(--jade-pale);
+    }
+    .confirm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .confirm-item {
+      padding: 14px 16px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+    }
+    .confirm-label {
+      font-size: 11px;
+      color: rgba(168, 230, 230, 0.5);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .confirm-value {
+      font-size: 15px;
+      color: var(--jade-pale);
+      font-weight: 500;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     #app.game-active {
       display: flex !important;
     }
@@ -2320,12 +2589,196 @@
       <div class="scroll-edge scroll-left" id="scroll-left"></div>
       <div class="scroll-edge scroll-right" id="scroll-right"></div>
     </div>
-    <div class="opening-title" id="opening-title">掌门模拟器</div>
-    <div class="opening-subtitle" id="opening-subtitle">云璃仙宗 · 天道酬勤</div>
+    <div class="opening-title" id="opening-title">宗门志</div>
+    <div class="opening-subtitle" id="opening-subtitle">问道长生 · 经营宗门 · 你的仙道由你书写</div>
     <div class="title-menu" id="title-menu">
       <button class="title-btn primary" id="btn-new-game" onclick="startNewGame()">开始新游戏</button>
       <button class="title-btn" id="btn-load-game" onclick="loadGame()">读取游戏</button>
       <button class="title-btn" id="btn-settings" onclick="openTitleSettings()">设置</button>
+    </div>
+  </div>
+
+  <!-- CREATION PAGE -->
+  <div id="creation-page" class="page-content" style="display:none">
+    <div class="creation-container">
+      <div class="creation-header">
+        <div class="step-indicator">
+          <div class="step active" data-step="1">
+            <span class="step-num">壹</span>
+            <span class="step-label">玩家信息</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" data-step="2">
+            <span class="step-num">贰</span>
+            <span class="step-label">宗门概况</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" data-step="3">
+            <span class="step-num">叁</span>
+            <span class="step-label">确认开局</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Player Info -->
+      <div class="creation-step active" data-step="1">
+        <h2 class="creation-title"></h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>名字</label>
+            <input type="text" id="c-name" placeholder="请输入你的名字" maxlength="12">
+          </div>
+          <div class="form-group">
+            <label>性别</label>
+            <div class="radio-group">
+              <label class="radio-label"><input type="radio" name="c-gender" value="男" checked> 男</label>
+              <label class="radio-label"><input type="radio" name="c-gender" value="女"> 女</label>
+              <label class="radio-label"><input type="radio" name="c-gender" value="其他"> 其他</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>初始境界</label>
+            <div class="select-row">
+              <select id="c-realm-level">
+                <option value="练气期">练气期</option>
+                <option value="筑基期">筑基期</option>
+                <option value="金丹期">金丹期</option>
+                <option value="元婴期">元婴期</option>
+                <option value="化神期">化神期</option>
+                <option value="道祖">道祖</option>
+              </select>
+              <select id="c-realm-stage">
+                <option value="前期">前期</option>
+                <option value="中期">中期</option>
+                <option value="后期">后期</option>
+                <option value="圆满">圆满</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>灵根</label>
+            <select id="c-spirit-root">
+              <option value="金灵根">金灵根</option>
+              <option value="木灵根">木灵根</option>
+              <option value="水灵根">水灵根</option>
+              <option value="火灵根">火灵根</option>
+              <option value="土灵根">土灵根</option>
+              <option value="天灵根">天灵根</option>
+              <option value="变异灵根">变异灵根</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label>性格标签（可多选）</label>
+            <div class="tag-group" id="c-personality">
+              <span class="tag" data-value="沉稳">沉稳</span>
+              <span class="tag" data-value="急躁">急躁</span>
+              <span class="tag" data-value="仁慈">仁慈</span>
+              <span class="tag" data-value="冷酷">冷酷</span>
+              <span class="tag" data-value="谋略">谋略</span>
+              <span class="tag" data-value="勇猛">勇猛</span>
+              <span class="tag" data-value="谨慎">谨慎</span>
+              <span class="tag" data-value="豁达">豁达</span>
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <label>外貌标签（可多选）</label>
+            <div class="tag-group" id="c-appearance">
+              <span class="tag" data-value="俊朗">俊朗</span>
+              <span class="tag" data-value="英武">英武</span>
+              <span class="tag" data-value="清秀">清秀</span>
+              <span class="tag" data-value="冷峻">冷峻</span>
+              <span class="tag" data-value="儒雅">儒雅</span>
+              <span class="tag" data-value="粗犷">粗犷</span>
+              <span class="tag" data-value="温润">温润</span>
+              <span class="tag" data-value="孤傲">孤傲</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>担任掌门时间（年）</label>
+            <input type="number" id="c-years" min="0" max="999" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Sect Info -->
+      <div class="creation-step" data-step="2">
+        <h2 class="creation-title"></h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>宗门名称</label>
+            <input type="text" id="c-sect-name" placeholder="请输入宗门名称" maxlength="16">
+          </div>
+          <div class="form-group">
+            <label>修行法门</label>
+            <select id="c-path">
+              <option value="道修">道修 — 顺应天道，万法自然</option>
+              <option value="神修">神修 — 香火成神，信仰之力</option>
+              <option value="魔修">魔修 — 逆天而行，以力证道</option>
+              <option value="体修">体修 — 淬炼肉身，金刚不坏</option>
+              <option value="旁门左道">旁门左道 — 另辟蹊径，出奇制胜</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>宗门专长</label>
+            <select id="c-specialty">
+              <option value="剑">剑 — 杀伐无双，一剑破万法</option>
+              <option value="丹">丹 — 炼制灵丹，救死扶伤</option>
+              <option value="炼器">炼器 — 锻造法宝，攻守兼备</option>
+              <option value="法阵">法阵 — 布置大阵，困敌护山</option>
+              <option value="符箓">符箓 — 绘制符箓，变化万千</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>开局地位</label>
+            <select id="c-status">
+              <option value="毫无名气">毫无名气 — 灵石500，弟子0</option>
+              <option value="末流小派">末流小派 — 灵石3000，弟子1-2</option>
+              <option value="三流小宗">三流小宗 — 灵石6000，弟子3</option>
+              <option value="二流宗门" selected>二流宗门 — 灵石12580，弟子6</option>
+              <option value="一流大宗">一流大宗 — 灵石30000，弟子10</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label>开局困境</label>
+            <div class="card-select-group" id="c-crisis">
+              <div class="card-select" data-value="临危受命">
+                <div class="card-title">临危受命</div>
+                <div class="card-desc">前任掌门陨落，你接手的是一个内忧外患的烂摊子</div>
+              </div>
+              <div class="card-select" data-value="白手起家">
+                <div class="card-title">白手起家</div>
+                <div class="card-desc">一穷二白，从零开始，一切靠自己打拼</div>
+              </div>
+              <div class="card-select" data-value="仇敌环伺">
+                <div class="card-title">仇敌环伺</div>
+                <div class="card-desc">刚灭了某魔道小头目，对方宗门已经盯上你了</div>
+              </div>
+              <div class="card-select" data-value="天降机缘">
+                <div class="card-title">天降机缘</div>
+                <div class="card-desc">发现上古遗迹，但消息走漏，各方势力虎视眈眈</div>
+              </div>
+              <div class="card-select" data-value="宗门内乱">
+                <div class="card-title">宗门内乱</div>
+                <div class="card-desc">大长老不服你，部分弟子离心，你需要平息内乱</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Confirm -->
+      <div class="creation-step" data-step="3">
+        <h2 class="creation-title"></h2>
+        <div class="confirm-grid" id="confirm-grid">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+
+      <div class="creation-nav">
+        <button class="creation-btn secondary" id="creation-prev" style="display:none">上一步</button>
+        <button class="creation-btn primary" id="creation-next">下一步</button>
+        <button class="creation-btn primary" id="creation-start" style="display:none">开始游戏</button>
+      </div>
     </div>
   </div>
 
@@ -5105,15 +5558,242 @@
       }, '<');
     })();
 
-    window.startNewGame = function() {
-      const titleScreen = document.getElementById('title-screen');
-      const app = document.getElementById('app');
-      if (titleScreen) titleScreen.classList.add('hidden');
-      if (app) {
-        app.style.display = 'flex';
-        setTimeout(() => { if (typeof resizeCanvas === 'function') resizeCanvas(); }, 100);
+    // ====== CHARACTER CREATION ======
+    (function initCreation() {
+      let currentStep = 1;
+      const creationData = {};
+
+      // Tag selection
+      document.querySelectorAll('.tag-group').forEach(group => {
+        group.addEventListener('click', e => {
+          const tag = e.target.closest('.tag');
+          if (!tag) return;
+          tag.classList.toggle('selected');
+        });
+      });
+
+      // Card single selection
+      document.querySelectorAll('.card-select-group').forEach(group => {
+        group.addEventListener('click', e => {
+          const card = e.target.closest('.card-select');
+          if (!card) return;
+          group.querySelectorAll('.card-select').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+        });
+      });
+
+      // Realm stage toggle (Daozu has no stage)
+      const realmSelect = document.getElementById('c-realm-level');
+      const stageSelect = document.getElementById('c-realm-stage');
+      if (realmSelect && stageSelect) {
+        realmSelect.addEventListener('change', () => {
+          if (realmSelect.value === '道祖') {
+            stageSelect.style.display = 'none';
+            stageSelect.value = '';
+          } else {
+            stageSelect.style.display = '';
+          }
+        });
       }
-    };
+
+      function updateStepUI() {
+        document.querySelectorAll('.step').forEach((step, i) => {
+          step.classList.remove('active', 'completed');
+          if (i + 1 === currentStep) step.classList.add('active');
+          else if (i + 1 < currentStep) step.classList.add('completed');
+        });
+        document.querySelectorAll('.creation-step').forEach((step, i) => {
+          step.classList.toggle('active', i + 1 === currentStep);
+        });
+        document.getElementById('creation-prev').style.display = currentStep > 1 ? '' : 'none';
+        document.getElementById('creation-next').style.display = currentStep < 3 ? '' : 'none';
+        document.getElementById('creation-start').style.display = currentStep === 3 ? '' : 'none';
+
+        if (currentStep === 3) renderConfirm();
+      }
+
+      function collectData() {
+        const personality = [];
+        document.querySelectorAll('#c-personality .tag.selected').forEach(t => personality.push(t.dataset.value));
+        const appearance = [];
+        document.querySelectorAll('#c-appearance .tag.selected').forEach(t => appearance.push(t.dataset.value));
+        const crisisEl = document.querySelector('#c-crisis .card-select.selected');
+
+        return {
+          name: document.getElementById('c-name').value.trim() || '无名掌门',
+          gender: document.querySelector('input[name="c-gender"]:checked')?.value || '男',
+          realmLevel: document.getElementById('c-realm-level').value,
+          realmStage: document.getElementById('c-realm-stage').value,
+          spiritRoot: document.getElementById('c-spirit-root').value,
+          personality,
+          appearance,
+          years: parseInt(document.getElementById('c-years').value) || 0,
+          sectName: document.getElementById('c-sect-name').value.trim() || '无名宗门',
+          path: document.getElementById('c-path').value,
+          specialty: document.getElementById('c-specialty').value,
+          status: document.getElementById('c-status').value,
+          crisis: crisisEl ? crisisEl.dataset.value : '白手起家'
+        };
+      }
+
+      function renderConfirm() {
+        const d = collectData();
+        const statusMap = {
+          '毫无名气': { gold: 500, disciples: 0, buildings: 0, prestige: 0 },
+          '末流小派': { gold: 3000, disciples: '1-2', buildings: 1, prestige: 100 },
+          '三流小宗': { gold: 6000, disciples: 3, buildings: 2, prestige: 300 },
+          '二流宗门': { gold: 12580, disciples: 6, buildings: '3-4', prestige: 800 },
+          '一流大宗': { gold: 30000, disciples: 10, buildings: '5+', prestige: 1800 }
+        };
+        const sm = statusMap[d.status] || statusMap['二流宗门'];
+        const grid = document.getElementById('confirm-grid');
+        grid.innerHTML = `
+          <div class="confirm-item"><div class="confirm-label">名字</div><div class="confirm-value">${escapeHtml(d.name)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">境界</div><div class="confirm-value">${escapeHtml(d.realmLevel)}${d.realmStage ? ' · ' + d.realmStage : ''}</div></div>
+          <div class="confirm-item"><div class="confirm-label">性别</div><div class="confirm-value">${escapeHtml(d.gender)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">灵根</div><div class="confirm-value">${escapeHtml(d.spiritRoot)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">性格</div><div class="confirm-value">${d.personality.join('、') || '—'}</div></div>
+          <div class="confirm-item"><div class="confirm-label">外貌</div><div class="confirm-value">${d.appearance.join('、') || '—'}</div></div>
+          <div class="confirm-item"><div class="confirm-label">掌门时间</div><div class="confirm-value">${d.years} 年</div></div>
+          <div class="confirm-item"><div class="confirm-label">宗门名称</div><div class="confirm-value">${escapeHtml(d.sectName)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">修行法门</div><div class="confirm-value">${escapeHtml(d.path)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">宗门专长</div><div class="confirm-value">${escapeHtml(d.specialty)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">开局地位</div><div class="confirm-value">${escapeHtml(d.status)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">开局困境</div><div class="confirm-value">${escapeHtml(d.crisis)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">初始灵石</div><div class="confirm-value">${sm.gold.toLocaleString()}</div></div>
+          <div class="confirm-item"><div class="confirm-label">初始弟子</div><div class="confirm-value">${sm.disciples} 人</div></div>
+        `;
+      }
+
+      document.getElementById('creation-next').addEventListener('click', () => {
+        if (currentStep < 3) { currentStep++; updateStepUI(); }
+      });
+      document.getElementById('creation-prev').addEventListener('click', () => {
+        if (currentStep > 1) { currentStep--; updateStepUI(); }
+      });
+
+      document.getElementById('creation-start').addEventListener('click', () => {
+        const d = collectData();
+        initializeGameState(d);
+        document.getElementById('creation-page').style.display = 'none';
+        const app = document.getElementById('app');
+        if (app) {
+          app.style.display = 'flex';
+          setTimeout(() => { if (typeof resizeCanvas === 'function') resizeCanvas(); }, 100);
+        }
+      });
+
+      window.startNewGame = function() {
+        const titleScreen = document.getElementById('title-screen');
+        if (titleScreen) titleScreen.classList.add('hidden');
+        const creationPage = document.getElementById('creation-page');
+        if (creationPage) {
+          creationPage.style.display = 'block';
+          currentStep = 1;
+          updateStepUI();
+        }
+      };
+    })();
+
+    // ====== GAME STATE INITIALIZATION ======
+    function initializeGameState(data) {
+      const statusMap = {
+        '毫无名气': { gold: 500, disciples: 0, buildings: [], prestige: 0 },
+        '末流小派': { gold: 3000, disciples: 2, buildings: [{ name: '破旧大殿', level: 1, unlocked: true, description: '勉强遮风挡雨' }], prestige: 100 },
+        '三流小宗': { gold: 6000, disciples: 3, buildings: [{ name: '议事厅', level: 1, unlocked: true, description: '宗门议事之所' }, { name: '修炼室', level: 1, unlocked: true, description: '弟子修炼之地' }], prestige: 300 },
+        '二流宗门': { gold: 12580, disciples: 6, buildings: [{ name: '悟道殿', level: 3, unlocked: true, description: '掌门修行之所' }, { name: '藏经阁', level: 2, unlocked: true, description: '收藏功法典籍' }, { name: '炼丹房', level: 1, unlocked: true, description: '炼制丹药' }, { name: '炼器峰', level: 1, unlocked: true, description: '锻造法器' }], prestige: 800 },
+        '一流大宗': { gold: 30000, disciples: 10, buildings: [{ name: '悟道殿', level: 5, unlocked: true, description: '掌门修行之所' }, { name: '藏经阁', level: 4, unlocked: true, description: '收藏功法典籍' }, { name: '炼丹房', level: 3, unlocked: true, description: '炼制丹药' }, { name: '炼器峰', level: 3, unlocked: true, description: '锻造法器' }, { name: '护山大阵', level: 3, unlocked: true, description: '宗门防御屏障' }], prestige: 1800 }
+      };
+      const sm = statusMap[data.status] || statusMap['二流宗门'];
+
+      // Set finance
+      window.gameStateManager.state.finance.gold = sm.gold;
+      window.gameStateManager.state.finance.prestige = sm.prestige;
+      window.gameStateManager.state.finance.income = Math.floor(sm.gold * 0.3);
+      window.gameStateManager.state.finance.expense = Math.floor(sm.gold * 0.2);
+      window.gameStateManager.state.finance.realmTitle = data.status;
+
+      // Set world
+      window.gameStateManager.state.world.buildings = sm.buildings;
+      window.gameStateManager.state.world.regions = [
+        { name: '山门', unlocked: true, controlledBy: data.sectName }
+      ];
+
+      // Create player
+      const realmStr = data.realmLevel === '道祖' ? '道祖' : data.realmLevel + (data.realmStage ? data.realmStage : '');
+      const playerId = 'player_' + Date.now();
+      window.gameStateManager.state.members[data.name] = {
+        id: playerId,
+        name: data.name,
+        daoName: data.name,
+        realm: realmStr,
+        role: '掌门',
+        status: '坐镇',
+        talent: '上上',
+        color: 'gold',
+        stats: { 杀伐: 75, 防御: 70, 身法: 65 },
+        baseStats: { 杀伐: 75, 防御: 70, 身法: 65 },
+        lifespan: { current: 500, max: 1200 },
+        loyalty: 100,
+        mood: 80,
+        skills: [`${data.spiritRoot} · 基础心法`],
+        equipment: []
+      };
+
+      // Generate disciples
+      if (sm.disciples > 0) {
+        const maleNames = ['林青羽','陈墨','顾长风','陆无尘','叶无殇','萧寒','楚云飞','赵无痕','周子瑜','李玄天'];
+        const femaleNames = ['苏晚晴','慕容雪','柳如烟','白芷','沈清秋','凤九歌','洛神','夜琉璃','花千骨','沐清歌'];
+        const realms = ['练气前期','练气中期','练气后期','筑基前期','筑基中期'];
+        const talents = ['上','中','上','中','下','上'];
+        const colors = ['jade','purple','pink','gold','jade','purple'];
+
+        for (let i = 0; i < sm.disciples; i++) {
+          const isMale = Math.random() > 0.5;
+          const namePool = isMale ? maleNames : femaleNames;
+          const name = namePool[i % namePool.length];
+          if (window.gameStateManager.state.members[name]) continue;
+          window.gameStateManager.state.members[name] = {
+            id: 'disciple_' + i,
+            name: name,
+            daoName: name,
+            realm: realms[Math.floor(Math.random() * realms.length)],
+            role: '内门弟子',
+            status: '研习',
+            talent: talents[i % talents.length],
+            color: colors[i % colors.length],
+            stats: { 杀伐: 30 + Math.floor(Math.random() * 25), 防御: 30 + Math.floor(Math.random() * 25), 身法: 30 + Math.floor(Math.random() * 25) },
+            baseStats: { 杀伐: 30 + Math.floor(Math.random() * 25), 防御: 30 + Math.floor(Math.random() * 25), 身法: 30 + Math.floor(Math.random() * 25) },
+            lifespan: { current: 80 + Math.floor(Math.random() * 40), max: 150 + Math.floor(Math.random() * 100) },
+            loyalty: 50 + Math.floor(Math.random() * 30),
+            mood: 60 + Math.floor(Math.random() * 25),
+            skills: [],
+            equipment: []
+          };
+        }
+      }
+
+      // Store creation metadata for LLM
+      window.gameStateManager.state._creationMeta = {
+        sectName: data.sectName,
+        path: data.path,
+        specialty: data.specialty,
+        crisis: data.crisis,
+        personality: data.personality,
+        appearance: data.appearance,
+        years: data.years,
+        spiritRoot: data.spiritRoot
+      };
+
+      // Refresh UI
+      if (typeof renderMembers === 'function') renderMembers();
+      if (typeof renderBuildings === 'function') renderBuildings();
+      if (typeof renderRegions === 'function') renderRegions();
+      if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
+      if (typeof renderSkills === 'function') renderSkills();
+      if (typeof renderOpportunities === 'function') renderOpportunities();
+      if (typeof renderQuests === 'function') renderQuests();
+    }
 
     window.loadGame = function() {
       alert('读取游戏功能即将上线');
