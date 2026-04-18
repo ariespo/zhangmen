@@ -91,7 +91,7 @@ const MemberSchema = zObject({
   realm: zString('炼气期'),
   role: zEnum(['掌门', '大长老', '执法首座', '丹峰长老', '藏经长老', '守山长老', '内门弟子', '外门弟子', '成员'], '成员'),
   status: zEnum(['坐镇', '巡查', '炼丹', '研习', '闭关', '外出', '受伤'], '坐镇'),
-  talent: zString('中'),
+  talent: zString('乙中'),
   color: zEnum(['jade', 'purple', 'pink', 'gold'], 'jade'),
   stats: zObject({
     杀伐: zNumber({ default: 50, min: 0, max: 100 }),
@@ -178,10 +178,10 @@ const RegionSchema = zObject({
 
 export const GameStateSchema = zObject({
   members: zRecord(MemberSchema, {
-    '沈万钧': { id: 'm1', name: '沈万钧', daoName: '万钧真人', realm: '元婴后期', role: '大长老', status: '坐镇', talent: '上上', color: 'jade', stats: { 杀伐: 88, 防御: 72, 身法: 45 }, baseStats: { 杀伐: 88, 防御: 72, 身法: 45 }, lifespan: { current: 892, max: 1500 }, loyalty: 85, mood: 75, skills: ['太虚真解（第三层）'], equipment: [] },
-    '周明远': { id: 'm2', name: '周明远', daoName: '明远子', realm: '元婴初期', role: '执法首座', status: '巡查', talent: '上', color: 'purple', stats: { 杀伐: 82, 防御: 58, 身法: 62 }, baseStats: { 杀伐: 82, 防御: 58, 身法: 62 }, lifespan: { current: 710, max: 1200 }, loyalty: 78, mood: 80, skills: [], equipment: [] },
-    '苏瑶': { id: 'm3', name: '苏瑶', daoName: '瑶光', realm: '金丹后期', role: '丹峰长老', status: '炼丹', talent: '上上', color: 'pink', stats: { 杀伐: 55, 防御: 48, 身法: 52 }, baseStats: { 杀伐: 55, 防御: 48, 身法: 52 }, lifespan: { current: 412, max: 800 }, loyalty: 82, mood: 72, skills: [], equipment: [] },
-    '林淮安': { id: 'm4', name: '林淮安', daoName: '静虚子', realm: '金丹中期', role: '藏经长老', status: '研习', talent: '上', color: 'gold', stats: { 杀伐: 42, 防御: 50, 身法: 38 }, baseStats: { 杀伐: 42, 防御: 50, 身法: 38 }, lifespan: { current: 356, max: 700 }, loyalty: 70, mood: 68, skills: [], equipment: [] }
+    '沈万钧': { id: 'm1', name: '沈万钧', daoName: '万钧真人', realm: '元婴期后期', role: '大长老', status: '坐镇', talent: '甲上', color: 'jade', stats: { 杀伐: 88, 防御: 72, 身法: 45 }, baseStats: { 杀伐: 88, 防御: 72, 身法: 45 }, lifespan: { current: 892, max: 1500 }, loyalty: 85, mood: 75, skills: ['太虚真解（第三层）'], equipment: [] },
+    '周明远': { id: 'm2', name: '周明远', daoName: '明远子', realm: '元婴期初期', role: '执法首座', status: '巡查', talent: '甲中', color: 'purple', stats: { 杀伐: 82, 防御: 58, 身法: 62 }, baseStats: { 杀伐: 82, 防御: 58, 身法: 62 }, lifespan: { current: 710, max: 1200 }, loyalty: 78, mood: 80, skills: [], equipment: [] },
+    '苏瑶': { id: 'm3', name: '苏瑶', daoName: '瑶光', realm: '金丹期后期', role: '丹峰长老', status: '炼丹', talent: '甲上', color: 'pink', stats: { 杀伐: 55, 防御: 48, 身法: 52 }, baseStats: { 杀伐: 55, 防御: 48, 身法: 52 }, lifespan: { current: 412, max: 800 }, loyalty: 82, mood: 72, skills: [], equipment: [] },
+    '林淮安': { id: 'm4', name: '林淮安', daoName: '静虚子', realm: '金丹期中期', role: '藏经长老', status: '研习', talent: '甲中', color: 'gold', stats: { 杀伐: 42, 防御: 50, 身法: 38 }, baseStats: { 杀伐: 42, 防御: 50, 身法: 38 }, lifespan: { current: 356, max: 700 }, loyalty: 70, mood: 68, skills: [], equipment: [] }
   }),
   finance: zObject({
     gold: zNumber({ default: 12580, min: 0 }),

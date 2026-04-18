@@ -2657,6 +2657,23 @@
               </select>
             </div>
           </div>
+          <div class="form-group">
+            <label>天赋资质</label>
+            <select id="c-talent">
+              <option value="甲上">甲上 — 千年难遇</option>
+              <option value="甲中">甲中 — 绝世天才</option>
+              <option value="甲下">甲下 — 天纵之资</option>
+              <option value="乙上">乙上 — 人中龙凤</option>
+              <option value="乙中" selected>乙中 — 可造之材</option>
+              <option value="乙下">乙下 — 资质平平</option>
+              <option value="丙上">丙上 — 略显愚钝</option>
+              <option value="丙中">丙中 — 泯然众人</option>
+              <option value="丙下">丙下 — 不堪造就</option>
+              <option value="丁上">丁上 — 废柴之资</option>
+              <option value="丁中">丁中 — 朽木难雕</option>
+              <option value="丁下">丁下 — 天道弃子</option>
+            </select>
+          </div>
           <div class="form-group full-width">
             <label>性格标签（可多选）</label>
             <div class="tag-group" id="c-personality">
@@ -5661,6 +5678,7 @@
           realmLevel: document.getElementById('c-realm-level').value,
           realmStage: document.getElementById('c-realm-stage').value,
           age: parseInt(document.getElementById('c-age').value) || 25,
+          talent: document.getElementById('c-talent').value,
           personality,
           appearance,
           sectName: document.getElementById('c-sect-name').value.trim() || '无名宗门',
@@ -5687,6 +5705,7 @@
           <div class="confirm-item"><div class="confirm-label">境界</div><div class="confirm-value">${escapeHtml(d.realmLevel)}${d.realmStage ? ' · ' + d.realmStage : ''}</div></div>
           <div class="confirm-item"><div class="confirm-label">性别</div><div class="confirm-value">${escapeHtml(d.gender)}</div></div>
           <div class="confirm-item"><div class="confirm-label">年龄</div><div class="confirm-value">${d.age} 岁</div></div>
+          <div class="confirm-item"><div class="confirm-label">天赋资质</div><div class="confirm-value">${escapeHtml(d.talent)}</div></div>
           <div class="confirm-item"><div class="confirm-label">性格</div><div class="confirm-value">${d.personality.join('、') || '—'}</div></div>
           <div class="confirm-item"><div class="confirm-label">外貌</div><div class="confirm-value">${d.appearance.join('、') || '—'}</div></div>
           <div class="confirm-item"><div class="confirm-label">宗门名称</div><div class="confirm-value">${escapeHtml(d.sectName)}</div></div>
@@ -5729,6 +5748,36 @@
       };
     })();
 
+    // ====== STAT CALCULATION ======
+    const TALENT_RANKS = ['甲上','甲中','甲下','乙上','乙中','乙下','丙上','丙中','丙下','丁上','丁中','丁下'];
+    const REALM_BIG = { '练气期': 0, '筑基期': 1, '金丹期': 2, '元婴期': 3, '化神期': 4, '道祖': 5 };
+    const REALM_SMALL = { '前期': 0, '中期': 1, '后期': 2, '圆满': 3 };
+
+    function calculateStats(talent, realmLevel, realmStage) {
+      const talentIdx = TALENT_RANKS.indexOf(talent);
+      const talentDiff = 4 - (talentIdx >= 0 ? talentIdx : 4);
+      const baseValue = 50 + talentDiff * 3;
+
+      const bigIdx = REALM_BIG[realmLevel] || 0;
+      const smallIdx = REALM_SMALL[realmStage] || 0;
+
+      const stageMultiplier = Math.pow(1.5, smallIdx);
+      const realmMultiplier = Math.pow(10, bigIdx);
+
+      const val = Math.round(baseValue * stageMultiplier * realmMultiplier);
+      return { 杀伐: val, 防御: val, 身法: val };
+    }
+
+    function parseRealm(realmStr) {
+      if (realmStr === '道祖') return { level: '道祖', stage: '' };
+      for (const level of Object.keys(REALM_BIG)) {
+        if (realmStr.startsWith(level)) {
+          return { level, stage: realmStr.slice(level.length) };
+        }
+      }
+      return { level: '练气期', stage: '前期' };
+    }
+
     // ====== GAME STATE INITIALIZATION ======
     function initializeGameState(data) {
       const statusMap = {
@@ -5755,6 +5804,7 @@
 
       // Create player
       const realmStr = data.realmLevel === '道祖' ? '道祖' : data.realmLevel + (data.realmStage ? data.realmStage : '');
+      const playerStats = calculateStats(data.talent, data.realmLevel, data.realmStage);
       const playerId = 'player_' + Date.now();
       window.gameStateManager.state.members[data.name] = {
         id: playerId,
@@ -5763,10 +5813,10 @@
         realm: realmStr,
         role: '掌门',
         status: '坐镇',
-        talent: '上上',
+        talent: data.talent,
         color: 'gold',
-        stats: { 杀伐: 75, 防御: 70, 身法: 65 },
-        baseStats: { 杀伐: 75, 防御: 70, 身法: 65 },
+        stats: { ...playerStats },
+        baseStats: { ...playerStats },
         lifespan: { current: data.age || 25, max: realmLifespan[data.realmLevel] || 150 },
         loyalty: 100,
         mood: 80,
@@ -5778,8 +5828,14 @@
       if (sm.disciples > 0) {
         const maleNames = ['林青羽','陈墨','顾长风','陆无尘','叶无殇','萧寒','楚云飞','赵无痕','周子瑜','李玄天'];
         const femaleNames = ['苏晚晴','慕容雪','柳如烟','白芷','沈清秋','凤九歌','洛神','夜琉璃','花千骨','沐清歌'];
-        const realms = ['练气前期','练气中期','练气后期','筑基前期','筑基中期'];
-        const talents = ['上','中','上','中','下','上'];
+        const discipleRealms = [
+          { level: '练气期', stage: '前期' },
+          { level: '练气期', stage: '中期' },
+          { level: '练气期', stage: '后期' },
+          { level: '筑基期', stage: '前期' },
+          { level: '筑基期', stage: '中期' }
+        ];
+        const discipleTalents = ['甲中','乙上','乙中','乙下','丙上','丙中'];
         const colors = ['jade','purple','pink','gold','jade','purple'];
 
         for (let i = 0; i < sm.disciples; i++) {
@@ -5787,17 +5843,20 @@
           const namePool = isMale ? maleNames : femaleNames;
           const name = namePool[i % namePool.length];
           if (window.gameStateManager.state.members[name]) continue;
+          const dr = discipleRealms[Math.floor(Math.random() * discipleRealms.length)];
+          const dt = discipleTalents[i % discipleTalents.length];
+          const ds = calculateStats(dt, dr.level, dr.stage);
           window.gameStateManager.state.members[name] = {
             id: 'disciple_' + i,
             name: name,
             daoName: name,
-            realm: realms[Math.floor(Math.random() * realms.length)],
+            realm: dr.level + dr.stage,
             role: '内门弟子',
             status: '研习',
-            talent: talents[i % talents.length],
+            talent: dt,
             color: colors[i % colors.length],
-            stats: { 杀伐: 30 + Math.floor(Math.random() * 25), 防御: 30 + Math.floor(Math.random() * 25), 身法: 30 + Math.floor(Math.random() * 25) },
-            baseStats: { 杀伐: 30 + Math.floor(Math.random() * 25), 防御: 30 + Math.floor(Math.random() * 25), 身法: 30 + Math.floor(Math.random() * 25) },
+            stats: { ...ds },
+            baseStats: { ...ds },
             lifespan: { current: 80 + Math.floor(Math.random() * 40), max: 150 + Math.floor(Math.random() * 100) },
             loyalty: 50 + Math.floor(Math.random() * 30),
             mood: 60 + Math.floor(Math.random() * 25),
