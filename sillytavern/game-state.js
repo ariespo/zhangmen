@@ -109,6 +109,8 @@ const MemberSchema = zObject({
   }),
   loyalty: zNumber({ default: 60, min: 0, max: 100 }),
   mood: zNumber({ default: 70, min: 0, max: 100 }),
+  personality: zArray(zString(), []),
+  appearance: zArray(zString(), []),
   skills: zArray(zString(), []),
   equipment: zArray(EquipmentSchema, [])
 });
@@ -476,6 +478,19 @@ export class GameStateManager {
     if (!this._state) this._state = createDeepProxy(deepClone(DEFAULT_GAME_STATE), p => this._onChange(p));
     return this._state;
   }
+  reset() {
+    this._chatId = null;
+    this._state = null;
+    this._loaded = false;
+    if (this._saveTimer) { clearTimeout(this._saveTimer); this._saveTimer = null; }
+    // 触发订阅者，让他们收到默认值
+    const emptyState = createDeepProxy(deepClone(DEFAULT_GAME_STATE), p => this._onChange(p));
+    this._state = emptyState;
+    for (const [subPath, cbs] of this._subs) {
+      const val = this.getByPath(subPath);
+      for (const cb of cbs) { try { cb(val); } catch (e) { console.error(e); } }
+    }
+  }
   _onChange(changedPath) {
     const cp = '/' + changedPath;
     for (const [subPath, cbs] of this._subs) {
@@ -513,6 +528,13 @@ export class GameStateManager {
   }
   applyPatch(patchArray) { applyPatches(this._state, patchArray); }
   toRaw() { return toRaw(this._state); }
+  replaceState(newState) {
+    this._state = createDeepProxy(deepClone(newState), p => this._onChange(p));
+    for (const [subPath, cbs] of this._subs) {
+      const val = this.getByPath(subPath);
+      for (const cb of cbs) { try { cb(val); } catch (e) { console.error(e); } }
+    }
+  }
 }
 
 export function createGameStateManager() { return new GameStateManager(); }

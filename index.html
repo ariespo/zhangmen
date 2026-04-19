@@ -1142,6 +1142,54 @@
       color: var(--jade-pale);
       font-weight: 500;
     }
+    .disciple-card {
+      position: relative;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px 16px 16px 52px;
+      margin-bottom: 16px;
+    }
+    .disciple-card .form-grid {
+      gap: 10px;
+    }
+    .disciple-card .form-group {
+      margin-bottom: 0;
+    }
+    .disciple-card .form-group label {
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+    .disciple-card .form-group input,
+    .disciple-card .form-group select {
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+    .disciple-random {
+      position: absolute;
+      left: 12px;
+      top: 16px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(110,207,207,0.1);
+      border: 1px solid rgba(110,207,207,0.2);
+      border-radius: 8px;
+      color: var(--jade-glow);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .disciple-random:hover {
+      background: rgba(110,207,207,0.2);
+      border-color: var(--jade-glow);
+    }
+    #disciples-container {
+      max-height: 60vh;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -2617,6 +2665,11 @@
           <div class="step-line"></div>
           <div class="step" data-step="3">
             <span class="step-num">叁</span>
+            <span class="step-label">弟子信息</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" data-step="4">
+            <span class="step-num">肆</span>
             <span class="step-label">确认开局</span>
           </div>
         </div>
@@ -2757,11 +2810,9 @@
           <div class="form-group">
             <label>开局地位</label>
             <select id="c-status">
-              <option value="毫无名气">毫无名气 — 灵石500，弟子0</option>
-              <option value="末流小派">末流小派 — 灵石3000，弟子1-2</option>
-              <option value="三流小宗">三流小宗 — 灵石6000，弟子3</option>
-              <option value="二流宗门" selected>二流宗门 — 灵石12580，弟子6</option>
-              <option value="一流大宗">一流大宗 — 灵石30000，弟子10</option>
+              <option value="末流小派">末流小派 — 灵石3000，弟子2</option>
+              <option value="四流小宗" selected>四流小宗 — 灵石5000，弟子3</option>
+              <option value="三流门派">三流门派 — 灵石8000，弟子4</option>
             </select>
           </div>
           <div class="form-group full-width">
@@ -2792,8 +2843,16 @@
         </div>
       </div>
 
-      <!-- Step 3: Confirm -->
+      <!-- Step 3: Disciples -->
       <div class="creation-step" data-step="3">
+        <h2 class="creation-title"></h2>
+        <div id="disciples-container">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+
+      <!-- Step 4: Confirm -->
+      <div class="creation-step" data-step="4">
         <h2 class="creation-title"></h2>
         <div class="confirm-grid" id="confirm-grid">
           <!-- 动态生成 -->
@@ -3791,7 +3850,10 @@
       setTimeout(() => {
         const resp = document.createElement('div');
         resp.className = 'story-paragraph';
-        resp.textContent = '你的决断如同一颗石子投入静湖，涟漪渐次扩散。四周的灵气似乎因你的心意而微微波动...';
+        resp.style.color = 'rgba(168,230,230,0.5)';
+        resp.style.fontSize = '13px';
+        resp.style.fontStyle = 'italic';
+        resp.textContent = '【操作已记录，点击操作面板中的「就如此行事吧」发送给天道】';
         area.appendChild(resp);
         area.scrollTop = area.scrollHeight;
       }, 500);
@@ -3870,6 +3932,10 @@
           <div class="info-block"><h4>职务</h4><div class="info-value">${m.role}</div></div>
           <div class="info-block"><h4>当前状态</h4><div class="info-value">${m.status}</div></div>
           <div class="info-block"><h4>天赋资质</h4><div class="info-value text-gold">${m.talent}</div></div>
+          <div class="info-block"><h4>忠诚度</h4><div class="info-value">${m.loyalty}</div></div>
+          <div class="info-block"><h4>心情</h4><div class="info-value">${m.mood}</div></div>
+          <div class="info-block full-width" style="grid-column:1/-1"><h4>性格标签</h4><div class="info-value">${(m.personality || []).join('、') || '—'}</div></div>
+          <div class="info-block full-width" style="grid-column:1/-1"><h4>外貌标签</h4><div class="info-value">${(m.appearance || []).join('、') || '—'}</div></div>
 
           <div class="info-block">
             <h4>杀伐</h4>
@@ -4119,7 +4185,19 @@
     // ====== ACTION LOG SYSTEM ======
     let stamina = { current: 5, max: 5 };
     let actionLogs = [];
-    let recentEvents = [];
+    try {
+      const savedStamina = sessionStorage.getItem('zhangmen_stamina');
+      if (savedStamina) stamina = JSON.parse(savedStamina);
+      const savedLogs = sessionStorage.getItem('zhangmen_actionLogs');
+      if (savedLogs) actionLogs = JSON.parse(savedLogs);
+    } catch (e) { console.warn('恢复 session 状态失败:', e); }
+
+    function saveSessionState() {
+      try {
+        sessionStorage.setItem('zhangmen_stamina', JSON.stringify(stamina));
+        sessionStorage.setItem('zhangmen_actionLogs', JSON.stringify(actionLogs));
+      } catch (e) { console.warn('保存 session 状态失败:', e); }
+    }
     let capturedSumText = '';
     let capturedVarsText = '';
     let currentSkillTypeFilter = 'all';
@@ -4147,6 +4225,7 @@
           logBtn.classList.remove('highlight');
         }
       }
+      saveSessionState();
     }
 
     function consumeStamina(cost) {
@@ -4176,6 +4255,7 @@
       };
       actionLogs.push(log);
       renderActionLogs();
+      saveSessionState();
       return true;
     }
 
@@ -4199,6 +4279,7 @@
         actionLogs.splice(index, 1);
         renderActionLogs();
         renderOpportunities();
+        saveSessionState();
       }
     }
 
@@ -4341,6 +4422,19 @@
       capturedMainText = '';
     }
 
+    function stripInternalTags(text) {
+      if (!text) return '';
+      return text
+        .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/<maintext>([\s\S]*?)<\/maintext>/gi, '$1')
+        .replace(/<option>[\s\S]*?<\/option>/gi, '')
+        .replace(/<sum>[\s\S]*?<\/sum>/gi, '')
+        .replace(/<vars>[\s\S]*?<\/vars>/gi, '')
+        .replace(/<var\s+[^>]*\/?>/gi, '')
+        .trim();
+    }
+
     function updateLiveOptions(text) {
       const container = document.getElementById('story-choices');
       if (!container) return;
@@ -4416,13 +4510,21 @@
       }
       // 如果没匹配到事件字段，但整段文本不为空，就把整段当作事件
       if (!eventStr && raw) eventStr = raw;
-      recentEvents.unshift({
+      const event = {
+        id: crypto.randomUUID(),
         text: eventStr,
         time: timeStr || '刚刚',
         location: locationStr,
         people: peopleStr,
         type: 'urgent'
-      });
+      };
+      if (window.gameStateManager) {
+        window.gameStateManager.applyPatch([{
+          op: 'insert',
+          path: '/events/-',
+          value: event
+        }]);
+      }
       renderEvents();
     }
 
@@ -4447,7 +4549,7 @@
         container.innerHTML = '';
         return;
       }
-      container.innerHTML = events.map(ev => {
+      container.innerHTML = events.slice().reverse().map(ev => {
         const metaHtml = [];
         if (ev.time) metaHtml.push(`<span class="event-meta-item time">⏳ ${escapeHtml(ev.time)}</span>`);
         if (ev.location) metaHtml.push(`<span class="event-meta-item location">📍 ${escapeHtml(ev.location)}</span>`);
@@ -4677,6 +4779,14 @@
           console.warn('恢复聊天记录失败:', e);
         }
       }
+      // 恢复 gameState
+      if (snapshot.gameStateRaw && window.gameStateManager) {
+        try {
+          window.gameStateManager.replaceState(snapshot.gameStateRaw);
+        } catch (e) {
+          console.warn('恢复 gameState 失败:', e);
+        }
+      }
     }
 
     async function submitActions() {
@@ -4702,7 +4812,8 @@
         staminaCurrent: stamina.current,
         actionLogPanelActive: panel ? panel.classList.contains('active') : false,
         chatId: null,
-        chatMessages: null
+        chatMessages: null,
+        gameStateRaw: window.gameStateManager ? window.gameStateManager.toRaw() : null
       };
       const stStore = window.sillyTavernStore;
       if (stStore) {
@@ -4784,7 +4895,7 @@
           lorebooks: activeBooks || [],
           userName: settings?.userName || playerName,
           characterName: settings?.characterName || '云璃仙子',
-          variables: chat?.variables || {},
+          variables: { ...(chat?.variables || {}), ...(window.gameStateManager?.state?._vars || {}) },
           gameState: window.gameStateManager?.state
         });
         messages = assembled.messages;
@@ -4876,15 +4987,31 @@
               if (chat) {
                 const { extractVariables } = await import('./sillytavern/st-variables.js');
                 const { cleanedText, updates } = extractVariables(fullRawResponse);
-                await store.addMessage(chat.id, { role: 'assistant', content: cleanedText || fullRawResponse });
+                const strippedText = stripInternalTags(cleanedText || fullRawResponse);
+                await store.addMessage(chat.id, { role: 'assistant', content: strippedText });
                 if (Object.keys(updates).length > 0) {
                   await store.setChatVariables(chat.id, updates);
+                  // 同步到 gameState，确保读档时不丢失
+                  if (window.gameStateManager) {
+                    window.gameStateManager.applyPatch([{
+                      op: 'replace',
+                      path: '/_vars',
+                      value: { ...(window.gameStateManager.state._vars || {}), ...updates }
+                    }]);
+                  }
                 }
               }
             }
           } catch (e) {
             console.warn('保存聊天记录失败:', e);
           }
+        }
+        // 本轮提交成功，清除 session 中的临时状态
+        if (fullRawResponse.trim()) {
+          try {
+            sessionStorage.removeItem('zhangmen_stamina');
+            sessionStorage.removeItem('zhangmen_actionLogs');
+          } catch (e) {}
         }
       }
     }
@@ -5318,6 +5445,17 @@
     const settingsData = await db.settings.get('settings');
     if (settingsData?.activeChatId) {
       await gameStateManager.load(settingsData.activeChatId);
+      // 读档后刷新所有 UI
+      if (typeof renderMembers === 'function') renderMembers();
+      if (typeof renderSectInfo === 'function') renderSectInfo();
+      if (typeof renderFactions === 'function') renderFactions();
+      if (typeof renderBuildings === 'function') renderBuildings();
+      if (typeof renderRegions === 'function') renderRegions();
+      if (typeof renderEvents === 'function') renderEvents();
+      if (typeof renderSkills === 'function') renderSkills();
+      if (typeof renderOpportunities === 'function') renderOpportunities();
+      if (typeof renderQuests === 'function') renderQuests();
+      if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
     }
 
     // 资源条自动订阅
@@ -5584,10 +5722,11 @@
           step.classList.toggle('active', i + 1 === currentStep);
         });
         document.getElementById('creation-prev').style.display = currentStep > 1 ? '' : 'none';
-        document.getElementById('creation-next').style.display = currentStep < 3 ? '' : 'none';
-        document.getElementById('creation-start').style.display = currentStep === 3 ? '' : 'none';
+        document.getElementById('creation-next').style.display = currentStep < 4 ? '' : 'none';
+        document.getElementById('creation-start').style.display = currentStep === 4 ? '' : 'none';
 
-        if (currentStep === 3) renderConfirm();
+        if (currentStep === 3) renderDisciplesUI();
+        if (currentStep === 4) renderConfirm();
       }
 
       function updateAgeHint() {
@@ -5608,12 +5747,205 @@
       document.getElementById('c-realm-level').addEventListener('change', updateAgeHint);
       updateAgeHint();
 
+      // ====== DISCIPLE CONFIGURATION ======
+      const DISCIPLE_STATUS_COUNT = { '末流小派': 2, '四流小宗': 3, '三流门派': 4 };
+      const DISCIPLE_ROLES = ['内门弟子', '外门弟子', '成员'];
+      const DISCIPLE_REALMS = ['练气期前期', '练气期中期', '练气期后期', '筑基期前期', '筑基期中期'];
+      const DISCIPLE_TALENTS = ['甲上','甲中','甲下','乙上','乙中','乙下','丙上','丙中','丙下','丁上','丁中','丁下'];
+      const DISCIPLE_PERSONALITY = ['沉稳','急躁','仁慈','冷酷','机智','木讷','豪爽','谨慎','孤傲','随和'];
+      const DISCIPLE_APPEARANCE = ['俊朗','英武','清秀','冷峻','儒雅','粗犷','温润','邪魅','普通','魁梧'];
+      const MALE_NAMES = ['林青羽','陈墨','顾长风','陆无尘','叶无殇','萧寒','楚云飞','赵无痕','周子瑜','李玄天'];
+      const FEMALE_NAMES = ['苏晚晴','慕容雪','柳如烟','白芷','沈清秋','凤九歌','洛神','夜琉璃','花千骨','沐清歌'];
+      const DISCIPLE_REALM_LIFESPAN = {
+        '练气期前期': 150, '练气期中期': 150, '练气期后期': 150,
+        '筑基期前期': 300, '筑基期中期': 300, '筑基期后期': 300,
+        '金丹期前期': 600, '金丹期中期': 600, '金丹期后期': 600,
+        '元婴期前期': 1200, '元婴期中期': 1200, '元婴期后期': 1200,
+        '化神期前期': 2000, '化神期中期': 2000, '化神期后期': 2000,
+        '道祖': 99999
+      };
+
+      function getDiscipleCount() {
+        return DISCIPLE_STATUS_COUNT[document.getElementById('c-status').value] || 0;
+      }
+
+      function randomDisciple(index) {
+        const isMale = Math.random() > 0.5;
+        const gender = isMale ? '男' : '女';
+        const name = isMale ? MALE_NAMES[index % MALE_NAMES.length] : FEMALE_NAMES[index % FEMALE_NAMES.length];
+        const realm = DISCIPLE_REALMS[Math.floor(Math.random() * DISCIPLE_REALMS.length)];
+        const maxLifespan = DISCIPLE_REALM_LIFESPAN[realm] || 150;
+        const age = Math.floor(16 + Math.random() * Math.min(80, maxLifespan - 20));
+        return {
+          name: name,
+          gender: gender,
+          daoName: name,
+          realm: realm,
+          age: age,
+          role: DISCIPLE_ROLES[Math.floor(Math.random() * DISCIPLE_ROLES.length)],
+          talent: DISCIPLE_TALENTS[Math.floor(Math.random() * DISCIPLE_TALENTS.length)],
+          loyalty: Math.floor(40 + Math.random() * 50),
+          personality: [DISCIPLE_PERSONALITY[Math.floor(Math.random() * DISCIPLE_PERSONALITY.length)]],
+          appearance: [DISCIPLE_APPEARANCE[Math.floor(Math.random() * DISCIPLE_APPEARANCE.length)]]
+        };
+      }
+
+      function renderDisciplesUI() {
+        const container = document.getElementById('disciples-container');
+        const count = getDiscipleCount();
+        const title = container.previousElementSibling;
+        if (title) title.textContent = `配置 ${count} 名弟子`;
+
+        if (count === 0) {
+          container.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(168,230,230,0.5)">
+            末流小派无人投奔，你将独自面对修仙世界的挑战……</div>`;
+          return;
+        }
+
+        let html = '';
+        for (let i = 0; i < count; i++) {
+          html += `
+          <div class="disciple-card" data-index="${i}">
+            <div class="disciple-random" onclick="randomizeDisciple(${i})" title="随机生成">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="2" width="20" height="20" rx="4"/>
+                <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                <circle cx="15.5" cy="8.5" r="1.5" fill="currentColor"/>
+                <circle cx="8.5" cy="15.5" r="1.5" fill="currentColor"/>
+                <circle cx="15.5" cy="15.5" r="1.5" fill="currentColor"/>
+              </svg>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>姓名</label>
+                <input type="text" class="d-name" data-index="${i}" placeholder="弟子姓名" maxlength="8">
+              </div>
+              <div class="form-group">
+                <label>性别</label>
+                <select class="d-gender" data-index="${i}">
+                  <option value="男">男</option>
+                  <option value="女">女</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>道号</label>
+                <input type="text" class="d-daoName" data-index="${i}" placeholder="道号" maxlength="10">
+              </div>
+              <div class="form-group">
+                <label>境界</label>
+                <select class="d-realm" data-index="${i}">
+                  ${DISCIPLE_REALMS.map(r => `<option value="${r}">${r}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>年龄</label>
+                <input type="number" class="d-age" data-index="${i}" min="1" max="300" value="20">
+              </div>
+              <div class="form-group">
+                <label>职务</label>
+                <select class="d-role" data-index="${i}">
+                  ${DISCIPLE_ROLES.map(r => `<option value="${r}">${r}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>天赋资质</label>
+                <select class="d-talent" data-index="${i}">
+                  ${DISCIPLE_TALENTS.map(t => `<option value="${t}">${t}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label>忠诚度</label>
+                <input type="number" class="d-loyalty" data-index="${i}" min="0" max="100" value="60">
+              </div>
+              <div class="form-group full-width">
+                <label>性格标签（可多选）</label>
+                <div class="tag-group d-personality" data-index="${i}">
+                  ${DISCIPLE_PERSONALITY.map(p => `<span class="tag" data-value="${p}">${p}</span>`).join('')}
+                </div>
+              </div>
+              <div class="form-group full-width">
+                <label>外貌标签（可多选）</label>
+                <div class="tag-group d-appearance" data-index="${i}">
+                  ${DISCIPLE_APPEARANCE.map(a => `<span class="tag" data-value="${a}">${a}</span>`).join('')}
+                </div>
+              </div>
+            </div>
+          </div>`;
+        }
+        container.innerHTML = html;
+
+        // 绑定 tag 点击
+        container.querySelectorAll('.tag-group').forEach(g => {
+          g.addEventListener('click', e => {
+            if (e.target.classList.contains('tag')) {
+              e.target.classList.toggle('selected');
+            }
+          });
+        });
+
+        // 绑定境界变化时的年龄上限
+        container.querySelectorAll('.d-realm').forEach(sel => {
+          sel.addEventListener('change', function() {
+            const max = DISCIPLE_REALM_LIFESPAN[this.value] || 150;
+            const ageInput = this.closest('.disciple-card').querySelector('.d-age');
+            ageInput.max = max;
+            if (parseInt(ageInput.value) > max) ageInput.value = max;
+          });
+        });
+
+        // 初始填充随机值
+        for (let i = 0; i < count; i++) randomizeDisciple(i);
+      }
+
+      window.randomizeDisciple = function(index) {
+        const card = document.querySelector(`.disciple-card[data-index="${index}"]`);
+        if (!card) return;
+        const d = randomDisciple(index);
+        card.querySelector('.d-name').value = d.name;
+        card.querySelector('.d-gender').value = d.gender;
+        card.querySelector('.d-daoName').value = d.daoName;
+        card.querySelector('.d-realm').value = d.realm;
+        const maxAge = DISCIPLE_REALM_LIFESPAN[d.realm] || 150;
+        const ageInput = card.querySelector('.d-age');
+        ageInput.max = maxAge;
+        ageInput.value = d.age;
+        card.querySelector('.d-role').value = d.role;
+        card.querySelector('.d-talent').value = d.talent;
+        card.querySelector('.d-loyalty').value = d.loyalty;
+        card.querySelectorAll('.d-personality .tag').forEach(t => t.classList.toggle('selected', d.personality.includes(t.dataset.value)));
+        card.querySelectorAll('.d-appearance .tag').forEach(t => t.classList.toggle('selected', d.appearance.includes(t.dataset.value)));
+      };
+
       function collectData() {
         const personality = [];
         document.querySelectorAll('#c-personality .tag.selected').forEach(t => personality.push(t.dataset.value));
         const appearance = [];
         document.querySelectorAll('#c-appearance .tag.selected').forEach(t => appearance.push(t.dataset.value));
         const crisisEl = document.querySelector('#c-crisis .card-select.selected');
+
+        // 收集弟子信息
+        const disciples = [];
+        const count = getDiscipleCount();
+        for (let i = 0; i < count; i++) {
+          const card = document.querySelector(`.disciple-card[data-index="${i}"]`);
+          if (!card) continue;
+          const dp = [];
+          card.querySelectorAll('.d-personality .tag.selected').forEach(t => dp.push(t.dataset.value));
+          const da = [];
+          card.querySelectorAll('.d-appearance .tag.selected').forEach(t => da.push(t.dataset.value));
+          disciples.push({
+            name: card.querySelector('.d-name').value.trim() || `弟子${i+1}`,
+            gender: card.querySelector('.d-gender').value,
+            daoName: card.querySelector('.d-daoName').value.trim() || card.querySelector('.d-name').value.trim() || `弟子${i+1}`,
+            realm: card.querySelector('.d-realm').value,
+            age: parseInt(card.querySelector('.d-age').value) || 20,
+            role: card.querySelector('.d-role').value,
+            talent: card.querySelector('.d-talent').value,
+            loyalty: parseInt(card.querySelector('.d-loyalty').value) || 60,
+            personality: dp,
+            appearance: da
+          });
+        }
 
         return {
           name: document.getElementById('c-name').value.trim() || '无名掌门',
@@ -5628,22 +5960,21 @@
           path: document.getElementById('c-path').value,
           specialty: document.getElementById('c-specialty').value,
           status: document.getElementById('c-status').value,
-          crisis: crisisEl ? crisisEl.dataset.value : '白手起家'
+          crisis: crisisEl ? crisisEl.dataset.value : '白手起家',
+          disciples
         };
       }
 
       function renderConfirm() {
         const d = collectData();
         const statusMap = {
-          '毫无名气': { gold: 500, disciples: 0, buildings: 0, prestige: 0 },
-          '末流小派': { gold: 3000, disciples: '1-2', buildings: 1, prestige: 100 },
-          '三流小宗': { gold: 6000, disciples: 3, buildings: 2, prestige: 300 },
-          '二流宗门': { gold: 12580, disciples: 6, buildings: '3-4', prestige: 800 },
-          '一流大宗': { gold: 30000, disciples: 10, buildings: '5+', prestige: 1800 }
+          '末流小派': { gold: 3000, disciples: 2, buildings: 1, prestige: 100 },
+          '四流小宗': { gold: 5000, disciples: 3, buildings: 2, prestige: 200 },
+          '三流门派': { gold: 8000, disciples: 4, buildings: 3, prestige: 400 }
         };
-        const sm = statusMap[d.status] || statusMap['二流宗门'];
+        const sm = statusMap[d.status] || statusMap['四流小宗'];
         const grid = document.getElementById('confirm-grid');
-        grid.innerHTML = `
+        let html = `
           <div class="confirm-item"><div class="confirm-label">名字</div><div class="confirm-value">${escapeHtml(d.name)}</div></div>
           <div class="confirm-item"><div class="confirm-label">境界</div><div class="confirm-value">${escapeHtml(d.realmLevel)}${d.realmStage ? ' · ' + d.realmStage : ''}</div></div>
           <div class="confirm-item"><div class="confirm-label">性别</div><div class="confirm-value">${escapeHtml(d.gender)}</div></div>
@@ -5657,19 +5988,45 @@
           <div class="confirm-item"><div class="confirm-label">开局地位</div><div class="confirm-value">${escapeHtml(d.status)}</div></div>
           <div class="confirm-item"><div class="confirm-label">开局困境</div><div class="confirm-value">${escapeHtml(d.crisis)}</div></div>
           <div class="confirm-item"><div class="confirm-label">初始灵石</div><div class="confirm-value">${sm.gold.toLocaleString()}</div></div>
-          <div class="confirm-item"><div class="confirm-label">初始弟子</div><div class="confirm-value">${sm.disciples} 人</div></div>
+          <div class="confirm-item"><div class="confirm-label">初始弟子</div><div class="confirm-value">${d.disciples.length} 人</div></div>
         `;
+        d.disciples.forEach((disc, i) => {
+          html += `
+          <div class="confirm-item full-width" style="grid-column:1/-1;border-top:1px solid rgba(168,230,230,0.1);padding-top:8px;margin-top:4px;">
+            <div class="confirm-label">弟子 ${i+1} · ${escapeHtml(disc.name)} · ${disc.realm} · ${disc.talent}</div>
+            <div class="confirm-value" style="font-size:12px;color:rgba(168,230,230,0.6)">
+              ${disc.gender} · ${disc.age}岁 · ${disc.role} · 忠诚:${disc.loyalty} · 性格:${disc.personality.join('、') || '—'} · 外貌:${disc.appearance.join('、') || '—'}
+            </div>
+          </div>`;
+        });
+        grid.innerHTML = html;
       }
 
       document.getElementById('creation-next').addEventListener('click', () => {
-        if (currentStep < 3) { currentStep++; updateStepUI(); }
+        if (currentStep < 4) { currentStep++; updateStepUI(); }
       });
       document.getElementById('creation-prev').addEventListener('click', () => {
         if (currentStep > 1) { currentStep--; updateStepUI(); }
       });
 
-      document.getElementById('creation-start').addEventListener('click', () => {
+      document.getElementById('creation-start').addEventListener('click', async () => {
         const d = collectData();
+
+        // 创建新对话（新存档槽）
+        if (window.sillyTavernStore) {
+          try {
+            const chatName = d.sectName || d.name || '新游戏';
+            await window.sillyTavernStore.createChat(chatName);
+          } catch (e) {
+            console.warn('创建新对话失败:', e);
+          }
+        }
+
+        // 重置 gameState 为默认值，清除所有旧数据
+        if (window.gameStateManager) {
+          window.gameStateManager.reset();
+        }
+
         initializeGameState(d);
         document.getElementById('creation-page').style.display = 'none';
         const app = document.getElementById('app');
@@ -5724,13 +6081,11 @@
     // ====== GAME STATE INITIALIZATION ======
     function initializeGameState(data) {
       const statusMap = {
-        '毫无名气': { gold: 500, disciples: 0, buildings: [], prestige: 0 },
-        '末流小派': { gold: 3000, disciples: 2, buildings: [{ name: '破旧大殿', level: 1, unlocked: true, description: '勉强遮风挡雨' }], prestige: 100 },
-        '三流小宗': { gold: 6000, disciples: 3, buildings: [{ name: '议事厅', level: 1, unlocked: true, description: '宗门议事之所' }, { name: '修炼室', level: 1, unlocked: true, description: '弟子修炼之地' }], prestige: 300 },
-        '二流宗门': { gold: 12580, disciples: 6, buildings: [{ name: '悟道殿', level: 3, unlocked: true, description: '掌门修行之所' }, { name: '藏经阁', level: 2, unlocked: true, description: '收藏功法典籍' }, { name: '炼丹房', level: 1, unlocked: true, description: '炼制丹药' }, { name: '炼器峰', level: 1, unlocked: true, description: '锻造法器' }], prestige: 800 },
-        '一流大宗': { gold: 30000, disciples: 10, buildings: [{ name: '悟道殿', level: 5, unlocked: true, description: '掌门修行之所' }, { name: '藏经阁', level: 4, unlocked: true, description: '收藏功法典籍' }, { name: '炼丹房', level: 3, unlocked: true, description: '炼制丹药' }, { name: '炼器峰', level: 3, unlocked: true, description: '锻造法器' }, { name: '护山大阵', level: 3, unlocked: true, description: '宗门防御屏障' }], prestige: 1800 }
+        '末流小派': { gold: 3000, buildings: [{ name: '破旧大殿', level: 1, unlocked: true, description: '勉强遮风挡雨' }], prestige: 100 },
+        '四流小宗': { gold: 5000, buildings: [{ name: '议事厅', level: 1, unlocked: true, description: '宗门议事之所' }, { name: '修炼室', level: 1, unlocked: true, description: '弟子修炼之地' }], prestige: 200 },
+        '三流门派': { gold: 8000, buildings: [{ name: '悟道殿', level: 2, unlocked: true, description: '掌门修行之所' }, { name: '藏经阁', level: 2, unlocked: true, description: '收藏功法典籍' }, { name: '修炼室', level: 1, unlocked: true, description: '弟子修炼之地' }], prestige: 400 }
       };
-      const sm = statusMap[data.status] || statusMap['二流宗门'];
+      const sm = statusMap[data.status] || statusMap['四流小宗'];
 
       // Set finance
       window.gameStateManager.state.finance.gold = sm.gold;
@@ -5767,46 +6122,33 @@
         equipment: []
       };
 
-      // Generate disciples
-      if (sm.disciples > 0) {
-        const maleNames = ['林青羽','陈墨','顾长风','陆无尘','叶无殇','萧寒','楚云飞','赵无痕','周子瑜','李玄天'];
-        const femaleNames = ['苏晚晴','慕容雪','柳如烟','白芷','沈清秋','凤九歌','洛神','夜琉璃','花千骨','沐清歌'];
-        const discipleRealms = [
-          { level: '练气期', stage: '前期' },
-          { level: '练气期', stage: '中期' },
-          { level: '练气期', stage: '后期' },
-          { level: '筑基期', stage: '前期' },
-          { level: '筑基期', stage: '中期' }
-        ];
-        const discipleTalents = ['甲中','乙上','乙中','乙下','丙上','丙中'];
-        const colors = ['jade','purple','pink','gold','jade','purple'];
-
-        for (let i = 0; i < sm.disciples; i++) {
-          const isMale = Math.random() > 0.5;
-          const namePool = isMale ? maleNames : femaleNames;
-          const name = namePool[i % namePool.length];
-          if (window.gameStateManager.state.members[name]) continue;
-          const dr = discipleRealms[Math.floor(Math.random() * discipleRealms.length)];
-          const dt = discipleTalents[i % discipleTalents.length];
-          const ds = calculateStats(dt, dr.level, dr.stage);
-          window.gameStateManager.state.members[name] = {
+      // Generate disciples from player configuration
+      if (data.disciples && data.disciples.length > 0) {
+        const colors = ['jade','purple','pink','gold','jade','purple','gold','jade'];
+        data.disciples.forEach((disc, i) => {
+          const rp = parseRealm(disc.realm);
+          const ds = calculateStats(disc.talent, rp.level, rp.stage);
+          const maxLifespan = realmLifespan[rp.level] || 150;
+          window.gameStateManager.state.members[disc.name] = {
             id: 'disciple_' + i,
-            name: name,
-            daoName: name,
-            realm: dr.level + dr.stage,
-            role: '内门弟子',
+            name: disc.name,
+            daoName: disc.daoName || disc.name,
+            realm: disc.realm,
+            role: disc.role,
             status: '研习',
-            talent: dt,
+            talent: disc.talent,
             color: colors[i % colors.length],
             stats: { ...ds },
             baseStats: { ...ds },
-            lifespan: { current: 80 + Math.floor(Math.random() * 40), max: 150 + Math.floor(Math.random() * 100) },
-            loyalty: 50 + Math.floor(Math.random() * 30),
+            lifespan: { current: disc.age, max: maxLifespan },
+            loyalty: disc.loyalty,
             mood: 60 + Math.floor(Math.random() * 25),
+            personality: disc.personality || [],
+            appearance: disc.appearance || [],
             skills: [],
             equipment: []
           };
-        }
+        });
       }
 
       // Set player info
@@ -5883,13 +6225,11 @@
       const crisisDesc = crisisMap[data.crisis] || crisisMap['白手起家'];
 
       const statusDescMap = {
-        '毫无名气': '方圆百里之内，几乎无人知晓这个名号。',
         '末流小派': '在附近几个村落中略有耳闻，但在真正的修仙界中微不足道。',
-        '三流小宗': '在方圆千里之内有些名气，偶尔会有散修前来投奔。',
-        '二流宗门': '在一洲之地颇有威望，与各大宗门皆有往来。',
-        '一流大宗': '天下皆知，万宗来朝，是这一方天地中最顶尖的势力之一。'
+        '四流小宗': '在方圆千里之内有些名气，偶尔会有散修前来投奔。',
+        '三流门派': '在一洲之地小有名气，与附近的宗门皆有往来。'
       };
-      const statusDesc = statusDescMap[data.status] || statusDescMap['二流宗门'];
+      const statusDesc = statusDescMap[data.status] || statusDescMap['四流小宗'];
 
       const pathDescMap = {
         '道修': '顺应天道，万法自然',
