@@ -1,4 +1,4 @@
-# 云璃仙宗 — 完整变量表
+# 宗门志 — 完整变量表
 
 > 本文档列出游戏中所有可通过 `<vars>` 标签读写状态。路径以 `/` 开头，层级用 `/` 分隔。
 
@@ -15,7 +15,10 @@
   "opportunities": [],    // 机遇数组
   "diplomacy":   {},      // Record<势力名, 外交对象>
   "quests":      {},      // 任务（主线+支线）
-  "world":       {}       // 世界（建筑+疆域）
+  "world":       {},      // 世界（建筑+疆域）
+  "player":      {},      // 玩家（掌门）自身信息
+  "sect":        {},      // 宗门信息
+  "events":      []       // 近日要事列表
 }
 ```
 
@@ -31,10 +34,10 @@
 | `id` | string | `""` | — | 唯一标识 |
 | `name` | string | `""` | — | 姓名（与 Record key 相同） |
 | `daoName` | string | `""` | — | 道号 |
-| `realm` | string | `"炼气期"` | — | 境界，如 炼气期/金丹期/元婴期/化神期 |
-| `role` | enum | `"成员"` | 掌门/大长老/执法首座/丹峰长老/藏经长老/守山长老/成员 | 职务 |
+| `realm` | string | `"炼气期"` | — | 境界，如 炼气期/金丹期/元婴期/化神期，含阶段则如 炼气期前期 |
+| `role` | enum | `"成员"` | 掌门/大长老/执法首座/丹峰长老/藏经长老/守山长老/内门弟子/外门弟子/成员 | 职务 |
 | `status` | enum | `"坐镇"` | 坐镇/巡查/炼丹/研习/闭关/外出/受伤 | 当前状态 |
-| `talent` | string | `"中"` | 上上/上/中/下/下下 | 天赋资质 |
+| `talent` | string | `"乙中"` | 甲上/甲中/甲下/乙上/乙中/乙下/丙上/丙中/丙下/丁上/丁中/丁下 | 天赋资质 |
 | `color` | enum | `"jade"` | jade/purple/pink/gold | UI 配色标识 |
 | `stats.杀伐` | number | `50` | 0–100 | 当前杀伐（含装备加成） |
 | `stats.防御` | number | `50` | 0–100 | 当前防御（含装备加成） |
@@ -78,7 +81,7 @@
 <vars>[{"op":"delta","path":"/members/沈万钧/lifespan/current","value":"-10"}]</vars>
 
 <!-- 新增成员（insert 到 Record） -->
-<vars>[{"op":"insert","path":"/members/林青羽","value":{"id":"m5","name":"林青羽","daoName":"青羽子","realm":"筑基后期","role":"成员","status":"坐镇","talent":"上","color":"purple","stats":{"杀伐":45,"防御":38,"身法":52},"baseStats":{"杀伐":45,"防御":38,"身法":52},"lifespan":{"current":120,"max":300},"loyalty":60,"mood":80,"skills":[],"equipment":[]}}]</vars>
+<vars>[{"op":"insert","path":"/members/林青羽","value":{"id":"m5","name":"林青羽","daoName":"青羽子","realm":"筑基期后期","role":"内门弟子","status":"坐镇","talent":"乙上","color":"purple","stats":{"杀伐":45,"防御":38,"身法":52},"baseStats":{"杀伐":45,"防御":38,"身法":52},"lifespan":{"current":120,"max":300},"loyalty":60,"mood":80,"skills":[],"equipment":[]}}]</vars>
 
 <!-- 移除成员 -->
 <vars>[{"op":"remove","path":"/members/林青羽"}]</vars>
@@ -354,7 +357,25 @@
 
 ---
 
-## 十、操作类型速查
+## 十、开局创建元数据（_creationMeta）
+
+游戏通过开局创建向导启动时，会将玩家选择存储在 `_creationMeta` 中，供 LLM 读取以了解宗门背景。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `sectName` | string | 宗门名称 |
+| `path` | string | 修行法门（道修/神修/魔修/体修/旁门左道） |
+| `specialty` | string | 宗门专长（剑/丹/炼器/法阵/符箓） |
+| `crisis` | string | 开局困境 |
+| `personality` | string[] | 玩家性格标签 |
+| `appearance` | string[] | 玩家外貌标签 |
+| `age` | number | 玩家年龄 |
+
+> 注意：`_creationMeta` 仅作为提示词上下文使用，不直接影响游戏机制。
+
+---
+
+## 十一、操作类型速查
 
 | op | 作用 | value 类型 | 适用路径 |
 |----|------|------------|----------|
@@ -372,7 +393,7 @@
 
 ---
 
-## 十一、批量操作示例
+## 十二、批量操作示例
 
 ```xml
 <vars>
@@ -390,4 +411,121 @@
 
 ---
 
-*文档版本：v1.0 | 对应游戏版本：2026-04-18*
+## 十三、天赋资质与三维计算
+
+角色三维（杀伐/防御/身法）由天赋资质和境界共同决定，LLM 在生成新成员时可参考此规则：
+
+| 天赋 | 等级索引 | 相对于乙中的差值 |
+|------|----------|------------------|
+| 甲上 | 0 | +12 |
+| 甲中 | 1 | +9 |
+| 甲下 | 2 | +6 |
+| 乙上 | 3 | +3 |
+| 乙中 | 4 | 0 |
+| 乙下 | 5 | −3 |
+| 丙上 | 6 | −6 |
+| 丙中 | 7 | −9 |
+| 丙下 | 8 | −12 |
+| 丁上 | 9 | −15 |
+| 丁中 | 10 | −18 |
+| 丁下 | 11 | −21 |
+
+**计算公式：**
+
+```
+base = 50 + talentDiff × 3
+stageMultiplier = 1.5 ^ stageIndex   // 前期=0, 中期=1, 后期=2, 圆满=3
+realmMultiplier = 10 ^ realmIndex    // 练气=0, 筑基=1, 金丹=2, 元婴=3, 化神=4, 道祖=5
+value = round(base × stageMultiplier × realmMultiplier)
+```
+
+**示例：**
+- 乙中 + 练气期前期 = 50
+- 乙上 + 练气期前期 = 53
+- 乙中 + 练气期中期 = 75
+- 甲上 + 金丹期后期 = round(62 × 3.375 × 100) = 20925
+
+---
+
+## 十、玩家（player）
+
+**路径前缀**：`/player`
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `name` | string | `""` | 玩家姓名 |
+| `daoName` | string | `""` | 道号 |
+| `realm` | string | `""` | 境界（含阶段，如"元婴期后期"） |
+| `gender` | string | `""` | 性别 |
+| `age` | number | `0` | 年龄 |
+| `lifespan.current` | number | `100` | 当前寿元 |
+| `lifespan.max` | number | `200` | 最大寿元 |
+| `talent` | string | `""` | 天赋资质（如"甲上"） |
+| `stats.杀伐` | number | `50` | 当前杀伐（含装备） |
+| `stats.防御` | number | `50` | 当前防御（含装备） |
+| `stats.身法` | number | `50` | 当前身法（含装备） |
+| `baseStats.杀伐` | number | `50` | 基础杀伐（不含装备） |
+| `baseStats.防御` | number | `50` | 基础防御（不含装备） |
+| `baseStats.身法` | number | `50` | 基础身法（不含装备） |
+| `skills` | string[] | `[]` | 已修功法列表 |
+| `personality` | string[] | `[]` | 性格标签 |
+| `appearance` | string[] | `[]` | 外貌标签 |
+| `color` | enum | `"gold"` | UI 配色：jade/purple/pink/gold |
+
+**操作示例：**
+
+```xml
+<vars>[{"op":"replace","path":"/player/realm","value":"化神期前期"},{"op":"delta","path":"/player/lifespan/current","value":"-10"},{"op":"insert","path":"/player/skills/-","value":"紫霄神雷诀（第一层）"}]</vars>
+```
+
+---
+
+## 十一、宗门（sect）
+
+**路径前缀**：`/sect`
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `name` | string | `""` | 宗门名称 |
+| `foundedYear` | string | `""` | 创立时间 |
+| `location` | string | `""` | 山门位置 |
+| `founder` | string | `""` | 创派祖师 |
+| `history` | string | `""` | 宗门历史 |
+| `lineage` | string[] | `[]` | 历代掌门列表 |
+| `description` | string | `""` | 宗门简介 |
+| `motto` | string | `""` | 宗门箴言 |
+| `arrayName` | string | `""` | 护山大阵名称 |
+| `arrayRank` | string | `""` | 护山大阵品阶 |
+| `arrayDesc` | string | `""` | 护山大阵描述 |
+
+**操作示例：**
+
+```xml
+<vars>[{"op":"replace","path":"/sect/name","value":"青云宗"},{"op":"replace","path":"/sect/description","value":"东荒第一大宗..."}]</vars>
+```
+
+---
+
+## 十二、近日要事（events）
+
+**类型**：数组  
+**路径前缀**：`/events/{索引}`
+
+| 字段 | 类型 | 默认值 | 可取值 | 说明 |
+|------|------|--------|--------|------|
+| `id` | string | `""` | — | 唯一标识 |
+| `text` | string | `""` | — | 事件描述 |
+| `time` | string | `""` | — | 时间标记 |
+| `location` | string | `""` | — | 地点 |
+| `people` | string | `""` | — | 涉及人物 |
+| `type` | enum | `"normal"` | urgent/normal/info/success | 事件类型 |
+
+**操作示例：**
+
+```xml
+<vars>[{"op":"insert","path":"/events/-","value":{"id":"e1","text":"天剑宗送来拜帖","time":"半日前","location":"天剑宗","people":"天剑宗使者","type":"info"}}]</vars>
+```
+
+---
+
+*文档版本：v2.1 | 对应游戏版本：2026-04-19*

@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="云璃仙宗 - 一款以修仙宗门管理为主题的文字交互游戏">
-  <title>云璃仙宗 · 掌门之道</title>
+  <meta name="description" content="宗门志 - 一款以修仙宗门管理为主题的文字交互游戏">
+  <title>宗门志</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./sillytavern/st-styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <style>
     :root {
       --jade-deep: #1a3a3a;
@@ -643,18 +644,31 @@
       border-radius: 50%;
     }
 
-    /* === OPENING / TITLE SCREEN === */
+    /* === OPENING / TITLE SCREEN — Ink Wash Painting Style === */
     #title-screen {
       position: fixed;
       top: 0; left: 0;
       width: 100vw; height: 100vh;
       z-index: 100;
-      background: radial-gradient(ellipse at center, #0a1212 0%, #020404 100%);
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(0,0,0,0.02) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(0,0,0,0.03) 0%, transparent 50%),
+        #f5f0e8;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       overflow: hidden;
+    }
+    #title-screen::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 3px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.01) 2px, rgba(0,0,0,0.01) 3px);
+      pointer-events: none;
+      z-index: 1;
     }
     #title-screen.hidden {
       opacity: 0;
@@ -665,28 +679,26 @@
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      opacity: 0.85;
+      opacity: 1;
     }
     .opening-title {
       position: relative;
       z-index: 2;
       font-family: 'ZCOOL XiaoWei', serif;
-      font-size: 72px;
-      letter-spacing: 16px;
-      color: var(--gold-bright);
-      text-shadow:
-        0 0 60px rgba(200,168,110,0.25),
-        0 0 120px rgba(200,168,110,0.1);
+      font-size: 80px;
+      letter-spacing: 20px;
+      color: #1a1a1a;
+      text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
       opacity: 0;
       transform: scale(0.95);
       font-weight: 400;
     }
     .opening-title.show {
-      animation: titleReveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: titleReveal 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
     @keyframes titleReveal {
-      0% { opacity: 0; transform: scale(0.95); filter: blur(12px); }
-      50% { opacity: 0.6; transform: scale(1.01); filter: blur(2px); }
+      0% { opacity: 0; transform: scale(0.95); filter: blur(8px); }
+      50% { opacity: 0.7; transform: scale(1.01); filter: blur(1px); }
       100% { opacity: 1; transform: scale(1); filter: blur(0); }
     }
     .opening-subtitle {
@@ -694,18 +706,18 @@
       z-index: 2;
       font-family: 'Noto Serif SC', serif;
       font-size: 16px;
-      letter-spacing: 8px;
-      color: rgba(168, 230, 230, 0.5);
+      letter-spacing: 10px;
+      color: rgba(60, 60, 60, 0.7);
       margin-top: 20px;
       opacity: 0;
       font-weight: 300;
     }
     .opening-subtitle.show {
-      animation: subtitleFadeIn 1.2s ease 0.4s forwards;
+      animation: subtitleFadeIn 1.4s ease 0.5s forwards;
     }
     @keyframes subtitleFadeIn {
-      from { opacity: 0; transform: translateY(8px); letter-spacing: 12px; }
-      to { opacity: 1; transform: translateY(0); letter-spacing: 8px; }
+      from { opacity: 0; transform: translateY(8px); letter-spacing: 14px; }
+      to { opacity: 1; transform: translateY(0); letter-spacing: 10px; }
     }
     .title-menu {
       position: relative;
@@ -728,12 +740,12 @@
       width: 220px;
       padding: 14px 0;
       background: transparent;
-      border: 1px solid rgba(200,168,110,0.3);
-      border-radius: 4px;
-      color: var(--gold-spirit);
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 2px;
+      color: #333;
       font-family: 'Noto Serif SC', serif;
       font-size: 16px;
-      letter-spacing: 4px;
+      letter-spacing: 6px;
       cursor: pointer;
       transition: all 0.4s ease;
       position: relative;
@@ -744,42 +756,398 @@
       position: absolute;
       top: 0; left: -100%;
       width: 100%; height: 100%;
-      background: rgba(200,168,110,0.1);
+      background: rgba(0,0,0,0.06);
       transition: left 0.4s ease;
     }
     .title-btn:hover::before {
       left: 0;
     }
     .title-btn:hover {
-      border-color: rgba(200,168,110,0.6);
-      color: var(--gold-bright);
-      text-shadow: 0 0 12px rgba(200,168,110,0.3);
+      border-color: rgba(0,0,0,0.5);
+      color: #000;
     }
     .title-btn.primary {
-      border-color: rgba(110,207,207,0.4);
-      color: var(--jade-glow);
+      border-color: rgba(0,0,0,0.35);
+      color: #1a1a1a;
+      font-weight: 500;
     }
     .title-btn.primary::before {
-      background: rgba(110,207,207,0.1);
+      background: rgba(0,0,0,0.08);
     }
     .title-btn.primary:hover {
-      border-color: rgba(110,207,207,0.7);
-      color: var(--jade-pale);
-      text-shadow: 0 0 12px rgba(110,207,207,0.3);
+      border-color: rgba(0,0,0,0.7);
+      color: #000;
     }
     .title-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
     }
     .title-bg-glow {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(26,58,58,0.15) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 1;
+      display: none;
     }
+    /* GSAP ink blobs */
+    .ink-blob {
+      position: absolute;
+      pointer-events: none;
+      transform-origin: center center;
+      will-change: transform, opacity, filter;
+    }
+    .ink-blob .blob-core {
+      width: 100%; height: 100%;
+      border-radius: 60% 40% 55% 45% / 55% 45% 60% 40%;
+      background: radial-gradient(ellipse at 45% 40%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 35%, rgba(0,0,0,0) 70%);
+      filter: blur(6px);
+    }
+    .ink-speck {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.75);
+      filter: blur(0.6px);
+      will-change: transform, opacity;
+    }
+
+    /* === LANDSCAPE SCROLL OPENING === */
+    .scroll-frame {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      clip-path: inset(0 50% 0 50%);
+    }
+    .landscape-svg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      opacity: 0;
+    }
+    .mountain-far,
+    .mountain-near,
+    .mountain-peak {
+      opacity: 0;
+    }
+    .mountain-far-stroke,
+    .mountain-near-stroke,
+    .mountain-peak-stroke {
+      stroke-dasharray: 3000;
+      stroke-dashoffset: 3000;
+      opacity: 0;
+    }
+    .cloud {
+      opacity: 0;
+      filter: blur(8px);
+    }
+    .crane-wrapper {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .crane {
+      position: absolute;
+      width: 80px; height: 46px;
+      transform-origin: center center;
+    }
+    .scroll-edge {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 24px;
+      background: linear-gradient(90deg, #d4c4a8 0%, #c8b898 40%, #b8a888 100%);
+      z-index: 5;
+    }
+    .scroll-edge::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #a08060 0%, #8a6e4e 50%, #a08060 100%);
+    }
+    .scroll-left {
+      left: 0;
+      transform: translateX(-100%);
+      border-radius: 0 12px 12px 0;
+    }
+    .scroll-left::after { right: 0; }
+    .scroll-right {
+      right: 0;
+      transform: translateX(100%);
+      border-radius: 12px 0 0 12px;
+      background: linear-gradient(-90deg, #d4c4a8 0%, #c8b898 40%, #b8a888 100%);
+    }
+    .scroll-right::after { left: 0; }
+
+    /* === CREATION PAGE === */
+    #creation-page {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 90;
+      background: linear-gradient(180deg, #0d1f1f 0%, #132b2b 50%, #0d1f1f 100%);
+      overflow-y: auto;
+      padding: 40px 20px;
+    }
+    .creation-container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .creation-header {
+      margin-bottom: 32px;
+    }
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.4;
+      transition: opacity 0.3s;
+    }
+    .step.active {
+      opacity: 1;
+    }
+    .step.completed {
+      opacity: 0.7;
+    }
+    .step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(110, 207, 207, 0.1);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--jade-pale);
+      font-family: 'ZCOOL XiaoWei', serif;
+    }
+    .step.active .step-num {
+      background: rgba(110, 207, 207, 0.2);
+      border-color: var(--jade-glow);
+      color: var(--jade-glow);
+    }
+    .step-label {
+      font-size: 12px;
+      color: rgba(168, 230, 230, 0.6);
+    }
+    .step.active .step-label {
+      color: var(--jade-pale);
+    }
+    .step-line {
+      width: 40px;
+      height: 1px;
+      background: var(--glass-border);
+    }
+    .creation-step {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .creation-step.active {
+      display: block;
+    }
+    .creation-title {
+      font-family: 'ZCOOL XiaoWei', serif;
+      font-size: 24px;
+      color: var(--jade-pale);
+      text-align: center;
+      margin-bottom: 28px;
+      letter-spacing: 4px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .form-group label {
+      font-size: 13px;
+      color: rgba(168, 230, 230, 0.7);
+      font-weight: 500;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group select {
+      padding: 10px 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--cloud-white);
+      font-family: 'Noto Serif SC', serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--jade-glow);
+    }
+    .form-group input::placeholder {
+      color: rgba(168, 230, 230, 0.3);
+    }
+    .select-row {
+      display: flex;
+      gap: 10px;
+    }
+    .select-row select {
+      flex: 1;
+    }
+    .radio-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: rgba(168, 230, 230, 0.8);
+      cursor: pointer;
+      padding: 8px 12px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    .radio-label:hover {
+      border-color: var(--jade-glow);
+    }
+    .radio-label input[type="radio"] {
+      accent-color: var(--jade-glow);
+    }
+    .tag-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      padding: 6px 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      font-size: 13px;
+      color: rgba(168, 230, 230, 0.7);
+      cursor: pointer;
+      transition: all 0.3s;
+      user-select: none;
+    }
+    .tag:hover {
+      border-color: rgba(110, 207, 207, 0.4);
+    }
+    .tag.selected {
+      background: linear-gradient(135deg, rgba(110, 207, 207, 0.25), rgba(110, 207, 207, 0.12));
+      border-color: var(--jade-glow);
+      color: var(--jade-glow);
+      box-shadow: 0 0 12px rgba(110, 207, 207, 0.25), inset 0 0 8px rgba(110, 207, 207, 0.08);
+      transform: scale(1.05);
+    }
+    .card-select-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .card-select {
+      padding: 16px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .card-select:hover {
+      border-color: rgba(110, 207, 207, 0.4);
+    }
+    .card-select.selected {
+      background: rgba(110, 207, 207, 0.1);
+      border-color: var(--jade-glow);
+    }
+    .card-title {
+      font-size: 15px;
+      color: var(--jade-pale);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .card-desc {
+      font-size: 12px;
+      color: rgba(168, 230, 230, 0.5);
+      line-height: 1.5;
+    }
+    .creation-nav {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 32px;
+      padding-bottom: 40px;
+    }
+    .creation-btn {
+      padding: 12px 36px;
+      border-radius: 8px;
+      font-family: 'Noto Serif SC', serif;
+      font-size: 15px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: none;
+    }
+    .creation-btn.primary {
+      background: linear-gradient(135deg, var(--jade-mid), var(--jade-deep));
+      color: var(--jade-pale);
+      border: 1px solid var(--jade-light);
+    }
+    .creation-btn.primary:hover {
+      background: linear-gradient(135deg, var(--jade-light), var(--jade-mid));
+      box-shadow: 0 0 20px rgba(110, 207, 207, 0.2);
+    }
+    .creation-btn.secondary {
+      background: transparent;
+      color: rgba(168, 230, 230, 0.7);
+      border: 1px solid var(--glass-border);
+    }
+    .creation-btn.secondary:hover {
+      border-color: var(--jade-glow);
+      color: var(--jade-pale);
+    }
+    .confirm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .confirm-item {
+      padding: 14px 16px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+    }
+    .confirm-label {
+      font-size: 11px;
+      color: rgba(168, 230, 230, 0.5);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .confirm-value {
+      font-size: 15px;
+      color: var(--jade-pale);
+      font-weight: 500;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     #app.game-active {
       display: flex !important;
     }
@@ -2178,14 +2546,265 @@
 
   <!-- TITLE SCREEN / OPENING -->
   <div id="title-screen">
-    <canvas id="ink-canvas"></canvas>
-    <div class="title-bg-glow"></div>
-    <div class="opening-title" id="opening-title">掌门模拟器</div>
-    <div class="opening-subtitle" id="opening-subtitle">云璃仙宗 · 天道酬勤</div>
+    <div class="scroll-frame" id="scroll-frame">
+      <svg class="landscape-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="ink-far" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(120,120,120,0.35)"/>
+            <stop offset="100%" stop-color="rgba(160,160,160,0.08)"/>
+          </linearGradient>
+          <linearGradient id="ink-near" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(40,40,40,0.85)"/>
+            <stop offset="60%" stop-color="rgba(60,60,60,0.55)"/>
+            <stop offset="100%" stop-color="rgba(80,80,80,0.15)"/>
+          </linearGradient>
+        </defs>
+        <!-- 远山层 -->
+        <path class="mountain-far" fill="url(#ink-far)"
+          d="M-100,700 Q150,450 350,550 T700,480 T1050,520 T1400,460 T1750,500 T2100,420 V1080 H-100 Z"/>
+        <path class="mountain-far-stroke" fill="none" stroke="rgba(140,140,140,0.25)" stroke-width="1.5"
+          d="M-100,700 Q150,450 350,550 T700,480 T1050,520 T1400,460 T1750,500 T2100,420"/>
+        <!-- 近山层 -->
+        <path class="mountain-near" fill="url(#ink-near)"
+          d="M-100,1080 L-100,820 Q200,580 450,720 T950,650 T1450,750 T1950,680 V1080 Z"/>
+        <path class="mountain-near-stroke" fill="none" stroke="rgba(30,30,30,0.6)" stroke-width="2.5"
+          d="M-100,820 Q200,580 450,720 T950,650 T1450,750 T1950,680"/>
+        <!-- 主峰 -->
+        <path class="mountain-peak" fill="rgba(20,20,20,0.7)"
+          d="M700,1080 L850,520 Q900,480 950,520 L1100,1080 Z"/>
+        <path class="mountain-peak-stroke" fill="none" stroke="rgba(10,10,10,0.8)" stroke-width="3"
+          d="M700,1080 L850,520 Q900,480 950,520 L1100,1080"/>
+        <!-- 云雾 -->
+        <ellipse class="cloud cloud-1" cx="400" cy="620" rx="180" ry="30" fill="rgba(245,240,232,0.6)"/>
+        <ellipse class="cloud cloud-2" cx="1100" cy="580" rx="220" ry="35" fill="rgba(245,240,232,0.5)"/>
+        <ellipse class="cloud cloud-3" cx="1600" cy="650" rx="160" ry="25" fill="rgba(245,240,232,0.55)"/>
+      </svg>
+      <div class="crane-wrapper" id="crane-wrapper">
+        <svg class="crane" viewBox="0 0 120 70" fill="none">
+          <path d="M85,25 Q95,15 105,22 Q100,28 90,28 Z" fill="rgba(60,60,60,0.7)"/>
+          <ellipse cx="60" cy="32" rx="28" ry="14" fill="rgba(60,60,60,0.7)"/>
+          <path d="M35,30 Q15,25 5,32 Q15,38 35,34" fill="rgba(60,60,60,0.7)"/>
+          <path d="M60,46 L50,62 M60,46 L58,64 M60,46 L70,62" stroke="rgba(60,60,60,0.6)" stroke-width="1.5"/>
+          <path d="M32,28 Q40,18 50,24" stroke="rgba(60,60,60,0.5)" stroke-width="1" fill="none"/>
+        </svg>
+      </div>
+      <div class="scroll-edge scroll-left" id="scroll-left"></div>
+      <div class="scroll-edge scroll-right" id="scroll-right"></div>
+    </div>
+    <div class="opening-title" id="opening-title">宗门志</div>
+    <div class="opening-subtitle" id="opening-subtitle">问道长生 · 经营宗门 · 你的仙道由你书写</div>
     <div class="title-menu" id="title-menu">
       <button class="title-btn primary" id="btn-new-game" onclick="startNewGame()">开始新游戏</button>
       <button class="title-btn" id="btn-load-game" onclick="loadGame()">读取游戏</button>
       <button class="title-btn" id="btn-settings" onclick="openTitleSettings()">设置</button>
+    </div>
+  </div>
+
+  <!-- CREATION PAGE -->
+  <div id="creation-page" class="page-content" style="display:none">
+    <div class="creation-container">
+      <div class="creation-header">
+        <div class="step-indicator">
+          <div class="step active" data-step="1">
+            <span class="step-num">壹</span>
+            <span class="step-label">玩家信息</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" data-step="2">
+            <span class="step-num">贰</span>
+            <span class="step-label">宗门概况</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" data-step="3">
+            <span class="step-num">叁</span>
+            <span class="step-label">确认开局</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Player Info -->
+      <div class="creation-step active" data-step="1">
+        <h2 class="creation-title"></h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>名字</label>
+            <input type="text" id="c-name" placeholder="请输入你的名字" maxlength="12">
+          </div>
+          <div class="form-group">
+            <label>性别</label>
+            <div class="radio-group">
+              <label class="radio-label"><input type="radio" name="c-gender" value="男" checked> 男</label>
+              <label class="radio-label"><input type="radio" name="c-gender" value="女"> 女</label>
+              <label class="radio-label"><input type="radio" name="c-gender" value="其他"> 其他</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>初始境界</label>
+            <div class="select-row">
+              <select id="c-realm-level">
+                <option value="练气期">练气期</option>
+                <option value="筑基期">筑基期</option>
+                <option value="金丹期">金丹期</option>
+                <option value="元婴期">元婴期</option>
+                <option value="化神期">化神期</option>
+                <option value="道祖">道祖</option>
+              </select>
+              <select id="c-realm-stage">
+                <option value="前期">前期</option>
+                <option value="中期">中期</option>
+                <option value="后期">后期</option>
+                <option value="圆满">圆满</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>天赋资质</label>
+            <select id="c-talent">
+              <option value="甲上">甲上 — 千年难遇</option>
+              <option value="甲中">甲中 — 绝世天才</option>
+              <option value="甲下">甲下 — 天纵之资</option>
+              <option value="乙上">乙上 — 人中龙凤</option>
+              <option value="乙中" selected>乙中 — 可造之材</option>
+              <option value="乙下">乙下 — 资质平平</option>
+              <option value="丙上">丙上 — 略显愚钝</option>
+              <option value="丙中">丙中 — 泯然众人</option>
+              <option value="丙下">丙下 — 不堪造就</option>
+              <option value="丁上">丁上 — 废柴之资</option>
+              <option value="丁中">丁中 — 朽木难雕</option>
+              <option value="丁下">丁下 — 天道弃子</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label>性格标签（可多选）</label>
+            <div class="tag-group" id="c-personality">
+              <span class="tag" data-value="沉稳">沉稳</span>
+              <span class="tag" data-value="急躁">急躁</span>
+              <span class="tag" data-value="仁慈">仁慈</span>
+              <span class="tag" data-value="冷酷">冷酷</span>
+              <span class="tag" data-value="谋略">谋略</span>
+              <span class="tag" data-value="勇猛">勇猛</span>
+              <span class="tag" data-value="谨慎">谨慎</span>
+              <span class="tag" data-value="豁达">豁达</span>
+              <span class="tag" data-value="偏执">偏执</span>
+              <span class="tag" data-value="圆滑">圆滑</span>
+              <span class="tag" data-value="孤傲">孤傲</span>
+              <span class="tag" data-value="多疑">多疑</span>
+              <span class="tag" data-value="懒散">懒散</span>
+              <span class="tag" data-value="勤勉">勤勉</span>
+              <span class="tag" data-value="腹黑">腹黑</span>
+              <span class="tag" data-value="随性">随性</span>
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <label>外貌标签（可多选）</label>
+            <div class="tag-group" id="c-appearance">
+              <span class="tag" data-value="俊朗">俊朗</span>
+              <span class="tag" data-value="英武">英武</span>
+              <span class="tag" data-value="清秀">清秀</span>
+              <span class="tag" data-value="冷峻">冷峻</span>
+              <span class="tag" data-value="儒雅">儒雅</span>
+              <span class="tag" data-value="粗犷">粗犷</span>
+              <span class="tag" data-value="温润">温润</span>
+              <span class="tag" data-value="邪魅">邪魅</span>
+              <span class="tag" data-value="仙风道骨">仙风道骨</span>
+              <span class="tag" data-value="鹤发童颜">鹤发童颜</span>
+              <span class="tag" data-value="剑眉星目">剑眉星目</span>
+              <span class="tag" data-value="面如冠玉">面如冠玉</span>
+              <span class="tag" data-value="丰神俊逸">丰神俊逸</span>
+              <span class="tag" data-value="不修边幅">不修边幅</span>
+              <span class="tag" data-value="少年老成">少年老成</span>
+              <span class="tag" data-value="风华绝代">风华绝代</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>年龄</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="number" id="c-age" min="1" max="150" value="25" style="flex:1">
+              <span id="c-lifespan-hint" style="font-size:12px;color:var(--jade-glow);white-space:nowrap">寿元上限：150</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Sect Info -->
+      <div class="creation-step" data-step="2">
+        <h2 class="creation-title"></h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>宗门名称</label>
+            <input type="text" id="c-sect-name" placeholder="请输入宗门名称" maxlength="16">
+          </div>
+          <div class="form-group">
+            <label>修行法门</label>
+            <select id="c-path">
+              <option value="道修">道修 — 顺应天道，万法自然</option>
+              <option value="神修">神修 — 香火成神，信仰之力</option>
+              <option value="魔修">魔修 — 弱肉强食，百无禁忌</option>
+              <option value="体修">体修 — 淬炼肉身，金刚不坏</option>
+              <option value="旁门左道">旁门左道 — 另辟蹊径，出奇制胜</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>宗门专长</label>
+            <select id="c-specialty">
+              <option value="剑">剑 — 杀伐无双，一剑破万法</option>
+              <option value="丹">丹 — 炼制灵丹，救死扶伤</option>
+              <option value="炼器">炼器 — 锻造法宝，攻守兼备</option>
+              <option value="法阵">法阵 — 布置大阵，困敌护山</option>
+              <option value="符箓">符箓 — 绘制符箓，变化万千</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>开局地位</label>
+            <select id="c-status">
+              <option value="毫无名气">毫无名气 — 灵石500，弟子0</option>
+              <option value="末流小派">末流小派 — 灵石3000，弟子1-2</option>
+              <option value="三流小宗">三流小宗 — 灵石6000，弟子3</option>
+              <option value="二流宗门" selected>二流宗门 — 灵石12580，弟子6</option>
+              <option value="一流大宗">一流大宗 — 灵石30000，弟子10</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label>开局困境</label>
+            <div class="card-select-group" id="c-crisis">
+              <div class="card-select" data-value="临危受命">
+                <div class="card-title">临危受命</div>
+                <div class="card-desc">前任掌门陨落，你接手的是一个内忧外患的烂摊子</div>
+              </div>
+              <div class="card-select" data-value="白手起家">
+                <div class="card-title">白手起家</div>
+                <div class="card-desc">一穷二白，从零开始，一切靠自己打拼</div>
+              </div>
+              <div class="card-select" data-value="仇敌环伺">
+                <div class="card-title">仇敌环伺</div>
+                <div class="card-desc">刚灭了某魔道小头目，对方宗门已经盯上你了</div>
+              </div>
+              <div class="card-select" data-value="天降机缘">
+                <div class="card-title">天降机缘</div>
+                <div class="card-desc">发现上古遗迹，但消息走漏，各方势力虎视眈眈</div>
+              </div>
+              <div class="card-select" data-value="宗门内乱">
+                <div class="card-title">宗门内乱</div>
+                <div class="card-desc">大长老不服你，部分弟子离心，你需要平息内乱</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Confirm -->
+      <div class="creation-step" data-step="3">
+        <h2 class="creation-title"></h2>
+        <div class="confirm-grid" id="confirm-grid">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+
+      <div class="creation-nav">
+        <button class="creation-btn secondary" id="creation-prev" style="display:none">上一步</button>
+        <button class="creation-btn primary" id="creation-next">下一步</button>
+        <button class="creation-btn primary" id="creation-start" style="display:none">开始游戏</button>
+      </div>
     </div>
   </div>
 
@@ -2214,7 +2833,7 @@
             </svg>
           </div>
           <div>
-            <div class="resource-value" id="res-gold" style="color:var(--jade-glow)">12,580</div>
+            <div class="resource-value" id="res-gold" style="color:var(--jade-glow)">0</div>
             <div class="resource-label">灵石</div>
           </div>
         </div>
@@ -2242,7 +2861,7 @@
             </svg>
           </div>
           <div>
-            <div class="resource-value" id="res-members" style="color:var(--lotus-pink)">4</div>
+            <div class="resource-value" id="res-members" style="color:var(--lotus-pink)">0</div>
             <div class="resource-label">成员</div>
           </div>
         </div>
@@ -2254,8 +2873,8 @@
             </svg>
           </div>
           <div>
-            <div class="resource-value" id="res-prestige" style="color:var(--gold-spirit)">1800</div>
-            <div class="resource-label" id="res-realm-title" style="font-size:10px;color:var(--jade-glow)">一洲正道魁首</div>
+            <div class="resource-value" id="res-prestige" style="color:var(--gold-spirit)">0</div>
+            <div class="resource-label" id="res-realm-title" style="font-size:10px;color:var(--jade-glow)">—</div>
           </div>
         </div>
         <!-- 体力 -->
@@ -2296,7 +2915,7 @@
 
       <div class="player-info" onclick="openModal('player')">
         <div>
-          <div class="player-name">清虚子</div>
+          <div class="player-name">—</div>
           <div class="player-realm">元婴中期</div>
         </div>
         <div class="player-avatar">
@@ -2413,8 +3032,8 @@
         <!-- HOME PAGE -->
         <div id="home-page" class="page-content active-page">
           <div class="home-header">
-            <h1>云璃仙宗</h1>
-            <div class="subtitle">天道酬勤 · 万法归宗</div>
+            <h1 id="sect-name-display">宗门志</h1>
+            <div class="subtitle" id="sect-motto-display">天道酬勤 · 万法归宗</div>
           </div>
 
           <div class="sect-overview">
@@ -2427,9 +3046,9 @@
                 </div>
                 <span class="stat-card-title">宗门实力</span>
               </div>
-              <div class="stat-card-value text-jade" style="font-size:14px">东荒云洲二流宗门</div>
-              <div class="stat-card-change" style="color:rgba(168,230,230,0.6);font-size:12px;margin-top:6px">
-                排名：第 127 位
+              <div class="stat-card-value text-jade" style="font-size:14px" id="sect-status-display">—</div>
+              <div class="stat-card-change" style="color:rgba(168,230,230,0.6);font-size:12px;margin-top:6px" id="sect-rank-display">
+                —
               </div>
             </div>
             <div class="stat-card">
@@ -2449,7 +3068,7 @@
                 <div>中等灵脉 <span style="color:var(--mist-purple);font-weight:600">7</span> 条</div>
               </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" id="sect-array-card">
               <div class="stat-card-header">
                 <div class="stat-card-icon bg-gold" style="color:var(--gold-spirit)">
                   <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -2458,11 +3077,11 @@
                 </div>
                 <span class="stat-card-title">宗门大阵</span>
               </div>
-              <div class="stat-card-value text-gold" style="font-size:16px">九曜星辰阵</div>
-              <div style="font-size:11px;color:var(--gold-spirit);margin:4px 0">地阶上品</div>
-              <div style="font-size:12px;color:rgba(168,230,230,0.6)">聚灵护山，攻防一体</div>
+              <div class="stat-card-value text-gold" style="font-size:16px" id="sect-array-name">—</div>
+              <div style="font-size:11px;color:var(--gold-spirit);margin:4px 0" id="sect-array-rank">—</div>
+              <div style="font-size:12px;color:rgba(168,230,230,0.6)" id="sect-array-desc">—</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" id="finance-card">
               <div class="stat-card-header">
                 <div class="stat-card-icon bg-pink" style="color:var(--lotus-pink)">
                   <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -2474,13 +3093,13 @@
               </div>
               <div style="font-size:12px;line-height:1.8">
                 <div style="color:var(--jade-glow)">
-                  月收入：<span style="font-weight:600">+8,420</span> 灵石
+                  月收入：<span style="font-weight:600" id="finance-income">+0</span> 灵石
                 </div>
                 <div style="color:var(--lotus-pink)">
-                  月支出：<span style="font-weight:600">-5,680</span> 灵石
+                  月支出：<span style="font-weight:600" id="finance-expense">-0</span> 灵石
                 </div>
                 <div style="color:var(--gold-spirit);margin-top:4px;padding-top:4px;border-top:1px solid var(--glass-border)">
-                  净盈余：<span style="font-weight:600">+2,740</span> 灵石
+                  净盈余：<span style="font-weight:600" id="finance-net">+0</span> 灵石
                 </div>
               </div>
             </div>
@@ -2496,7 +3115,7 @@
               </div>
               <div class="module-badge" style="background:rgba(212,114,140,0.15);color:var(--lotus-pink)">有新事件</div>
               <h3 class="text-jade">天机台</h3>
-              <p>天降异象，玄云覆顶。一位自称苍梧山散修的神秘访客正在山门外求见，声称携有一份关乎云璃仙宗命运的密信...</p>
+              <p>天道运转，因果相续。天机台中观星象、测吉凶，宗门命运皆系于你一念之间...</p>
               <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap">
                 <span style="padding:3px 10px;border-radius:8px;font-size:11px;background:rgba(110,207,207,0.1);color:var(--jade-glow)">主线剧情</span>
                 <span style="padding:3px 10px;border-radius:8px;font-size:11px;background:rgba(139,126,200,0.1);color:var(--mist-purple)">待决策</span>
@@ -2580,52 +3199,7 @@
 
           <div class="events-section">
             <div class="section-title">近日要事</div>
-            <div class="event-list">
-              <div class="event-item" onclick="switchPage('story')">
-                <div class="event-dot urgent"></div>
-                <div class="event-content">
-                  <div class="event-desc">苍梧山散修求见，携密信一封，称事关宗门存亡</div>
-                  <div class="event-meta">
-                    <span class="event-meta-item time">⏳ 刚刚</span>
-                    <span class="event-meta-item location">📍 苍梧山</span>
-                    <span class="event-meta-item people">👤 散修</span>
-                  </div>
-                </div>
-              </div>
-              <div class="event-item" onclick="switchPage('members')">
-                <div class="event-dot normal"></div>
-                <div class="event-content">
-                  <div class="event-desc">成员「林淮安」整理藏经阁时发现一卷失传古籍</div>
-                  <div class="event-meta">
-                    <span class="event-meta-item time">⏳ 一炷香前</span>
-                    <span class="event-meta-item location">📍 藏经阁</span>
-                    <span class="event-meta-item people">👤 林淮安</span>
-                  </div>
-                </div>
-              </div>
-              <div class="event-item" onclick="switchPage('diplomacy')">
-                <div class="event-dot info"></div>
-                <div class="event-content">
-                  <div class="event-desc">天剑宗送来拜帖，邀请参加三月后的论剑大会</div>
-                  <div class="event-meta">
-                    <span class="event-meta-item time">⏳ 半日前</span>
-                    <span class="event-meta-item location">📍 天剑宗</span>
-                    <span class="event-meta-item people">👤 天剑宗使者</span>
-                  </div>
-                </div>
-              </div>
-              <div class="event-item" onclick="switchPage('treasury')">
-                <div class="event-dot normal"></div>
-                <div class="event-content">
-                  <div class="event-desc">炼器峰新铸「碧落剑」一柄，品质上佳，待入库</div>
-                  <div class="event-meta">
-                    <span class="event-meta-item time">⏳ 一日前</span>
-                    <span class="event-meta-item location">📍 炼器峰</span>
-                    <span class="event-meta-item people">👤 炼器长老</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div class="event-list"></div>
           </div>
         </div>
 
@@ -2659,20 +3233,8 @@
                 <span>测试流</span>
               </div>
               <div id="story-content">
-                <div class="story-paragraph narrator" style="animation-delay:0s">
-                  【天机台 · 第一章 · 玄云密信】
-                </div>
-                <div class="story-paragraph" style="animation-delay:0.15s">
-                  晨曦初露，云璃峰上雾气氤氲。你正于悟道殿中参悟《太虚真解》，忽闻门外传来一阵急促的脚步声。
-                </div>
-                <div class="story-paragraph" style="animation-delay:0.3s">
-                  守山成员周明远匆匆入内，单膝跪地，抱拳道："禀掌门，山门外来了一位散修，自称受苍梧山洛风前辈所遣，名唤周沉舟。此人修为不俗，约在金丹后期，身上隐有剑意流转。他说携有一封密信，事关重大，非见掌门不可。"
-                </div>
-                <div class="story-paragraph" style="animation-delay:0.45s">
-                  你缓缓睁开双眼，掐指一算。苍梧山......洛风......此人三十年前曾与你有过一面之缘，是个性情古怪却颇有本事的剑修。他为何在此时遣人送信？
-                </div>
-                <div class="story-paragraph narrator" style="animation-delay:0.6s">
-                  你望向窗外翻涌的云海，沉吟片刻——
+                <div class="story-paragraph narrator" style="color:rgba(168,230,230,0.4)">
+                  天机台静待启封，天道流转，因果将启……
                 </div>
               </div>
             </div>
@@ -2687,19 +3249,7 @@
             <div class="story-choices" id="story-choices">
               <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
                 <div class="choice-marker">壹</div>
-                <span>令周明远将此人请至偏殿奉茶，你亲自前去接见，以示郑重</span>
-              </button>
-              <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
-                <div class="choice-marker">贰</div>
-                <span>先让执法堂暗中查探此人底细，确认身份后再做定夺</span>
-              </button>
-              <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
-                <div class="choice-marker">叁</div>
-                <span>只取密信来看，不必见人——非常之时，需防有诈</span>
-              </button>
-              <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
-                <div class="choice-marker">肆</div>
-                <span>召集长老议事，此事需众人商议后再做回复</span>
+                <span>在天机台静候天道指引...</span>
               </button>
             </div>
 
@@ -2747,38 +3297,7 @@
           <div class="page-header">
             <h2>宗门志</h2>
           </div>
-          <div class="sect-info-grid">
-            <div class="info-block">
-              <h4>宗门名称</h4>
-              <div class="info-value">云璃仙宗</div>
-            </div>
-            <div class="info-block">
-              <h4>创立时间</h4>
-              <div class="info-value">玄黄历三千七百二十一年</div>
-            </div>
-            <div class="info-block">
-              <h4>山门位置</h4>
-              <div class="info-value">东荒云璃山脉主峰</div>
-            </div>
-            <div class="info-block">
-              <h4>现任掌门</h4>
-              <div class="info-value text-gold">清虚子</div>
-            </div>
-            <div class="info-block full-width">
-              <h4>宗门简介</h4>
-              <div class="info-value" style="font-size:13px;line-height:1.8">
-                云璃仙宗创立于玄黄历三千七百二十一年，创派祖师云璃真人以剑入道，一日悟道飞升，留下《太虚真解》作为镇宗之宝。宗门地处东荒云璃山脉，占据九条灵脉交汇之处，灵气充沛，是修炼的洞天福地。
-                <br><br>
-                历经千年发展，云璃仙宗由昔日小门派发展为今日的甲等中宗，门下成员众多，高手如云。然而百年前天魔之乱，宗门遭受重创，至今仍在恢复元气...
-              </div>
-            </div>
-            <div class="info-block full-width">
-              <h4>历代掌门</h4>
-              <div class="info-value" style="font-size:13px;line-height:2">
-                初代：云璃真人（飞升）→ 二代：玄霄子（渡劫失败）→ 三代：青松道长（寿终正寝）→ 四代：明月仙子（失踪）→ 五代：清虚子（现任）
-              </div>
-            </div>
-          </div>
+          <div class="sect-info-grid" id="sect-info-grid"></div>
         </div>
 
         <!-- WORLD PAGE -->
@@ -3096,7 +3615,7 @@
       const body = document.getElementById('modal-body');
 
       if (type === 'player') {
-        const p = playerData;
+        const p = window.gameStateManager?.state?.player || {};
         const stats = getTotalStats(p.name);
         const base = p.baseStats;
         const equippedItems = getMemberEquippedItems(p.name);
@@ -3149,7 +3668,7 @@
 
             <div class="info-block full-width">
               <h4>已修功法</h4>
-              <div class="info-value" style="font-size:13px;line-height:2">${p.skills}</div>
+              <div class="info-value" style="font-size:13px;line-height:2">${Array.isArray(p.skills) && p.skills.length > 0 ? p.skills.join('、') : '<span style="color:rgba(168,230,230,0.4)">暂无</span>'}</div>
             </div>
             <div class="info-block full-width">
               <h4>佩戴装备</h4>
@@ -3282,18 +3801,7 @@
       if (e.key === 'Enter') sendCustomInput();
     });
 
-    // ====== MEMBERS DATA ======
-    const playerData = {
-      name: '清虚子',
-      daoName: '清虚子',
-      realm: '元婴中期',
-      lifespan: { current: 612, max: 1200 },
-      talent: '水木双灵根',
-      baseStats: { 杀伐: 78, 防御: 68, 身法: 58 },
-      skills: '太虚真解（第五层）、云璃剑诀（大成）、清心咒（圆满）'
-    };
-
-    // members 已迁移至 gameStateManager.state.members
+    // members / player / sect / events 均已迁移至 gameStateManager.state
 
     function renderMembers() {
       const tbody = document.getElementById('members-tbody');
@@ -3387,7 +3895,7 @@
 
           <div class="info-block full-width">
             <h4>已修功法</h4>
-            <div class="info-value" style="font-size:13px;line-height:2">太虚真解（第三层）、基础剑术（大成）</div>
+            <div class="info-value" style="font-size:13px;line-height:2">${Array.isArray(m.skills) && m.skills.length > 0 ? m.skills.join('、') : '<span style="color:rgba(168,230,230,0.4)">暂无</span>'}</div>
           </div>
           <div class="info-block full-width">
             <h4>佩戴装备</h4>
@@ -3404,6 +3912,21 @@
         </div>
       `;
       overlay.classList.add('active');
+    }
+
+    function renderSectInfo() {
+      const sect = window.gameStateManager?.state?.sect || {};
+      const player = window.gameStateManager?.state?.player || {};
+      const grid = document.getElementById('sect-info-grid');
+      if (!grid) return;
+      grid.innerHTML = `
+        <div class="info-block"><h4>宗门名称</h4><div class="info-value">${sect.name || '—'}</div></div>
+        <div class="info-block"><h4>创立时间</h4><div class="info-value">${sect.foundedYear || '—'}</div></div>
+        <div class="info-block"><h4>山门位置</h4><div class="info-value">${sect.location || '—'}</div></div>
+        <div class="info-block"><h4>现任掌门</h4><div class="info-value text-gold">${player.name || '—'}</div></div>
+        <div class="info-block full-width"><h4>宗门简介</h4><div class="info-value" style="font-size:13px;line-height:1.8">${sect.description ? sect.description.replace(/\n/g, '<br>') : '<span style="color:rgba(168,230,230,0.4)">暂无简介</span>'}</div></div>
+        <div class="info-block full-width"><h4>历代掌门</h4><div class="info-value" style="font-size:13px;line-height:2">${Array.isArray(sect.lineage) && sect.lineage.length > 0 ? sect.lineage.join(' → ') : '<span style="color:rgba(168,230,230,0.4)">暂无记录</span>'}</div></div>
+      `;
     }
 
     // ====== DIPLOMACY DATA ======
@@ -3919,11 +4442,12 @@
     function renderEvents() {
       const container = document.querySelector('.event-list');
       if (!container) return;
-      if (recentEvents.length === 0) {
+      const events = window.gameStateManager?.state?.events || [];
+      if (events.length === 0) {
         container.innerHTML = '';
         return;
       }
-      container.innerHTML = recentEvents.map(ev => {
+      container.innerHTML = events.map(ev => {
         const metaHtml = [];
         if (ev.time) metaHtml.push(`<span class="event-meta-item time">⏳ ${escapeHtml(ev.time)}</span>`);
         if (ev.location) metaHtml.push(`<span class="event-meta-item location">📍 ${escapeHtml(ev.location)}</span>`);
@@ -4158,8 +4682,8 @@
     async function submitActions() {
       if (actionLogs.length === 0) return;
 
-      const playerName = '清虚子';
-      const sectName = '云璃仙宗';
+      const playerName = window.gameStateManager?.state?.player?.name || '掌门';
+      const sectName = window.gameStateManager?.state?.sect?.name || '宗门';
       const operations = actionLogs.map(log => {
         if (log.opportunityId) {
           return `对「${log.title}」的决定是：${log.content}`;
@@ -4610,7 +5134,8 @@
 
     function getTotalStats(memberName) {
       const member = window.gameStateManager.state.members[memberName];
-      const target = member || (playerData.name === memberName ? playerData : null);
+      const player = window.gameStateManager.state.player;
+      const target = member || (player && player.name === memberName ? player : null);
       if (!target) return { 杀伐: 0, 防御: 0, 身法: 0 };
       const equipped = getMemberEquippedItems(memberName);
       const stats = { ...target.baseStats };
@@ -4764,13 +5289,7 @@
     updateNotificationDots();
     updateStaminaSegments();
 
-    // 初始化近日要事
-    recentEvents = [
-      { text: '苍梧山散修求见，携密信一封，称事关宗门存亡', time: '刚刚', location: '苍梧山', people: '散修', type: 'urgent' },
-      { text: '成员「林淮安」整理藏经阁时发现一卷失传古籍', time: '一炷香前', location: '藏经阁', people: '林淮安', type: 'normal' },
-      { text: '天剑宗送来拜帖，邀请参加三月后的论剑大会', time: '半日前', location: '天剑宗', people: '天剑宗使者', type: 'info' },
-      { text: '炼器峰新铸「碧落剑」一柄，品质上佳，待入库', time: '一日前', location: '炼器峰', people: '炼器长老', type: 'normal' }
-    ];
+    // 初始化近日要事（已从 gameState.events 读取）
     renderEvents();
 
     // 为静态剧情段落应用富文本格式
@@ -4815,7 +5334,18 @@
     });
     gameStateManager.subscribe('/finance/realmTitle', v => {
       const el = document.getElementById('res-realm-title');
-      if (el) el.textContent = v || '一洲正道魁首';
+      if (el) el.textContent = v || '—';
+      const statusEl = document.getElementById('sect-status-display');
+      if (statusEl) statusEl.textContent = v || '—';
+    });
+    gameStateManager.subscribe('/finance', finance => {
+      const incEl = document.getElementById('finance-income');
+      const expEl = document.getElementById('finance-expense');
+      const netEl = document.getElementById('finance-net');
+      if (incEl) incEl.textContent = '+' + (finance?.income || 0).toLocaleString('zh-CN');
+      if (expEl) expEl.textContent = '-' + (finance?.expense || 0).toLocaleString('zh-CN');
+      const net = (finance?.income || 0) - (finance?.expense || 0);
+      if (netEl) netEl.textContent = (net >= 0 ? '+' : '') + net.toLocaleString('zh-CN');
     });
     gameStateManager.subscribe('/members', members => {
       const el = document.getElementById('res-members');
@@ -4830,6 +5360,14 @@
     gameStateManager.subscribe('/treasury/items', () => {
       if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
     });
+    gameStateManager.subscribe('/treasury', treasury => {
+      const nameEl = document.getElementById('sect-array-name');
+      const rankEl = document.getElementById('sect-array-rank');
+      const descEl = document.getElementById('sect-array-desc');
+      if (nameEl) nameEl.textContent = treasury?.arrayName || '—';
+      if (rankEl) rankEl.textContent = treasury?.arrayRank || '—';
+      if (descEl) descEl.textContent = treasury?.arrayDesc || '—';
+    });
     gameStateManager.subscribe('/library', () => {
       if (typeof renderSkills === 'function') renderSkills();
     });
@@ -4838,6 +5376,28 @@
     });
     gameStateManager.subscribe('/quests', () => {
       if (typeof renderQuests === 'function') renderQuests();
+    });
+    gameStateManager.subscribe('/events', () => {
+      if (typeof renderEvents === 'function') renderEvents();
+    });
+    gameStateManager.subscribe('/player', () => {
+      if (typeof renderSectInfo === 'function') renderSectInfo();
+      const p = window.gameStateManager?.state?.player;
+      if (p) {
+        document.querySelector('.player-name').textContent = p.name || '—';
+        document.title = (p.name ? p.name + ' · ' : '') + '宗门志';
+      }
+    });
+    gameStateManager.subscribe('/sect', () => {
+      if (typeof renderSectInfo === 'function') renderSectInfo();
+      const s = window.gameStateManager?.state?.sect;
+      const nameEl = document.getElementById('sect-name-display');
+      const mottoEl = document.getElementById('sect-motto-display');
+      if (nameEl) nameEl.textContent = s?.name || '宗门志';
+      if (mottoEl) mottoEl.textContent = s?.motto || '天道酬勤 · 万法归宗';
+      if (s?.name) {
+        document.querySelector('meta[name="description"]').content = (s.name || '宗门') + ' - 一款以修仙宗门管理为主题的文字交互游戏';
+      }
     });
     // 首次手动刷新各页面（后续由 LLM patch 触发变更后自动重渲染）
     if (typeof renderMembers === 'function') renderMembers();
@@ -4848,181 +5408,540 @@
     if (typeof renderSkills === 'function') renderSkills();
     if (typeof renderOpportunities === 'function') renderOpportunities();
     if (typeof renderQuests === 'function') renderQuests();
+    if (typeof renderEvents === 'function') renderEvents();
+    if (typeof renderSectInfo === 'function') renderSectInfo();
 
-    // ====== OPENING ANIMATION ======
+    // ====== OPENING ANIMATION — Landscape Scroll (GSAP) ======
     (function initOpening() {
-      const inkCanvas = document.getElementById('ink-canvas');
-      const inkCtx = inkCanvas.getContext('2d');
-      const titleEl = document.getElementById('opening-title');
-      const subtitleEl = document.getElementById('opening-subtitle');
-      const menuEl = document.getElementById('title-menu');
+      const tl = gsap.timeline({ delay: 0.3 });
 
-      function resizeInkCanvas() {
-        inkCanvas.width = window.innerWidth;
-        inkCanvas.height = window.innerHeight;
-      }
-      resizeInkCanvas();
-      window.addEventListener('resize', resizeInkCanvas);
+      // Phase 1: Scroll unrolls from center
+      tl.to('#scroll-frame', {
+        clipPath: 'inset(0 0% 0 0%)',
+        duration: 1.6,
+        ease: 'power2.inOut'
+      });
 
-      const W = inkCanvas.width;
-      const H = inkCanvas.height;
-      const cx = W / 2;
-      const cy = H / 2;
+      // Phase 2: Landscape fades in
+      tl.to('.landscape-svg', {
+        opacity: 1,
+        duration: 1.0,
+        ease: 'power1.out'
+      }, '-=0.8');
 
-      // ---- Ink layer system ----
-      // Each layer is a group of overlapping soft ellipses
-      // to create an organic, irregular ink blob.
-      function createInkSpot(x, y, maxR, opacity, delay, spotCount) {
-        const spots = [];
-        for (let i = 0; i < spotCount; i++) {
-          const a = Math.random() * Math.PI * 2;
-          const d = Math.random() * maxR * 0.35;
-          spots.push({
-            x: x + Math.cos(a) * d,
-            y: y + Math.sin(a) * d,
-            r: maxR * (0.5 + Math.random() * 0.5),
-            blur: 18 + Math.random() * 30,
-            opacity: opacity * (0.4 + Math.random() * 0.6),
-            aspect: 0.7 + Math.random() * 0.5,
-            rotation: Math.random() * Math.PI
-          });
-        }
-        return { spots, delay, age: 0, done: false };
-      }
+      // Phase 3: Far mountain stroke draw
+      tl.to('.mountain-far-stroke', {
+        strokeDashoffset: 0,
+        opacity: 1,
+        duration: 2.2,
+        ease: 'power1.inOut'
+      }, '-=0.6');
 
-      const inkLayers = [];
+      // Phase 4: Far mountain fill washes in
+      tl.to('.mountain-far', {
+        opacity: 1,
+        duration: 1.8,
+        ease: 'power1.out'
+      }, '-=1.4');
 
-      // 1. Central heavy ink (dense, dark, appears first)
-      inkLayers.push(createInkSpot(cx, cy, Math.min(W, H) * 0.28, 0.65, 0, 6));
+      // Phase 5: Near mountain stroke draw
+      tl.to('.mountain-near-stroke', {
+        strokeDashoffset: 0,
+        opacity: 1,
+        duration: 2.0,
+        ease: 'power2.inOut'
+      }, '-=1.6');
 
-      // 2. Medium satellite inks
-      for (let i = 0; i < 7; i++) {
-        const a = (i / 7) * Math.PI * 2 + Math.random() * 0.4;
-        const d = Math.min(W, H) * 0.1 * (0.6 + Math.random() * 0.7);
-        inkLayers.push(createInkSpot(
-          cx + Math.cos(a) * d,
-          cy + Math.sin(a) * d,
-          Math.min(W, H) * 0.13 * (0.5 + Math.random() * 0.6),
-          0.25 + Math.random() * 0.2,
-          12 + i * 8,
-          3
-        ));
-      }
+      // Phase 6: Near mountain fill
+      tl.to('.mountain-near', {
+        opacity: 1,
+        duration: 1.6,
+        ease: 'power1.out'
+      }, '-=1.2');
 
-      // 3. Light washes (faint, wide, appear later)
-      for (let i = 0; i < 6; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const d = Math.min(W, H) * 0.12 * Math.random();
-        inkLayers.push(createInkSpot(
-          cx + Math.cos(a) * d,
-          cy + Math.sin(a) * d,
-          Math.min(W, H) * 0.22 * (0.7 + Math.random() * 0.5),
-          0.08 + Math.random() * 0.08,
-          35 + i * 12,
-          2
-        ));
-      }
+      // Phase 7: Peak stroke + fill
+      tl.to('.mountain-peak-stroke', {
+        strokeDashoffset: 0,
+        opacity: 1,
+        duration: 1.6,
+        ease: 'power2.inOut'
+      }, '-=1.4');
+      tl.to('.mountain-peak', {
+        opacity: 1,
+        duration: 1.2,
+        ease: 'power1.out'
+      }, '-=1.0');
 
-      // 4. Fly-specks: tiny dry-brush texture dots
-      const specks = [];
-      for (let i = 0; i < 80; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const d = Math.random() * Math.min(W, H) * 0.38;
-        specks.push({
-          x: cx + Math.cos(a) * d,
-          y: cy + Math.sin(a) * d,
-          rx: 0.8 + Math.random() * 5,
-          ry: 0.4 + Math.random() * 2.5,
-          rot: Math.random() * Math.PI,
-          delay: 25 + Math.random() * 120,
-          life: 0,
-          maxLife: 60 + Math.random() * 100,
-          opacity: 0.02 + Math.random() * 0.06
+      // Phase 8: Clouds drift in with blur
+      tl.fromTo('.cloud', {
+        opacity: 0, x: -60, filter: 'blur(16px)'
+      }, {
+        opacity: 1, x: 0, filter: 'blur(8px)',
+        duration: 2.0, ease: 'power2.out', stagger: 0.2
+      }, '-=1.6');
+
+      // Phase 9: Crane flies across
+      tl.set('#crane-wrapper', { opacity: 1 });
+      tl.fromTo('.crane', {
+        x: -120, y: 180, rotation: -8, opacity: 0, scale: 0.7
+      }, {
+        x: window.innerWidth + 120, y: -40, rotation: 4, opacity: 0.85, scale: 1,
+        duration: 5.5, ease: 'none'
+      }, '-=2.5');
+
+      // Phase 10: Title reveal
+      tl.fromTo('#opening-title', {
+        opacity: 0, y: 30, filter: 'blur(10px)', scale: 0.95
+      }, {
+        opacity: 1, y: 0, filter: 'blur(0px)', scale: 1,
+        duration: 1.6, ease: 'power3.out'
+      }, '-=3.2');
+
+      // Phase 11: Subtitle
+      tl.fromTo('#opening-subtitle', {
+        opacity: 0, y: 16, filter: 'blur(5px)'
+      }, {
+        opacity: 1, y: 0, filter: 'blur(0px)',
+        duration: 1.2, ease: 'power2.out'
+      }, '-=1.2');
+
+      // Phase 12: Menu buttons
+      tl.fromTo('#title-menu', {
+        opacity: 0, y: 20
+      }, {
+        opacity: 1, y: 0,
+        duration: 0.8, ease: 'power2.out'
+      }, '-=0.8');
+
+      // Phase 13: Landscape settles into background
+      tl.to('.landscape-svg', {
+        opacity: 0.18,
+        filter: 'blur(2px)',
+        duration: 2.0,
+        ease: 'power1.out'
+      }, '-=0.4');
+      tl.to('.cloud', {
+        opacity: 0.10,
+        duration: 2.0,
+        ease: 'power1.out'
+      }, '<');
+    })();
+
+    // ====== CHARACTER CREATION ======
+    const realmLifespan = {
+      '练气期': 150,
+      '筑基期': 250,
+      '金丹期': 500,
+      '元婴期': 2000,
+      '化神期': Infinity,
+      '道祖': Infinity
+    };
+
+    (function initCreation() {
+      let currentStep = 1;
+      const creationData = {};
+
+      // Tag selection
+      document.querySelectorAll('.tag-group').forEach(group => {
+        group.addEventListener('click', e => {
+          const tag = e.target.closest('.tag');
+          if (!tag) return;
+          tag.classList.toggle('selected');
+        });
+      });
+
+      // Card single selection
+      document.querySelectorAll('.card-select-group').forEach(group => {
+        group.addEventListener('click', e => {
+          const card = e.target.closest('.card-select');
+          if (!card) return;
+          group.querySelectorAll('.card-select').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+        });
+      });
+
+      // Realm stage toggle (Daozu has no stage)
+      const realmSelect = document.getElementById('c-realm-level');
+      const stageSelect = document.getElementById('c-realm-stage');
+      if (realmSelect && stageSelect) {
+        realmSelect.addEventListener('change', () => {
+          if (realmSelect.value === '道祖') {
+            stageSelect.style.display = 'none';
+            stageSelect.value = '';
+          } else {
+            stageSelect.style.display = '';
+          }
         });
       }
 
-      function drawLayer(layer) {
-        if (layer.age < layer.delay) { layer.age++; return false; }
-        const p = Math.min((layer.age - layer.delay) / 220, 1);
-        const ease = 1 - Math.pow(1 - p, 2.5);
-        if (p >= 1) { layer.done = true; return true; }
-        layer.age++;
+      function updateStepUI() {
+        document.querySelectorAll('.step').forEach((step, i) => {
+          step.classList.remove('active', 'completed');
+          if (i + 1 === currentStep) step.classList.add('active');
+          else if (i + 1 < currentStep) step.classList.add('completed');
+        });
+        document.querySelectorAll('.creation-step').forEach((step, i) => {
+          step.classList.toggle('active', i + 1 === currentStep);
+        });
+        document.getElementById('creation-prev').style.display = currentStep > 1 ? '' : 'none';
+        document.getElementById('creation-next').style.display = currentStep < 3 ? '' : 'none';
+        document.getElementById('creation-start').style.display = currentStep === 3 ? '' : 'none';
 
-        for (const s of layer.spots) {
-          const curR = s.r * ease;
-          const alpha = s.opacity * (1 - p * 0.15);
-
-          inkCtx.save();
-          inkCtx.filter = `blur(${s.blur * (1 - ease * 0.4)}px)`;
-
-          // True ink black — very dark, near-pure black with slight warmth
-          const g = inkCtx.createRadialGradient(s.x, s.y, 0, s.x, s.y, curR);
-          g.addColorStop(0, `rgba(2,2,3,${alpha})`);
-          g.addColorStop(0.35, `rgba(3,3,4,${alpha * 0.75})`);
-          g.addColorStop(0.65, `rgba(4,4,5,${alpha * 0.35})`);
-          g.addColorStop(1, `rgba(5,5,6,0)`);
-
-          inkCtx.fillStyle = g;
-          inkCtx.beginPath();
-          inkCtx.ellipse(s.x, s.y, curR, curR * s.aspect, s.rotation, 0, Math.PI * 2);
-          inkCtx.fill();
-          inkCtx.restore();
-        }
-        return false;
+        if (currentStep === 3) renderConfirm();
       }
 
-      function animate() {
-        inkCtx.clearRect(0, 0, W, H);
-        let allDone = true;
-
-        for (const layer of inkLayers) {
-          const done = drawLayer(layer);
-          if (!done && !layer.done) allDone = false;
+      function updateAgeHint() {
+        const realm = document.getElementById('c-realm-level').value;
+        const maxAge = realmLifespan[realm];
+        const hint = document.getElementById('c-lifespan-hint');
+        const ageInput = document.getElementById('c-age');
+        if (maxAge === Infinity) {
+          hint.textContent = '寿元上限：无上限';
+          ageInput.max = 99999;
+        } else {
+          hint.textContent = '寿元上限：' + maxAge;
+          ageInput.max = maxAge;
+          if (parseInt(ageInput.value) > maxAge) ageInput.value = maxAge;
         }
-
-        for (const s of specks) {
-          if (s.life < s.delay) { s.life++; allDone = false; continue; }
-          const p = (s.life - s.delay) / s.maxLife;
-          if (p >= 1) continue;
-          allDone = false;
-          const a = Math.sin(p * Math.PI) * s.opacity;
-          inkCtx.save();
-          inkCtx.translate(s.x, s.y);
-          inkCtx.rotate(s.rot);
-          inkCtx.filter = 'blur(0.8px)';
-          inkCtx.fillStyle = `rgba(3,3,4,${a})`;
-          inkCtx.beginPath();
-          inkCtx.ellipse(0, 0, s.rx, s.ry, 0, 0, Math.PI * 2);
-          inkCtx.fill();
-          inkCtx.restore();
-          s.life++;
-        }
-
-        if (!allDone) requestAnimationFrame(animate);
       }
 
-      // Timeline: slower, more contemplative
-      setTimeout(() => { animate(); }, 200);
-      setTimeout(() => { if (titleEl) titleEl.classList.add('show'); }, 2000);
-      setTimeout(() => { if (subtitleEl) subtitleEl.classList.add('show'); }, 3200);
-      setTimeout(() => {
-        if (menuEl) menuEl.classList.add('show');
-        if (inkCanvas) {
-          inkCanvas.style.transition = 'opacity 3s ease';
-          inkCanvas.style.opacity = '0';
+      document.getElementById('c-realm-level').addEventListener('change', updateAgeHint);
+      updateAgeHint();
+
+      function collectData() {
+        const personality = [];
+        document.querySelectorAll('#c-personality .tag.selected').forEach(t => personality.push(t.dataset.value));
+        const appearance = [];
+        document.querySelectorAll('#c-appearance .tag.selected').forEach(t => appearance.push(t.dataset.value));
+        const crisisEl = document.querySelector('#c-crisis .card-select.selected');
+
+        return {
+          name: document.getElementById('c-name').value.trim() || '无名掌门',
+          gender: document.querySelector('input[name="c-gender"]:checked')?.value || '男',
+          realmLevel: document.getElementById('c-realm-level').value,
+          realmStage: document.getElementById('c-realm-stage').value,
+          age: parseInt(document.getElementById('c-age').value) || 25,
+          talent: document.getElementById('c-talent').value,
+          personality,
+          appearance,
+          sectName: document.getElementById('c-sect-name').value.trim() || '无名宗门',
+          path: document.getElementById('c-path').value,
+          specialty: document.getElementById('c-specialty').value,
+          status: document.getElementById('c-status').value,
+          crisis: crisisEl ? crisisEl.dataset.value : '白手起家'
+        };
+      }
+
+      function renderConfirm() {
+        const d = collectData();
+        const statusMap = {
+          '毫无名气': { gold: 500, disciples: 0, buildings: 0, prestige: 0 },
+          '末流小派': { gold: 3000, disciples: '1-2', buildings: 1, prestige: 100 },
+          '三流小宗': { gold: 6000, disciples: 3, buildings: 2, prestige: 300 },
+          '二流宗门': { gold: 12580, disciples: 6, buildings: '3-4', prestige: 800 },
+          '一流大宗': { gold: 30000, disciples: 10, buildings: '5+', prestige: 1800 }
+        };
+        const sm = statusMap[d.status] || statusMap['二流宗门'];
+        const grid = document.getElementById('confirm-grid');
+        grid.innerHTML = `
+          <div class="confirm-item"><div class="confirm-label">名字</div><div class="confirm-value">${escapeHtml(d.name)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">境界</div><div class="confirm-value">${escapeHtml(d.realmLevel)}${d.realmStage ? ' · ' + d.realmStage : ''}</div></div>
+          <div class="confirm-item"><div class="confirm-label">性别</div><div class="confirm-value">${escapeHtml(d.gender)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">年龄</div><div class="confirm-value">${d.age} 岁</div></div>
+          <div class="confirm-item"><div class="confirm-label">天赋资质</div><div class="confirm-value">${escapeHtml(d.talent)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">性格</div><div class="confirm-value">${d.personality.join('、') || '—'}</div></div>
+          <div class="confirm-item"><div class="confirm-label">外貌</div><div class="confirm-value">${d.appearance.join('、') || '—'}</div></div>
+          <div class="confirm-item"><div class="confirm-label">宗门名称</div><div class="confirm-value">${escapeHtml(d.sectName)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">修行法门</div><div class="confirm-value">${escapeHtml(d.path)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">宗门专长</div><div class="confirm-value">${escapeHtml(d.specialty)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">开局地位</div><div class="confirm-value">${escapeHtml(d.status)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">开局困境</div><div class="confirm-value">${escapeHtml(d.crisis)}</div></div>
+          <div class="confirm-item"><div class="confirm-label">初始灵石</div><div class="confirm-value">${sm.gold.toLocaleString()}</div></div>
+          <div class="confirm-item"><div class="confirm-label">初始弟子</div><div class="confirm-value">${sm.disciples} 人</div></div>
+        `;
+      }
+
+      document.getElementById('creation-next').addEventListener('click', () => {
+        if (currentStep < 3) { currentStep++; updateStepUI(); }
+      });
+      document.getElementById('creation-prev').addEventListener('click', () => {
+        if (currentStep > 1) { currentStep--; updateStepUI(); }
+      });
+
+      document.getElementById('creation-start').addEventListener('click', () => {
+        const d = collectData();
+        initializeGameState(d);
+        document.getElementById('creation-page').style.display = 'none';
+        const app = document.getElementById('app');
+        if (app) {
+          app.style.display = 'flex';
+          setTimeout(() => { if (typeof resizeCanvas === 'function') resizeCanvas(); }, 100);
         }
-      }, 5000);
+      });
+
+      window.startNewGame = function() {
+        const titleScreen = document.getElementById('title-screen');
+        if (titleScreen) titleScreen.classList.add('hidden');
+        const creationPage = document.getElementById('creation-page');
+        if (creationPage) {
+          creationPage.style.display = 'block';
+          currentStep = 1;
+          updateStepUI();
+        }
+      };
     })();
 
-    window.startNewGame = function() {
-      const titleScreen = document.getElementById('title-screen');
-      const app = document.getElementById('app');
-      if (titleScreen) titleScreen.classList.add('hidden');
-      if (app) {
-        app.style.display = 'flex';
-        setTimeout(() => { if (typeof resizeCanvas === 'function') resizeCanvas(); }, 100);
+    // ====== STAT CALCULATION ======
+    const TALENT_RANKS = ['甲上','甲中','甲下','乙上','乙中','乙下','丙上','丙中','丙下','丁上','丁中','丁下'];
+    const REALM_BIG = { '练气期': 0, '筑基期': 1, '金丹期': 2, '元婴期': 3, '化神期': 4, '道祖': 5 };
+    const REALM_SMALL = { '前期': 0, '中期': 1, '后期': 2, '圆满': 3 };
+
+    function calculateStats(talent, realmLevel, realmStage) {
+      const talentIdx = TALENT_RANKS.indexOf(talent);
+      const talentDiff = 4 - (talentIdx >= 0 ? talentIdx : 4);
+      const baseValue = 50 + talentDiff * 3;
+
+      const bigIdx = REALM_BIG[realmLevel] || 0;
+      const smallIdx = REALM_SMALL[realmStage] || 0;
+
+      const stageMultiplier = Math.pow(1.5, smallIdx);
+      const realmMultiplier = Math.pow(10, bigIdx);
+
+      const val = Math.round(baseValue * stageMultiplier * realmMultiplier);
+      return { 杀伐: val, 防御: val, 身法: val };
+    }
+
+    function parseRealm(realmStr) {
+      if (realmStr === '道祖') return { level: '道祖', stage: '' };
+      for (const level of Object.keys(REALM_BIG)) {
+        if (realmStr.startsWith(level)) {
+          return { level, stage: realmStr.slice(level.length) };
+        }
       }
-    };
+      return { level: '练气期', stage: '前期' };
+    }
+
+    // ====== GAME STATE INITIALIZATION ======
+    function initializeGameState(data) {
+      const statusMap = {
+        '毫无名气': { gold: 500, disciples: 0, buildings: [], prestige: 0 },
+        '末流小派': { gold: 3000, disciples: 2, buildings: [{ name: '破旧大殿', level: 1, unlocked: true, description: '勉强遮风挡雨' }], prestige: 100 },
+        '三流小宗': { gold: 6000, disciples: 3, buildings: [{ name: '议事厅', level: 1, unlocked: true, description: '宗门议事之所' }, { name: '修炼室', level: 1, unlocked: true, description: '弟子修炼之地' }], prestige: 300 },
+        '二流宗门': { gold: 12580, disciples: 6, buildings: [{ name: '悟道殿', level: 3, unlocked: true, description: '掌门修行之所' }, { name: '藏经阁', level: 2, unlocked: true, description: '收藏功法典籍' }, { name: '炼丹房', level: 1, unlocked: true, description: '炼制丹药' }, { name: '炼器峰', level: 1, unlocked: true, description: '锻造法器' }], prestige: 800 },
+        '一流大宗': { gold: 30000, disciples: 10, buildings: [{ name: '悟道殿', level: 5, unlocked: true, description: '掌门修行之所' }, { name: '藏经阁', level: 4, unlocked: true, description: '收藏功法典籍' }, { name: '炼丹房', level: 3, unlocked: true, description: '炼制丹药' }, { name: '炼器峰', level: 3, unlocked: true, description: '锻造法器' }, { name: '护山大阵', level: 3, unlocked: true, description: '宗门防御屏障' }], prestige: 1800 }
+      };
+      const sm = statusMap[data.status] || statusMap['二流宗门'];
+
+      // Set finance
+      window.gameStateManager.state.finance.gold = sm.gold;
+      window.gameStateManager.state.finance.prestige = sm.prestige;
+      window.gameStateManager.state.finance.income = Math.floor(sm.gold * 0.3);
+      window.gameStateManager.state.finance.expense = Math.floor(sm.gold * 0.2);
+      window.gameStateManager.state.finance.realmTitle = data.status;
+
+      // Set world
+      window.gameStateManager.state.world.buildings = sm.buildings;
+      window.gameStateManager.state.world.regions = [
+        { name: '山门', unlocked: true, controlledBy: data.sectName }
+      ];
+
+      // Create player
+      const realmStr = data.realmLevel === '道祖' ? '道祖' : data.realmLevel + (data.realmStage ? data.realmStage : '');
+      const playerStats = calculateStats(data.talent, data.realmLevel, data.realmStage);
+      const playerId = 'player_' + Date.now();
+      window.gameStateManager.state.members[data.name] = {
+        id: playerId,
+        name: data.name,
+        daoName: data.name,
+        realm: realmStr,
+        role: '掌门',
+        status: '坐镇',
+        talent: data.talent,
+        color: 'gold',
+        stats: { ...playerStats },
+        baseStats: { ...playerStats },
+        lifespan: { current: data.age || 25, max: realmLifespan[data.realmLevel] || 150 },
+        loyalty: 100,
+        mood: 80,
+        skills: ['基础心法'],
+        equipment: []
+      };
+
+      // Generate disciples
+      if (sm.disciples > 0) {
+        const maleNames = ['林青羽','陈墨','顾长风','陆无尘','叶无殇','萧寒','楚云飞','赵无痕','周子瑜','李玄天'];
+        const femaleNames = ['苏晚晴','慕容雪','柳如烟','白芷','沈清秋','凤九歌','洛神','夜琉璃','花千骨','沐清歌'];
+        const discipleRealms = [
+          { level: '练气期', stage: '前期' },
+          { level: '练气期', stage: '中期' },
+          { level: '练气期', stage: '后期' },
+          { level: '筑基期', stage: '前期' },
+          { level: '筑基期', stage: '中期' }
+        ];
+        const discipleTalents = ['甲中','乙上','乙中','乙下','丙上','丙中'];
+        const colors = ['jade','purple','pink','gold','jade','purple'];
+
+        for (let i = 0; i < sm.disciples; i++) {
+          const isMale = Math.random() > 0.5;
+          const namePool = isMale ? maleNames : femaleNames;
+          const name = namePool[i % namePool.length];
+          if (window.gameStateManager.state.members[name]) continue;
+          const dr = discipleRealms[Math.floor(Math.random() * discipleRealms.length)];
+          const dt = discipleTalents[i % discipleTalents.length];
+          const ds = calculateStats(dt, dr.level, dr.stage);
+          window.gameStateManager.state.members[name] = {
+            id: 'disciple_' + i,
+            name: name,
+            daoName: name,
+            realm: dr.level + dr.stage,
+            role: '内门弟子',
+            status: '研习',
+            talent: dt,
+            color: colors[i % colors.length],
+            stats: { ...ds },
+            baseStats: { ...ds },
+            lifespan: { current: 80 + Math.floor(Math.random() * 40), max: 150 + Math.floor(Math.random() * 100) },
+            loyalty: 50 + Math.floor(Math.random() * 30),
+            mood: 60 + Math.floor(Math.random() * 25),
+            skills: [],
+            equipment: []
+          };
+        }
+      }
+
+      // Set player info
+      window.gameStateManager.state.player = {
+        name: data.name,
+        daoName: data.name,
+        realm: realmStr,
+        gender: data.gender || '',
+        age: data.age || 25,
+        lifespan: { current: data.age || 25, max: realmLifespan[data.realmLevel] || 150 },
+        talent: data.talent,
+        stats: { ...playerStats },
+        baseStats: { ...playerStats },
+        skills: ['基础心法'],
+        personality: data.personality || [],
+        appearance: data.appearance || [],
+        color: 'gold'
+      };
+
+      // Set sect info
+      window.gameStateManager.state.sect = {
+        name: data.sectName,
+        foundedYear: '',
+        location: '',
+        founder: '',
+        history: '',
+        lineage: [],
+        description: '',
+        motto: '',
+        arrayName: '基础护山阵',
+        arrayRank: '凡阶',
+        arrayDesc: '最基础的护山大阵，仅能感知外来者'
+      };
+
+      // Store creation metadata for LLM
+      window.gameStateManager.state._creationMeta = {
+        sectName: data.sectName,
+        path: data.path,
+        specialty: data.specialty,
+        crisis: data.crisis,
+        personality: data.personality,
+        appearance: data.appearance,
+        age: data.age
+      };
+
+      // Generate opening story and show in story page
+      generateOpeningStory(data);
+
+      // Switch to story page as default
+      if (typeof switchPage === 'function') switchPage('story');
+
+      // Refresh UI
+      if (typeof renderMembers === 'function') renderMembers();
+      if (typeof renderBuildings === 'function') renderBuildings();
+      if (typeof renderRegions === 'function') renderRegions();
+      if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
+      if (typeof renderSkills === 'function') renderSkills();
+      if (typeof renderOpportunities === 'function') renderOpportunities();
+      if (typeof renderQuests === 'function') renderQuests();
+    }
+
+    function generateOpeningStory(data) {
+      const realmFull = data.realmLevel === '道祖' ? '道祖' : data.realmLevel + (data.realmStage || '');
+      const personalityStr = data.personality.join('、') || '沉稳';
+      const appearanceStr = data.appearance.join('、') || '俊朗';
+
+      const crisisMap = {
+        '临危受命': `前任掌门陨落，整个宗门群龙无首。${data.name}临危受命，接下了这副千钧重担。`,
+        '白手起家': `${data.name}白手起家，从零开始。一砖一瓦，一草一木，皆需亲力亲为。`,
+        '仇敌环伺': `不久前，${data.name}亲手斩杀了一名魔道小头目。如今对方宗门已放出话来，誓要血债血偿。`,
+        '天降机缘': `近日，${data.name}在山门深处发现了一处上古遗迹。消息不胫而走，各方势力已闻风而动。`,
+        '宗门内乱': `宗门大长老对${data.name}执掌大权心怀不满，暗中拉拢了一批弟子，意图架空掌门。`
+      };
+      const crisisDesc = crisisMap[data.crisis] || crisisMap['白手起家'];
+
+      const statusDescMap = {
+        '毫无名气': '方圆百里之内，几乎无人知晓这个名号。',
+        '末流小派': '在附近几个村落中略有耳闻，但在真正的修仙界中微不足道。',
+        '三流小宗': '在方圆千里之内有些名气，偶尔会有散修前来投奔。',
+        '二流宗门': '在一洲之地颇有威望，与各大宗门皆有往来。',
+        '一流大宗': '天下皆知，万宗来朝，是这一方天地中最顶尖的势力之一。'
+      };
+      const statusDesc = statusDescMap[data.status] || statusDescMap['二流宗门'];
+
+      const pathDescMap = {
+        '道修': '顺应天道，万法自然',
+        '神修': '香火成神，信仰之力',
+        '魔修': '弱肉强食，百无禁忌',
+        '体修': '淬炼肉身，金刚不坏',
+        '旁门左道': '另辟蹊径，出奇制胜'
+      };
+      const pathDesc = pathDescMap[data.path] || data.path;
+
+      const specialtyDescMap = {
+        '剑': '以剑入道，杀伐无双',
+        '丹': '以丹入道，救死扶伤',
+        '炼器': '以器入道，攻守兼备',
+        '法阵': '以阵入道，困敌护山',
+        '符箓': '以符入道，变化万千'
+      };
+      const specialtyDesc = specialtyDescMap[data.specialty] || data.specialty;
+
+      const storyHTML = `
+        <div class="story-paragraph narrator" style="animation-delay:0s">
+          【天机台 · 序章 · 问道之始】
+        </div>
+        <div class="story-paragraph" style="animation-delay:0.15s">
+          ${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}
+        </div>
+        <div class="story-paragraph" style="animation-delay:0.3s">
+          ${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。
+        </div>
+        <div class="story-paragraph" style="animation-delay:0.45s">
+          ${crisisDesc}
+        </div>
+        <div class="story-paragraph narrator" style="animation-delay:0.6s">
+          风云际会，正是你书写传奇的时刻——
+        </div>
+      `;
+
+      const storyContent = document.getElementById('story-content');
+      if (storyContent) {
+        storyContent.innerHTML = storyHTML;
+      }
+
+      const storyChoices = document.getElementById('story-choices');
+      if (storyChoices) {
+        storyChoices.innerHTML = `
+          <button class="story-choice-btn" onclick="copyChoiceToInput(this)">
+            <div class="choice-marker">壹</div>
+            <span>开始你的宗门之旅</span>
+          </button>
+        `;
+      }
+    }
 
     window.loadGame = function() {
       alert('读取游戏功能即将上线');
