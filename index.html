@@ -792,20 +792,22 @@
       left: 0;
     }
     .title-btn:hover {
-      border-color: rgba(0,0,0,0.5);
-      color: #000;
+      border-color: rgba(184,155,107,0.5);
+      color: var(--mythic-gold);
     }
     .title-btn.primary {
-      border-color: rgba(0,0,0,0.35);
-      color: #1a1a1a;
+      border-color: rgba(184,155,107,0.6);
+      color: var(--mythic-gold);
       font-weight: 500;
+      background: rgba(184,155,107,0.08);
     }
     .title-btn.primary::before {
-      background: rgba(0,0,0,0.08);
+      background: rgba(184,155,107,0.12);
     }
     .title-btn.primary:hover {
-      border-color: rgba(0,0,0,0.7);
-      color: #000;
+      border-color: var(--mythic-gold);
+      color: var(--mythic-gold);
+      background: rgba(184,155,107,0.15);
     }
     .title-btn:disabled {
       opacity: 0.4;
@@ -2786,7 +2788,7 @@
   <!-- TITLE SCREEN / OPENING -->
   <div id="title-screen">
     <div class="mountains-container">
-      <svg viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <svg viewBox="-200 0 2800 1080" preserveAspectRatio="none">
         <!-- Far mountains -->
         <path class="mountain-far" fill="rgba(26,40,48,0.7)"
           d="M-100,1080 L-100,650 Q200,400 450,550 T950,480 T1450,520 T1950,450 T2400,500 V1080 Z"/>
