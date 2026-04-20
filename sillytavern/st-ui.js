@@ -781,7 +781,11 @@ export function bindEvents(store) {
   });
 
   document.getElementById('st-btn-chat')?.addEventListener('click', () => {
-    store.setState({ activeModal: 'chat' });
+    if (typeof window.loadGame === 'function') {
+      window.loadGame();
+    } else {
+      store.setState({ activeModal: 'chat' });
+    }
   });
 
   document.getElementById('st-btn-variables')?.addEventListener('click', () => {
