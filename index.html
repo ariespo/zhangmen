@@ -5754,6 +5754,7 @@
     gameStateManager.subscribe('/members', members => {
       const el = document.getElementById('res-members');
       if (el) el.textContent = Object.keys(members || {}).length;
+      if (typeof renderMembers === 'function') renderMembers();
     });
     gameStateManager.subscribe('/world/buildings', () => {
       if (typeof renderBuildings === 'function') renderBuildings();
