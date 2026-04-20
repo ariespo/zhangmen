@@ -7,13 +7,7 @@
   <title>宗门志</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./sillytavern/st-styles.css">
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
-    }
-  }
-  </script>
+  <!-- No external animation libs — pure CSS/SVG -->
   <style>
     :root {
       --jade-deep: #1a3a3a;
@@ -650,51 +644,80 @@
       border-radius: 50%;
     }
 
-    /* === OPENING / TITLE SCREEN — Ink Wash Painting Style === */
+    /* === OPENING / TITLE SCREEN — Dark Xianxia Style === */
     #title-screen {
       position: fixed;
       top: 0; left: 0;
       width: 100vw; height: 100vh;
       z-index: 100;
-      background:
-        radial-gradient(ellipse at 30% 20%, rgba(0,0,0,0.02) 0%, transparent 50%),
-        radial-gradient(ellipse at 70% 80%, rgba(0,0,0,0.03) 0%, transparent 50%),
-        #f5f0e8;
+      background: #0c1418;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       overflow: hidden;
     }
-    #title-screen::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 3px),
-        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.01) 2px, rgba(0,0,0,0.01) 3px);
-      pointer-events: none;
-      z-index: 1;
-    }
     #title-screen.hidden {
       opacity: 0;
       pointer-events: none;
       transition: opacity 1.2s ease;
     }
-    #ink-canvas {
+
+    /* Mountains SVG */
+    .mountains-container {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      opacity: 1;
+      bottom: 0; left: 0;
+      width: 100%; height: 65%;
+      z-index: 1;
+      pointer-events: none;
     }
+    .mountains-container svg {
+      width: 100%; height: 100%;
+    }
+    .mountain-far {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    .mountain-mid {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    .mountain-near {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .mountain-far.raised {
+      animation: mountainRise 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .mountain-mid.raised {
+      animation: mountainRise 2s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
+    }
+    .mountain-near.raised {
+      animation: mountainRise 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.8s forwards;
+    }
+    @keyframes mountainRise {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mist overlay */
+    .mountain-mist {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 30%;
+      background: linear-gradient(to top, rgba(12,20,24,0.9) 0%, transparent 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+
     .opening-title {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       font-family: 'ZCOOL XiaoWei', serif;
       font-size: 80px;
       letter-spacing: 20px;
-      color: #1a1a1a;
-      text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
+      color: var(--mythic-gold);
+      text-shadow: 0 0 40px rgba(184,155,107,0.3), 0 2px 4px rgba(0,0,0,0.5);
       opacity: 0;
       transform: scale(0.95);
       font-weight: 400;
@@ -704,18 +727,18 @@
     }
     @keyframes titleReveal {
       0% { opacity: 0; transform: scale(0.95); filter: blur(8px); }
-      50% { opacity: 0.7; transform: scale(1.01); filter: blur(1px); }
+      50% { opacity: 0.8; transform: scale(1.01); filter: blur(1px); }
       100% { opacity: 1; transform: scale(1); filter: blur(0); }
     }
     .opening-subtitle {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       font-family: 'Noto Serif SC', serif;
       font-size: 16px;
       letter-spacing: 10px;
-      color: rgba(60, 60, 60, 0.7);
-      margin-top: 20px;
+      color: var(--jade-glow);
       opacity: 0;
+      margin-top: 20px;
       font-weight: 300;
     }
     .opening-subtitle.show {
@@ -723,11 +746,11 @@
     }
     @keyframes subtitleFadeIn {
       from { opacity: 0; transform: translateY(8px); letter-spacing: 14px; }
-      to { opacity: 1; transform: translateY(0); letter-spacing: 10px; }
+      to { opacity: 0.7; transform: translateY(0); letter-spacing: 10px; }
     }
     .title-menu {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -746,9 +769,9 @@
       width: 220px;
       padding: 14px 0;
       background: transparent;
-      border: 1px solid rgba(0,0,0,0.15);
+      border: 1px solid rgba(184,155,107,0.25);
       border-radius: 2px;
-      color: #333;
+      color: rgba(168,230,230,0.8);
       font-family: 'Noto Serif SC', serif;
       font-size: 16px;
       letter-spacing: 6px;
@@ -762,7 +785,7 @@
       position: absolute;
       top: 0; left: -100%;
       width: 100%; height: 100%;
-      background: rgba(0,0,0,0.06);
+      background: rgba(184,155,107,0.08);
       transition: left 0.4s ease;
     }
     .title-btn:hover::before {
@@ -928,97 +951,6 @@
       text-align: center; color: var(--ink-light);
       padding: 40px 20px; font-size: 14px;
     }
-    /* GSAP ink blobs */
-    .ink-blob {
-      position: absolute;
-      pointer-events: none;
-      transform-origin: center center;
-      will-change: transform, opacity, filter;
-    }
-    .ink-blob .blob-core {
-      width: 100%; height: 100%;
-      border-radius: 60% 40% 55% 45% / 55% 45% 60% 40%;
-      background: radial-gradient(ellipse at 45% 40%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 35%, rgba(0,0,0,0) 70%);
-      filter: blur(6px);
-    }
-    .ink-speck {
-      position: absolute;
-      pointer-events: none;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.75);
-      filter: blur(0.6px);
-      will-change: transform, opacity;
-    }
-
-    /* === LANDSCAPE SCROLL OPENING === */
-    .scroll-frame {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      overflow: hidden;
-      clip-path: inset(0 50% 0 50%);
-    }
-    .landscape-svg {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      opacity: 0;
-    }
-    .mountain-far,
-    .mountain-near,
-    .mountain-peak {
-      opacity: 0;
-    }
-    .mountain-far-stroke,
-    .mountain-near-stroke,
-    .mountain-peak-stroke {
-      stroke-dasharray: 3000;
-      stroke-dashoffset: 3000;
-      opacity: 0;
-    }
-    .cloud {
-      opacity: 0;
-      filter: blur(8px);
-    }
-    .crane-wrapper {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      opacity: 0;
-    }
-    .crane {
-      position: absolute;
-      width: 80px; height: 46px;
-      transform-origin: center center;
-    }
-    .scroll-edge {
-      position: absolute;
-      top: 0; bottom: 0;
-      width: 24px;
-      background: linear-gradient(90deg, #d4c4a8 0%, #c8b898 40%, #b8a888 100%);
-      z-index: 5;
-    }
-    .scroll-edge::after {
-      content: '';
-      position: absolute;
-      top: 0; bottom: 0;
-      width: 3px;
-      background: linear-gradient(180deg, #a08060 0%, #8a6e4e 50%, #a08060 100%);
-    }
-    .scroll-left {
-      left: 0;
-      transform: translateX(-100%);
-      border-radius: 0 12px 12px 0;
-    }
-    .scroll-left::after { right: 0; }
-    .scroll-right {
-      right: 0;
-      transform: translateX(100%);
-      border-radius: 12px 0 0 12px;
-      background: linear-gradient(-90deg, #d4c4a8 0%, #c8b898 40%, #b8a888 100%);
-    }
-    .scroll-right::after { left: 0; }
 
     /* === CREATION PAGE === */
     #creation-page {
@@ -2853,7 +2785,22 @@
 
   <!-- TITLE SCREEN / OPENING -->
   <div id="title-screen">
-    <div id="opening-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;"></div>
+    <div class="mountains-container">
+      <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMax slice">
+        <!-- Far mountains -->
+        <path class="mountain-far" fill="rgba(26,40,48,0.7)"
+          d="M-100,1080 L-100,650 Q200,400 450,550 T950,480 T1450,520 T1950,450 T2400,500 V1080 Z"/>
+        <!-- Mid mountains -->
+        <path class="mountain-mid" fill="rgba(46,70,80,0.8)"
+          d="M-100,1080 L-100,750 Q250,580 500,720 T1000,650 T1500,720 T2000,680 V1080 Z"/>
+        <!-- Near mountains -->
+        <path class="mountain-near" fill="none" stroke="rgba(110,207,207,0.15)" stroke-width="2"
+          d="M-100,1080 L-100,850 Q300,720 600,880 T1100,780 T1600,860 V1080 Z"/>
+        <path class="mountain-near" fill="rgba(12,20,24,0.95)"
+          d="M-100,1080 L-100,860 Q300,740 600,890 T1100,800 T1600,870 V1080 Z"/>
+      </svg>
+      <div class="mountain-mist"></div>
+    </div>
     <div class="opening-title" id="opening-title">宗门志</div>
     <div class="opening-subtitle" id="opening-subtitle">问道长生 · 经营宗门 · 你的仙道由你书写</div>
     <div class="title-menu" id="title-menu">
@@ -5861,28 +5808,26 @@
     if (typeof renderEvents === 'function') renderEvents();
     if (typeof renderSectInfo === 'function') renderSectInfo();
 
-    // ====== THREE.JS INK OPENING ANIMATION ======
-    (async function initInkOpening() {
-      try {
-        const { initOpeningAnimation } = await import('./opening/index.js');
-        const container = document.getElementById('opening-canvas');
-        if (!container) return;
+    // ====== OPENING ANIMATION — Mountains Rise ======
+    (function initOpening() {
+      // Trigger mountain rise animations
+      setTimeout(() => {
+        document.querySelectorAll('.mountain-far, .mountain-mid, .mountain-near')
+          .forEach(el => el.classList.add('raised'));
+      }, 300);
 
-        const opening = initOpeningAnimation(container,
-          // onTitleReveal (~11s)
-          () => {
-            document.getElementById('opening-title')?.classList.add('show');
-            document.getElementById('opening-subtitle')?.classList.add('show');
-            document.getElementById('title-menu')?.classList.add('show');
-          },
-          // onComplete (~16s)
-          () => {}
-        );
+      // Title reveal after mountains
+      setTimeout(() => {
+        document.getElementById('opening-title')?.classList.add('show');
+      }, 1800);
 
-        window._openingAnimation = opening;
-      } catch (e) {
-        console.error('Failed to load opening animation:', e);
-      }
+      setTimeout(() => {
+        document.getElementById('opening-subtitle')?.classList.add('show');
+      }, 2400);
+
+      setTimeout(() => {
+        document.getElementById('title-menu')?.classList.add('show');
+      }, 3000);
     })();
 
     // ====== CHARACTER CREATION ======
