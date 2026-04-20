@@ -840,6 +840,27 @@
       border: 1px solid rgba(184, 155, 107, 0.2);
       border-radius: 16px;
       padding: 32px;
+      position: relative;
+    }
+    .load-game-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 32px; height: 32px;
+      background: transparent;
+      border: 1px solid rgba(184, 155, 107, 0.3);
+      border-radius: 8px;
+      color: rgba(168, 230, 230, 0.6);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: all 0.2s;
+    }
+    .load-game-close:hover {
+      border-color: rgba(212, 114, 140, 0.6);
+      color: var(--lotus-pink);
     }
     .load-game-title {
       text-align: center; font-size: 28px; color: var(--mythic-gold);
@@ -2815,6 +2836,7 @@
   <!-- LOAD GAME SCREEN -->
   <div id="load-game-screen" class="page-overlay" style="display:none;">
     <div class="load-game-container">
+      <button class="load-game-close" onclick="hideLoadGameScreen()" title="关闭">&times;</button>
       <h2 class="load-game-title">读取游戏</h2>
       <div class="load-game-layout">
         <div class="load-player-panel">
@@ -2832,7 +2854,7 @@
           </button>
         </div>
       </div>
-      <button class="title-btn" onclick="hideLoadGameScreen()">返回标题</button>
+      <button class="title-btn" id="load-game-back-btn" onclick="hideLoadGameScreen()">返回</button>
     </div>
   </div>
 
@@ -6481,6 +6503,14 @@
           return;
         }
 
+        // 记录打开来源：标题页 or 游戏主页面
+        const app = document.getElementById('app');
+        window._loadGameFromTitle = !(app && app.style.display === 'flex');
+
+        // 更新返回按钮文字
+        const backBtn = document.getElementById('load-game-back-btn');
+        if (backBtn) backBtn.textContent = window._loadGameFromTitle ? '返回标题' : '返回游戏';
+
         _currentLoadPlayer = players[0];
         renderLoadGameScreen();
         document.getElementById('load-game-screen').style.display = 'flex';
@@ -6490,11 +6520,16 @@
       }
     };
 
-    function hideLoadGameScreen() {
+    window.hideLoadGameScreen = function() {
       document.getElementById('load-game-screen').style.display = 'none';
       _currentLoadPlayer = null;
       _loadGameData = {};
-    }
+
+      // 如果在游戏主页面打开，则回到当前页面；如果在标题页打开，无额外操作
+      if (window._loadGameFromTitle === false) {
+        // 已在游戏主页面，无需操作
+      }
+    };
 
     function renderLoadGameScreen() {
       const players = Object.keys(_loadGameData).sort();
