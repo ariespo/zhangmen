@@ -675,12 +675,13 @@ export function createStore() {
     },
 
     // ---- Chats ----
-    async createChat(name = '新对话') {
+    async createChat(name = '新对话', opts = {}) {
       const chat = {
         id: crypto.randomUUID(),
         name,
+        playerName: opts.playerName || '',
         messages: [],
-        variables: {},
+        variables: opts.variables || {},
         presetId: state.settings.activePresetId,
         lorebookIds: [...state.settings.activeLorebookIds],
         userName: state.settings.userName,
