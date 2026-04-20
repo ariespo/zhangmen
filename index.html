@@ -3904,7 +3904,7 @@
             <div class="info-block"><h4>名称</h4><div class="info-value">${p.name}</div></div>
             <div class="info-block"><h4>道号</h4><div class="info-value">${p.daoName}</div></div>
             <div class="info-block"><h4>境界</h4><div class="info-value text-gold">${p.realm}</div></div>
-            <div class="info-block"><h4>寿元</h4><div class="info-value">${p.lifespan.current} / ${p.lifespan.max}</div></div>
+            <div class="info-block"><h4>寿元</h4><div class="info-value">${p.lifespan.max === Infinity ? p.lifespan.current + ' / 长生久视' : p.lifespan.current + ' / ' + p.lifespan.max}</div></div>
             <div class="info-block"><h4>天赋资质</h4><div class="info-value text-jade">${p.talent}</div></div>
 
             <div class="info-block">
@@ -4092,7 +4092,7 @@
           </td>
           <td style="color:var(--gold-spirit)">${m.daoName}</td>
           <td><span class="realm-badge" style="background:rgba(110,207,207,0.1);color:${color}">${m.realm}</span></td>
-          <td>${m.lifespan.current} / ${m.lifespan.max}</td>
+          <td>${m.lifespan.max === Infinity ? m.lifespan.current + ' / 长生久视' : m.lifespan.current + ' / ' + m.lifespan.max}</td>
           <td><span class="role-badge">${m.role}</span></td>
           <td style="color:${m.status === '闭关' ? 'var(--mist-purple)' : m.status === '巡查' ? 'var(--jade-glow)' : m.status === '炼丹' ? 'var(--lotus-pink)' : 'rgba(168,230,230,0.6)'}">${m.status}</td>
           <td style="color:var(--gold-spirit)">${m.talent}</td>
@@ -4132,7 +4132,7 @@
         <div class="sect-info-grid">
           <div class="info-block"><h4>道号</h4><div class="info-value text-gold">${m.daoName}</div></div>
           <div class="info-block"><h4>境界</h4><div class="info-value">${m.realm}</div></div>
-          <div class="info-block"><h4>寿元</h4><div class="info-value">${m.lifespan.current} / ${m.lifespan.max}</div></div>
+          <div class="info-block"><h4>寿元</h4><div class="info-value">${m.lifespan.max === Infinity ? m.lifespan.current + ' / 长生久视' : m.lifespan.current + ' / ' + m.lifespan.max}</div></div>
           <div class="info-block"><h4>职务</h4><div class="info-value">${m.role}</div></div>
           <div class="info-block"><h4>当前状态</h4><div class="info-value">${m.status}</div></div>
           <div class="info-block"><h4>天赋资质</h4><div class="info-value text-gold">${m.talent}</div></div>
