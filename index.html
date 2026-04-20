@@ -6540,11 +6540,58 @@
       renderLoadGameScreen();
     };
 
+    async function renderStoryFromMessages(chatId) {
+      try {
+        const chat = await db.chats.get(chatId);
+        if (!chat?.messages?.length) return;
+
+        const storyContent = document.getElementById('story-content');
+        const storyChoices = document.getElementById('story-choices');
+        if (!storyContent) return;
+
+        storyContent.innerHTML = '';
+        if (storyChoices) storyChoices.innerHTML = '';
+
+        let lastOptions = '';
+
+        for (const msg of chat.messages) {
+          const content = msg.content || '';
+
+          // 提取 maintext
+          const mainMatch = content.match(/<maintext>([\s\S]*?)<\/maintext>/i);
+          if (mainMatch) {
+            const p = document.createElement('div');
+            p.className = 'story-paragraph';
+            p.innerHTML = formatStoryText(mainMatch[1]);
+            storyContent.appendChild(p);
+          }
+
+          // 提取 options（保留最后一个）
+          const optionMatch = content.match(/<option>([\s\S]*?)<\/option>/i);
+          if (optionMatch) {
+            lastOptions = optionMatch[1];
+          }
+        }
+
+        // 渲染最后一条 option
+        if (lastOptions && storyChoices) {
+          updateLiveOptions(lastOptions);
+        }
+
+        // 滚动到底部
+        const area = document.getElementById('story-text-area');
+        if (area) area.scrollTop = area.scrollHeight;
+      } catch (e) {
+        console.warn('[renderStoryFromMessages] failed:', e);
+      }
+    }
+
     window.loadSave = async function(chatId) {
       try {
         await window.gameStateManager.load(chatId);
         await window.sillyTavernStore.loadChat(chatId);
         refreshAllUI();
+        await renderStoryFromMessages(chatId);
         hideLoadGameScreen();
         document.getElementById('title-screen').classList.add('hidden');
         document.getElementById('app').style.display = 'flex';
