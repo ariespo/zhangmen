@@ -7,7 +7,7 @@
   <title>宗门志</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./sillytavern/st-styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/motion@10.18.0/dist/motion.umd.min.js"></script>
   <style>
     :root {
       --jade-deep: #1a3a3a;
@@ -5899,120 +5899,118 @@
     if (typeof renderEvents === 'function') renderEvents();
     if (typeof renderSectInfo === 'function') renderSectInfo();
 
-    // ====== OPENING ANIMATION — Landscape Scroll (GSAP) ======
-    (function initOpening() {
-      const tl = gsap.timeline({ delay: 0.3 });
+    // ====== OPENING ANIMATION — Landscape Scroll (Motion One) ======
+    (async function initOpening() {
+      const { animate, stagger } = motion;
+      await new Promise(r => setTimeout(r, 300));
 
       // Phase 1: Scroll unrolls from center
-      tl.to('#scroll-frame', {
-        clipPath: 'inset(0 0% 0 0%)',
-        duration: 1.6,
-        ease: 'power2.inOut'
-      });
+      const scrollAnim = animate('#scroll-frame',
+        { clipPath: ['inset(0 50% 0 50%)', 'inset(0 0% 0 0%)'] },
+        { duration: 1.6, easing: 'ease-in-out' }
+      );
 
-      // Phase 2: Landscape fades in
-      tl.to('.landscape-svg', {
-        opacity: 1,
-        duration: 1.0,
-        ease: 'power1.out'
-      }, '-=0.8');
+      // Phase 2: Landscape fades in (overlaps with scroll)
+      const landscapeAnim = animate('.landscape-svg',
+        { opacity: [0, 1] },
+        { duration: 1.0, easing: 'ease-out', delay: 0.8 }
+      );
+
+      await scrollAnim.finished;
+      await landscapeAnim.finished;
 
       // Phase 3: Far mountain stroke draw
-      tl.to('.mountain-far-stroke', {
-        strokeDashoffset: 0,
-        opacity: 1,
-        duration: 2.2,
-        ease: 'power1.inOut'
-      }, '-=0.6');
+      const farStroke = animate('.mountain-far-stroke',
+        { strokeDashoffset: ['3000', '0'], opacity: [0, 1] },
+        { duration: 2.2, easing: 'ease-in-out' }
+      );
+      // Phase 4: Far mountain fill (overlaps)
+      const farFill = animate('.mountain-far',
+        { opacity: [0, 1] },
+        { duration: 1.8, easing: 'ease-out', delay: 0.8 }
+      );
 
-      // Phase 4: Far mountain fill washes in
-      tl.to('.mountain-far', {
-        opacity: 1,
-        duration: 1.8,
-        ease: 'power1.out'
-      }, '-=1.4');
+      await farStroke.finished;
 
       // Phase 5: Near mountain stroke draw
-      tl.to('.mountain-near-stroke', {
-        strokeDashoffset: 0,
-        opacity: 1,
-        duration: 2.0,
-        ease: 'power2.inOut'
-      }, '-=1.6');
+      const nearStroke = animate('.mountain-near-stroke',
+        { strokeDashoffset: ['3000', '0'], opacity: [0, 1] },
+        { duration: 2.0, easing: 'ease-in-out' }
+      );
+      // Phase 6: Near mountain fill (overlaps)
+      const nearFill = animate('.mountain-near',
+        { opacity: [0, 1] },
+        { duration: 1.6, easing: 'ease-out', delay: 0.8 }
+      );
 
-      // Phase 6: Near mountain fill
-      tl.to('.mountain-near', {
-        opacity: 1,
-        duration: 1.6,
-        ease: 'power1.out'
-      }, '-=1.2');
+      await nearStroke.finished;
 
       // Phase 7: Peak stroke + fill
-      tl.to('.mountain-peak-stroke', {
-        strokeDashoffset: 0,
-        opacity: 1,
-        duration: 1.6,
-        ease: 'power2.inOut'
-      }, '-=1.4');
-      tl.to('.mountain-peak', {
-        opacity: 1,
-        duration: 1.2,
-        ease: 'power1.out'
-      }, '-=1.0');
+      const peakStroke = animate('.mountain-peak-stroke',
+        { strokeDashoffset: ['3000', '0'], opacity: [0, 1] },
+        { duration: 1.6, easing: 'ease-in-out' }
+      );
+      const peakFill = animate('.mountain-peak',
+        { opacity: [0, 1] },
+        { duration: 1.2, easing: 'ease-out', delay: 0.6 }
+      );
 
-      // Phase 8: Clouds drift in with blur
-      tl.fromTo('.cloud', {
-        opacity: 0, x: -60, filter: 'blur(16px)'
-      }, {
-        opacity: 1, x: 0, filter: 'blur(8px)',
-        duration: 2.0, ease: 'power2.out', stagger: 0.2
-      }, '-=1.6');
+      await Promise.all([peakStroke.finished, peakFill.finished]);
+
+      // Phase 8: Clouds drift in with blur (staggered)
+      animate('.cloud',
+        { opacity: [0, 1], x: [-60, 0], filter: ['blur(16px)', 'blur(8px)'] },
+        { duration: 2.0, easing: 'ease-out', delay: stagger(0.2) }
+      );
 
       // Phase 9: Crane flies across
-      tl.set('#crane-wrapper', { opacity: 1 });
-      tl.fromTo('.crane', {
-        x: -120, y: 180, rotation: -8, opacity: 0, scale: 0.7
-      }, {
-        x: window.innerWidth + 120, y: -40, rotation: 4, opacity: 0.85, scale: 1,
-        duration: 5.5, ease: 'none'
-      }, '-=2.5');
+      animate('#crane-wrapper', { opacity: [0, 1] }, { duration: 0.1 });
+      animate('.crane',
+        {
+          x: [-120, window.innerWidth + 120],
+          y: [180, -40],
+          rotate: [-8, 4],
+          opacity: [0, 0.85],
+          scale: [0.7, 1]
+        },
+        { duration: 5.5, easing: 'linear', delay: 0.5 }
+      );
 
-      // Phase 10: Title reveal
-      tl.fromTo('#opening-title', {
-        opacity: 0, y: 30, filter: 'blur(10px)', scale: 0.95
-      }, {
-        opacity: 1, y: 0, filter: 'blur(0px)', scale: 1,
-        duration: 1.6, ease: 'power3.out'
-      }, '-=3.2');
+      // Phase 10: Title reveal (overlaps with crane)
+      await new Promise(r => setTimeout(r, 800));
+      const titleAnim = animate('#opening-title',
+        {
+          opacity: [0, 1],
+          y: [30, 0],
+          filter: ['blur(10px)', 'blur(0px)'],
+          scale: [0.95, 1]
+        },
+        { duration: 1.6, easing: [0.22, 1, 0.36, 1] } // cubic-bezier for power3.out feel
+      );
 
       // Phase 11: Subtitle
-      tl.fromTo('#opening-subtitle', {
-        opacity: 0, y: 16, filter: 'blur(5px)'
-      }, {
-        opacity: 1, y: 0, filter: 'blur(0px)',
-        duration: 1.2, ease: 'power2.out'
-      }, '-=1.2');
+      const subtitleAnim = animate('#opening-subtitle',
+        { opacity: [0, 1], y: [16, 0], filter: ['blur(5px)', 'blur(0px)'] },
+        { duration: 1.2, easing: 'ease-out', delay: 0.4 }
+      );
 
       // Phase 12: Menu buttons
-      tl.fromTo('#title-menu', {
-        opacity: 0, y: 20
-      }, {
-        opacity: 1, y: 0,
-        duration: 0.8, ease: 'power2.out'
-      }, '-=0.8');
+      const menuAnim = animate('#title-menu',
+        { opacity: [0, 1], y: [20, 0] },
+        { duration: 0.8, easing: 'ease-out', delay: 0.4 }
+      );
+
+      await Promise.all([titleAnim.finished, subtitleAnim.finished, menuAnim.finished]);
 
       // Phase 13: Landscape settles into background
-      tl.to('.landscape-svg', {
-        opacity: 0.18,
-        filter: 'blur(2px)',
-        duration: 2.0,
-        ease: 'power1.out'
-      }, '-=0.4');
-      tl.to('.cloud', {
-        opacity: 0.10,
-        duration: 2.0,
-        ease: 'power1.out'
-      }, '<');
+      animate('.landscape-svg',
+        { opacity: [1, 0.18], filter: ['blur(0px)', 'blur(2px)'] },
+        { duration: 2.0, easing: 'ease-out' }
+      );
+      animate('.cloud',
+        { opacity: [1, 0.10] },
+        { duration: 2.0, easing: 'ease-out' }
+      );
     })();
 
     // ====== CHARACTER CREATION ======
