@@ -5592,14 +5592,7 @@
     window.__st_addChatMessage = addChatMessage;
     window.__st_getActiveChat = getActiveChat;
     window.storyHistory = [];
-    const gameStateManager = createGameStateManager();
-    window.gameStateManager = gameStateManager;
-    window.GameStateSchema = GameStateSchema;
-    await initSillyTavernEnhancer();
-    const settingsData = await db.settings.get('settings');
-    if (settingsData?.activeChatId) {
-      await gameStateManager.load(settingsData.activeChatId);
-      // 读档后刷新所有 UI
+    function refreshAllUI() {
       if (typeof renderMembers === 'function') renderMembers();
       if (typeof renderSectInfo === 'function') renderSectInfo();
       if (typeof renderFactions === 'function') renderFactions();
@@ -5610,6 +5603,17 @@
       if (typeof renderOpportunities === 'function') renderOpportunities();
       if (typeof renderQuests === 'function') renderQuests();
       if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
+    }
+
+    const gameStateManager = createGameStateManager();
+    window.gameStateManager = gameStateManager;
+    window.GameStateSchema = GameStateSchema;
+    await initSillyTavernEnhancer();
+    const settingsData = await db.settings.get('settings');
+    if (settingsData?.activeChatId) {
+      await gameStateManager.load(settingsData.activeChatId);
+      // 读档后刷新所有 UI
+      refreshAllUI();
     }
 
     // 资源条自动订阅
