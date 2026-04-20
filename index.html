@@ -6080,6 +6080,9 @@
 
     // ====== GAME STATE INITIALIZATION ======
     function initializeGameState(data) {
+      // 清空旧成员，防止默认状态中的残留数据污染新游戏
+      window.gameStateManager.state.members = {};
+
       const statusMap = {
         '末流小派': { gold: 3000, buildings: [{ name: '破旧大殿', level: 1, unlocked: true, description: '勉强遮风挡雨' }], prestige: 100 },
         '四流小宗': { gold: 5000, buildings: [{ name: '议事厅', level: 1, unlocked: true, description: '宗门议事之所' }, { name: '修炼室', level: 1, unlocked: true, description: '弟子修炼之地' }], prestige: 200 },
