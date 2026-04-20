@@ -7,7 +7,13 @@
   <title>宗门志</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./sillytavern/st-styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/motion@10.18.0/dist/motion.umd.min.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
   <style>
     :root {
       --jade-deep: #1a3a3a;
@@ -2847,51 +2853,7 @@
 
   <!-- TITLE SCREEN / OPENING -->
   <div id="title-screen">
-    <div class="scroll-frame" id="scroll-frame">
-      <svg class="landscape-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <linearGradient id="ink-far" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="rgba(120,120,120,0.35)"/>
-            <stop offset="100%" stop-color="rgba(160,160,160,0.08)"/>
-          </linearGradient>
-          <linearGradient id="ink-near" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="rgba(40,40,40,0.85)"/>
-            <stop offset="60%" stop-color="rgba(60,60,60,0.55)"/>
-            <stop offset="100%" stop-color="rgba(80,80,80,0.15)"/>
-          </linearGradient>
-        </defs>
-        <!-- 远山层 -->
-        <path class="mountain-far" fill="url(#ink-far)"
-          d="M-100,700 Q150,450 350,550 T700,480 T1050,520 T1400,460 T1750,500 T2100,420 V1080 H-100 Z"/>
-        <path class="mountain-far-stroke" fill="none" stroke="rgba(140,140,140,0.25)" stroke-width="1.5"
-          d="M-100,700 Q150,450 350,550 T700,480 T1050,520 T1400,460 T1750,500 T2100,420"/>
-        <!-- 近山层 -->
-        <path class="mountain-near" fill="url(#ink-near)"
-          d="M-100,1080 L-100,820 Q200,580 450,720 T950,650 T1450,750 T1950,680 V1080 Z"/>
-        <path class="mountain-near-stroke" fill="none" stroke="rgba(30,30,30,0.6)" stroke-width="2.5"
-          d="M-100,820 Q200,580 450,720 T950,650 T1450,750 T1950,680"/>
-        <!-- 主峰 -->
-        <path class="mountain-peak" fill="rgba(20,20,20,0.7)"
-          d="M700,1080 L850,520 Q900,480 950,520 L1100,1080 Z"/>
-        <path class="mountain-peak-stroke" fill="none" stroke="rgba(10,10,10,0.8)" stroke-width="3"
-          d="M700,1080 L850,520 Q900,480 950,520 L1100,1080"/>
-        <!-- 云雾 -->
-        <ellipse class="cloud cloud-1" cx="400" cy="620" rx="180" ry="30" fill="rgba(245,240,232,0.6)"/>
-        <ellipse class="cloud cloud-2" cx="1100" cy="580" rx="220" ry="35" fill="rgba(245,240,232,0.5)"/>
-        <ellipse class="cloud cloud-3" cx="1600" cy="650" rx="160" ry="25" fill="rgba(245,240,232,0.55)"/>
-      </svg>
-      <div class="crane-wrapper" id="crane-wrapper">
-        <svg class="crane" viewBox="0 0 120 70" fill="none">
-          <path d="M85,25 Q95,15 105,22 Q100,28 90,28 Z" fill="rgba(60,60,60,0.7)"/>
-          <ellipse cx="60" cy="32" rx="28" ry="14" fill="rgba(60,60,60,0.7)"/>
-          <path d="M35,30 Q15,25 5,32 Q15,38 35,34" fill="rgba(60,60,60,0.7)"/>
-          <path d="M60,46 L50,62 M60,46 L58,64 M60,46 L70,62" stroke="rgba(60,60,60,0.6)" stroke-width="1.5"/>
-          <path d="M32,28 Q40,18 50,24" stroke="rgba(60,60,60,0.5)" stroke-width="1" fill="none"/>
-        </svg>
-      </div>
-      <div class="scroll-edge scroll-left" id="scroll-left"></div>
-      <div class="scroll-edge scroll-right" id="scroll-right"></div>
-    </div>
+    <div id="opening-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;"></div>
     <div class="opening-title" id="opening-title">宗门志</div>
     <div class="opening-subtitle" id="opening-subtitle">问道长生 · 经营宗门 · 你的仙道由你书写</div>
     <div class="title-menu" id="title-menu">
@@ -5899,118 +5861,21 @@
     if (typeof renderEvents === 'function') renderEvents();
     if (typeof renderSectInfo === 'function') renderSectInfo();
 
-    // ====== OPENING ANIMATION — Landscape Scroll (Motion One) ======
-    (async function initOpening() {
-      const { animate, stagger } = Motion;
-      await new Promise(r => setTimeout(r, 300));
+    // ====== THREE.JS INK OPENING ANIMATION ======
+    (async function initInkOpening() {
+      try {
+        const { initOpeningAnimation } = await import('./opening/index.js');
+        const container = document.getElementById('opening-canvas');
+        if (!container) return;
 
-      // Phase 1: Scroll unrolls from center
-      const scrollAnim = animate('#scroll-frame',
-        { clipPath: ['inset(0 50% 0 50%)', 'inset(0 0% 0 0%)'] },
-        { duration: 1.6, easing: 'ease-in-out' }
-      );
+        const opening = initOpeningAnimation(container, () => {
+          // Animation complete
+        });
 
-      // Phase 2: Landscape fades in (overlaps with scroll)
-      const landscapeAnim = animate('.landscape-svg',
-        { opacity: [0, 1] },
-        { duration: 1.0, easing: 'ease-out', delay: 0.8 }
-      );
-
-      await scrollAnim.finished;
-      await landscapeAnim.finished;
-
-      // Phase 3: Far mountain stroke draw
-      const farStroke = animate('.mountain-far-stroke',
-        { strokeDashoffset: ['3000', '0'], opacity: [0, 1] },
-        { duration: 2.2, easing: 'ease-in-out' }
-      );
-      // Phase 4: Far mountain fill (overlaps)
-      const farFill = animate('.mountain-far',
-        { opacity: [0, 1] },
-        { duration: 1.8, easing: 'ease-out', delay: 0.8 }
-      );
-
-      await farStroke.finished;
-
-      // Phase 5: Near mountain stroke draw
-      const nearStroke = animate('.mountain-near-stroke',
-        { strokeDashoffset: ['3000', '0'], opacity: [0, 1] },
-        { duration: 2.0, easing: 'ease-in-out' }
-      );
-      // Phase 6: Near mountain fill (overlaps)
-      const nearFill = animate('.mountain-near',
-        { opacity: [0, 1] },
-        { duration: 1.6, easing: 'ease-out', delay: 0.8 }
-      );
-
-      await nearStroke.finished;
-
-      // Phase 7: Peak stroke + fill
-      const peakStroke = animate('.mountain-peak-stroke',
-        { strokeDashoffset: ['3000', '0'], opacity: [0, 1] },
-        { duration: 1.6, easing: 'ease-in-out' }
-      );
-      const peakFill = animate('.mountain-peak',
-        { opacity: [0, 1] },
-        { duration: 1.2, easing: 'ease-out', delay: 0.6 }
-      );
-
-      await Promise.all([peakStroke.finished, peakFill.finished]);
-
-      // Phase 8: Clouds drift in with blur (staggered)
-      animate('.cloud',
-        { opacity: [0, 1], x: [-60, 0], filter: ['blur(16px)', 'blur(8px)'] },
-        { duration: 2.0, easing: 'ease-out', delay: stagger(0.2) }
-      );
-
-      // Phase 9: Crane flies across
-      animate('#crane-wrapper', { opacity: [0, 1] }, { duration: 0.1 });
-      animate('.crane',
-        {
-          x: [-120, window.innerWidth + 120],
-          y: [180, -40],
-          rotate: [-8, 4],
-          opacity: [0, 0.85],
-          scale: [0.7, 1]
-        },
-        { duration: 5.5, easing: 'linear', delay: 0.5 }
-      );
-
-      // Phase 10: Title reveal (overlaps with crane)
-      await new Promise(r => setTimeout(r, 800));
-      const titleAnim = animate('#opening-title',
-        {
-          opacity: [0, 1],
-          y: [30, 0],
-          filter: ['blur(10px)', 'blur(0px)'],
-          scale: [0.95, 1]
-        },
-        { duration: 1.6, easing: [0.22, 1, 0.36, 1] } // cubic-bezier for power3.out feel
-      );
-
-      // Phase 11: Subtitle
-      const subtitleAnim = animate('#opening-subtitle',
-        { opacity: [0, 1], y: [16, 0], filter: ['blur(5px)', 'blur(0px)'] },
-        { duration: 1.2, easing: 'ease-out', delay: 0.4 }
-      );
-
-      // Phase 12: Menu buttons
-      const menuAnim = animate('#title-menu',
-        { opacity: [0, 1], y: [20, 0] },
-        { duration: 0.8, easing: 'ease-out', delay: 0.4 }
-      );
-
-      await Promise.all([titleAnim.finished, subtitleAnim.finished, menuAnim.finished]);
-
-      // Phase 13: Landscape settles into background
-      animate('.landscape-svg',
-        { opacity: [1, 0.18], filter: ['blur(0px)', 'blur(2px)'] },
-        { duration: 2.0, easing: 'ease-out' }
-      );
-      animate('.cloud',
-        { opacity: [1, 0.10] },
-        { duration: 2.0, easing: 'ease-out' }
-      );
+        window._openingAnimation = opening;
+      } catch (e) {
+        console.error('Failed to load opening animation:', e);
+      }
     })();
 
     // ====== CHARACTER CREATION ======
