@@ -8,7 +8,7 @@ import { initOpeningScene } from './opening-scene.js';
  * @param {Function} onComplete - 动画完成回调
  * @returns {Object} { dispose }
  */
-export function initOpeningAnimation(container, onComplete) {
+export function initOpeningAnimation(container, onTitleReveal, onComplete) {
   const canvas = document.createElement('canvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   if (!gl) {
@@ -17,7 +17,7 @@ export function initOpeningAnimation(container, onComplete) {
     return { dispose() {} };
   }
 
-  const scene = initOpeningScene(container, onComplete);
+  const scene = initOpeningScene(container, onTitleReveal, onComplete);
 
   return {
     dispose() {

@@ -5868,9 +5868,16 @@
         const container = document.getElementById('opening-canvas');
         if (!container) return;
 
-        const opening = initOpeningAnimation(container, () => {
-          // Animation complete
-        });
+        const opening = initOpeningAnimation(container,
+          // onTitleReveal (~11s)
+          () => {
+            document.getElementById('opening-title')?.classList.add('show');
+            document.getElementById('opening-subtitle')?.classList.add('show');
+            document.getElementById('title-menu')?.classList.add('show');
+          },
+          // onComplete (~16s)
+          () => {}
+        );
 
         window._openingAnimation = opening;
       } catch (e) {

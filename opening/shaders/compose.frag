@@ -47,7 +47,8 @@ void main() {
   float mtn = mountain.r;
 
   // Combine ink background + mountains
-  float combinedInk = max(ink * 0.3, mtn);
+  // Ink provides subtle background texture, mountains dominate
+  float combinedInk = max(ink * 0.06, mtn);
 
   // Paper and ink colors
   vec3 paperColor = vec3(0.96, 0.94, 0.91);

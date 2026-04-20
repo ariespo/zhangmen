@@ -24,15 +24,22 @@ export class OpeningScene {
     this.height = container.clientHeight || window.innerHeight;
     this.startTime = performance.now();
     this.isComplete = false;
+    this.titleRevealed = false;
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     this.renderer.setSize(this.width, this.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.autoClear = true;
     container.appendChild(this.renderer.domElement);
 
-    this.scene = new THREE.Scene();
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
+    // Independent scenes for each pass (prevents cross-contamination)
+    this.inkScene = new THREE.Scene();
+    this.mountainScene = new THREE.Scene();
+    this.composeScene = new THREE.Scene();
+
+    // Offscreen render targets
     this.inkTarget = new THREE.WebGLRenderTarget(this.width, this.height);
     this.mountainTarget = new THREE.WebGLRenderTarget(this.width, this.height);
 
@@ -95,13 +102,17 @@ export class OpeningScene {
       })
     };
 
-    this.quads = {
-      ink: new THREE.Mesh(quadGeo, this.materials.ink),
-      mountain: new THREE.Mesh(quadGeo, this.materials.mountain),
-      compose: new THREE.Mesh(quadGeo, this.materials.compose)
-    };
+    const inkQuad = new THREE.Mesh(quadGeo, this.materials.ink);
+    const mtnQuad = new THREE.Mesh(quadGeo, this.materials.mountain);
+    const compQuad = new THREE.Mesh(quadGeo, this.materials.compose);
 
-    this.particles = createParticles(this.scene, 60);
+    this.inkScene.add(inkQuad);
+    this.mountainScene.add(mtnQuad);
+    this.composeScene.add(compQuad);
+
+    // Particles are rendered on top of compose in a separate pass
+    this.particleScene = new THREE.Scene();
+    this.particles = createParticles(this.particleScene, 60);
   }
 
   update(elapsed) {
@@ -109,43 +120,44 @@ export class OpeningScene {
 
     const t = elapsed;
 
-    // Ink diffusion: 0-3s
+    // --- Phase 1: Ink diffusion (0-3s) ---
     const inkProgress = Math.min(t / 3.0, 1.0);
     this.materials.ink.uniforms.u_time.value = t;
     this.materials.ink.uniforms.u_diffusionProgress.value = inkProgress;
 
-    // Mountain reveal: starts at 2s, ends at 8s
-    const mtnProgress = t > 2.0 ? Math.min((t - 2.0) / 5.0, 1.0) : 0;
+    // --- Phase 2: Mountain reveal (1.5-5s, faster) ---
+    const mtnProgress = t > 1.5 ? Math.min((t - 1.5) / 3.5, 1.0) : 0;
     this.materials.mountain.uniforms.u_time.value = t;
     this.materials.mountain.uniforms.u_revealProgress.value = mtnProgress;
 
-    // Compose
+    // --- Compose uniforms ---
     this.materials.compose.uniforms.u_time.value = t;
 
-    // Render ink pass
-    this.scene.add(this.quads.ink);
+    // Render ink pass → inkTarget
     this.renderer.setRenderTarget(this.inkTarget);
-    this.renderer.render(this.scene, this.camera);
-    this.scene.remove(this.quads.ink);
+    this.renderer.render(this.inkScene, this.camera);
 
-    // Render mountain pass
-    this.scene.add(this.quads.mountain);
+    // Render mountain pass → mountainTarget
     this.renderer.setRenderTarget(this.mountainTarget);
-    this.renderer.render(this.scene, this.camera);
-    this.scene.remove(this.quads.mountain);
+    this.renderer.render(this.mountainScene, this.camera);
 
-    // Render compose pass to screen
-    this.scene.add(this.quads.compose);
+    // Render compose pass → screen
     this.renderer.setRenderTarget(null);
-    this.renderer.render(this.scene, this.camera);
-    this.scene.remove(this.quads.compose);
+    this.renderer.render(this.composeScene, this.camera);
 
-    // Particles (after 5s)
+    // Render particles on top (after 5s)
     if (this.particles && t > 5) {
       this.particles.update(t);
+      this.renderer.render(this.particleScene, this.camera);
     }
 
-    // Completion
+    // --- Phase 4: Title reveal trigger (11s) ---
+    if (t > 11 && !this.titleRevealed) {
+      this.titleRevealed = true;
+      if (this.onTitleReveal) this.onTitleReveal();
+    }
+
+    // Completion (16s)
     if (t > 16 && !this.isComplete) {
       this.isComplete = true;
       if (this.onComplete) this.onComplete();
@@ -180,8 +192,9 @@ export class OpeningScene {
   }
 }
 
-export function initOpeningScene(container, onComplete) {
+export function initOpeningScene(container, onTitleReveal, onComplete) {
   const scene = new OpeningScene(container);
+  scene.onTitleReveal = onTitleReveal;
   scene.onComplete = onComplete;
   scene.init().then(() => scene.animate());
   return scene;

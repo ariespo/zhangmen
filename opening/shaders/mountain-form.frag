@@ -77,20 +77,20 @@ void main() {
   // Reveal from bottom up
   float reveal = smoothstep(0.0, 1.0, u_revealProgress * 1.2 - uv.y * 0.2);
 
-  // Far mountains (distant, faint, smooth)
+  // Far mountains (distant, faint, smooth) — boosted for visibility
   float farMtn = mountainLayer(uv, 0.55, 0.15, 2.0, 3, 0.08);
-  float farInk = farMtn * 0.25 * reveal;
+  float farInk = farMtn * 0.45 * reveal;
 
   // Mid mountains
   float midMtn = mountainLayer(uv, 0.45, 0.20, 3.5, 4, 0.05);
-  float midInk = midMtn * 0.50 * reveal;
+  float midInk = midMtn * 0.70 * reveal;
 
   // Near mountains (detailed, dark, with brush texture)
   float nearMtn = mountainLayer(uv, 0.35, 0.25, 5.0, 5, 0.03);
   // Add brush texture (cun fa simulation)
   float brushTex = fbm(uv * 20.0 + vec2(0.0, uv.y * 5.0), 3);
   nearMtn *= 0.85 + brushTex * 0.3;
-  float nearInk = nearMtn * 0.85 * reveal;
+  float nearInk = nearMtn * 0.95 * reveal;
 
   // Combine layers
   float totalInk = max(max(farInk, midInk), nearInk);
