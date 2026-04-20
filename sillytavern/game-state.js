@@ -415,6 +415,35 @@ export async function saveGameState(chatId, state) {
   } catch (e) { console.error('[GameState] save failed:', e); }
 }
 
+export async function getAllSaves() {
+  try {
+    const chats = await db.chats.toArray();
+    const saves = chats.filter(c => c.playerName);
+    const grouped = {};
+    for (const chat of saves) {
+      if (!grouped[chat.playerName]) grouped[chat.playerName] = [];
+      const gs = chat.variables?.gameState || {};
+      grouped[chat.playerName].push({
+        id: chat.id,
+        name: chat.name,
+        playerName: chat.playerName,
+        updatedAt: chat.updatedAt,
+        sectName: gs.sect?.name || '未知宗门',
+        playerRealm: gs.player?.realm || '未知',
+        memberCount: Object.keys(gs.members || {}).length,
+        messageCount: chat.messages?.length || 0
+      });
+    }
+    for (const name in grouped) {
+      grouped[name].sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+    return grouped;
+  } catch (e) {
+    console.error('[GameState] getAllSaves failed:', e);
+    return {};
+  }
+}
+
 // ===== Deep Proxy =====
 function createDeepProxy(target, notify, path = '') {
   if (target == null || typeof target !== 'object') return target;
