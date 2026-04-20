@@ -6166,22 +6166,12 @@
       document.getElementById('creation-start').addEventListener('click', async () => {
         const d = collectData();
 
-        // 创建新对话（新存档槽）
-        if (window.sillyTavernStore) {
-          try {
-            const chatName = d.sectName || d.name || '新游戏';
-            await window.sillyTavernStore.createChat(chatName);
-          } catch (e) {
-            console.warn('创建新对话失败:', e);
-          }
-        }
-
         // 重置 gameState 为默认值，清除所有旧数据
         if (window.gameStateManager) {
           window.gameStateManager.reset();
         }
 
-        initializeGameState(d);
+        await initializeGameState(d);
         document.getElementById('creation-page').style.display = 'none';
         const app = document.getElementById('app');
         if (app) {
@@ -6233,7 +6223,7 @@
     }
 
     // ====== GAME STATE INITIALIZATION ======
-    function initializeGameState(data) {
+    async function initializeGameState(data) {
       // 清空旧成员，防止默认状态中的残留数据污染新游戏
       window.gameStateManager.state.members = {};
 
@@ -6365,6 +6355,19 @@
       if (typeof renderSkills === 'function') renderSkills();
       if (typeof renderOpportunities === 'function') renderOpportunities();
       if (typeof renderQuests === 'function') renderQuests();
+
+      // 创建存档槽并持久化
+      if (window.sillyTavernStore) {
+        try {
+          const saveName = `${data.name} - 存档1`;
+          const chat = await window.sillyTavernStore.createChat(saveName, { playerName: data.name });
+          const { saveGameState } = await import('./sillytavern/game-state.js');
+          await saveGameState(chat.id, window.gameStateManager.state);
+          window.gameStateManager._chatId = chat.id;
+        } catch (e) {
+          console.warn('创建存档失败:', e);
+        }
+      }
     }
 
     function generateOpeningStory(data) {
