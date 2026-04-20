@@ -6537,9 +6537,6 @@
         age: data.age
       };
 
-      // Generate opening story and show in story page
-      generateOpeningStory(data);
-
       // Switch to story page as default
       if (typeof switchPage === 'function') switchPage('story');
 
@@ -6564,6 +6561,10 @@
           console.warn('创建存档失败:', e);
         }
       }
+
+      // Generate opening story and show in story page
+      // 必须在创建存档之后调用，才能将剧情写入 chat.messages
+      generateOpeningStory(data);
     }
 
     function generateOpeningStory(data) {
@@ -6636,6 +6637,16 @@
             <span>开始你的宗门之旅</span>
           </button>
         `;
+      }
+
+      // 将开局剧情保存到 chat.messages，以便读档时恢复
+      const chatId = window.gameStateManager?._chatId;
+      if (chatId && window.sillyTavernStore) {
+        const plainText = `${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}\n\n${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。\n\n${crisisDesc}`;
+        window.sillyTavernStore.addMessage(chatId, {
+          role: 'assistant',
+          content: `<maintext>${plainText}</maintext>\n<option>开始你的宗门之旅</option>`
+        }).catch(e => console.warn('[generateOpeningStory] save message failed:', e));
       }
     }
 
