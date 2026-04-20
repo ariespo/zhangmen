@@ -2724,6 +2724,122 @@
       color: rgba(168,230,230,0.85);
       white-space: pre-wrap;
     }
+
+    /* === RECAP PANEL === */
+    .story-recap-btn {
+      position: absolute;
+      top: 12px;
+      right: 144px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(184, 155, 107, 0.08);
+      border: 1px solid rgba(184, 155, 107, 0.2);
+      border-radius: 6px;
+      cursor: pointer;
+      color: rgba(184, 155, 107, 0.8);
+      font-size: 12px;
+      z-index: 10;
+      transition: all 0.2s;
+    }
+    .story-recap-btn:hover {
+      background: rgba(184, 155, 107, 0.15);
+      border-color: rgba(184, 155, 107, 0.4);
+      color: var(--mythic-gold);
+    }
+    .story-recap-btn.empty {
+      opacity: 0.4;
+      cursor: default;
+      pointer-events: none;
+    }
+    .recap-panel {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 800px;
+      max-height: 70vh;
+      background: var(--ink-mid);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .recap-panel.active {
+      display: flex;
+    }
+    .recap-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(0,0,0,0.2);
+    }
+    .recap-panel-header h3 {
+      font-size: 14px;
+      color: var(--mythic-gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .recap-icon {
+      font-size: 16px;
+    }
+    .recap-panel-close {
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: rgba(168,230,230,0.6);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .recap-panel-close:hover {
+      background: rgba(212,114,140,0.15);
+      color: var(--lotus-pink);
+    }
+    .recap-panel-body {
+      padding: 16px;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.8;
+      color: rgba(168,230,230,0.85);
+    }
+    .recap-entry {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(168,230,230,0.08);
+    }
+    .recap-entry:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .recap-entry-index {
+      font-size: 11px;
+      color: var(--mythic-gold);
+      margin-bottom: 6px;
+      opacity: 0.6;
+    }
+    .recap-entry-text {
+      color: rgba(168,230,230,0.85);
+    }
+    .recap-empty {
+      text-align: center;
+      color: var(--ink-light);
+      padding: 40px 20px;
+    }
   </style>
 </head>
 <body>
@@ -3431,6 +3547,13 @@
               <div style="color:var(--jade-glow);font-size:16px;letter-spacing:4px">天道运转中</div>
             </div>
             <div class="story-text-area" id="story-text-area">
+              <div class="story-recap-btn" id="story-recap-btn" onclick="openRecapPanel()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                </svg>
+                <span>回顾前文</span>
+              </div>
               <div class="think-view-btn empty" id="think-view-btn" onclick="openThinkPanel()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
                   <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
@@ -3701,6 +3824,15 @@
       <button class="think-panel-close" onclick="closeThinkPanel()">×</button>
     </div>
     <div class="think-panel-body" id="think-panel-body"></div>
+  </div>
+
+  <!-- 回顾前文面板 -->
+  <div class="recap-panel" id="recap-panel">
+    <div class="recap-panel-header">
+      <h3><span class="recap-icon">📜</span> 回顾前文</h3>
+      <button class="recap-panel-close" onclick="closeRecapPanel()">×</button>
+    </div>
+    <div class="recap-panel-body" id="recap-panel-body"></div>
   </div>
 
   <script>
@@ -4631,6 +4763,59 @@
 
     function closeThinkPanel() {
       const panel = document.getElementById('think-panel');
+      if (panel) panel.classList.remove('active');
+    }
+
+    async function openRecapPanel() {
+      const panel = document.getElementById('recap-panel');
+      const body = document.getElementById('recap-panel-body');
+      if (!panel || !body) return;
+
+      const chatId = window.gameStateManager?._chatId;
+      if (!chatId) {
+        body.innerHTML = '<div class="recap-empty">暂无剧情记录</div>';
+        panel.classList.add('active');
+        return;
+      }
+
+      try {
+        const chat = await db.chats.get(chatId);
+        if (!chat?.messages?.length) {
+          body.innerHTML = '<div class="recap-empty">暂无剧情记录</div>';
+          panel.classList.add('active');
+          return;
+        }
+
+        const entries = [];
+        for (let i = 0; i < chat.messages.length; i++) {
+          const msg = chat.messages[i];
+          const content = msg.content || '';
+          const mainMatch = content.match(/<maintext>([\s\S]*?)<\/maintext>/i);
+          if (mainMatch) {
+            entries.push({ index: i + 1, text: mainMatch[1].trim() });
+          }
+        }
+
+        if (entries.length === 0) {
+          body.innerHTML = '<div class="recap-empty">暂无剧情记录</div>';
+        } else {
+          body.innerHTML = entries.map(e => `
+            <div class="recap-entry">
+              <div class="recap-entry-index">第 ${e.index} 回</div>
+              <div class="recap-entry-text">${formatStoryText(e.text)}</div>
+            </div>
+          `).join('');
+        }
+        panel.classList.add('active');
+      } catch (e) {
+        console.error('[openRecapPanel] failed:', e);
+        body.innerHTML = '<div class="recap-empty">加载失败</div>';
+        panel.classList.add('active');
+      }
+    }
+
+    function closeRecapPanel() {
+      const panel = document.getElementById('recap-panel');
       if (panel) panel.classList.remove('active');
     }
 
