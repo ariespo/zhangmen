@@ -5756,6 +5756,9 @@
       if (el) el.textContent = Object.keys(members || {}).length;
       if (typeof renderMembers === 'function') renderMembers();
     });
+    gameStateManager.subscribe('/diplomacy', () => {
+      if (typeof renderFactions === 'function') renderFactions();
+    });
     gameStateManager.subscribe('/world/buildings', () => {
       if (typeof renderBuildings === 'function') renderBuildings();
     });
