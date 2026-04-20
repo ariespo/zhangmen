@@ -449,6 +449,10 @@ export class GameStateManager {
     this._state = null;
     this._loaded = false;
     if (this._saveTimer) { clearTimeout(this._saveTimer); this._saveTimer = null; }
+    // 清除 activeChatId，防止刷新后加载旧存档
+    db.settings.get('settings').then(s => {
+      if (s) { s.activeChatId = null; db.settings.put(s); }
+    });
     // 触发订阅者，让他们收到默认值
     const emptyState = createDeepProxy(deepClone(DEFAULT_GAME_STATE), p => this._onChange(p));
     this._state = emptyState;
