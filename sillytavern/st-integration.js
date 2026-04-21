@@ -3,7 +3,7 @@
  * 解耦设计：此文件是唯一与宿主项目交互的入口点
  */
 
-import { createStore } from './st-core.js';
+import { createStore, db } from './st-core.js';
 import { renderModal, bindEvents, updateLorebookBadge, updateChatBadge, renderToast } from './st-ui.js';
 import { previewPrompt } from './st-prompt.js';
 import { extractVariables } from './st-variables.js';
@@ -44,6 +44,7 @@ export async function initSillyTavernEnhancer(options = {}) {
   };
 
   await store.loadData();
+  await ensureDefaultLorebook(store);
 
   renderControlButtons(container);
   bindEvents(store);
@@ -190,6 +191,107 @@ export async function addChatMessage(message) {
   await store.addMessage(activeChat.id, msg);
   if (Object.keys(updates).length > 0) {
     await store.setChatVariables(activeChat.id, updates);
+  }
+}
+
+/**
+ * Ensure default lorebook '宗门志' exists with format and variable specs.
+ * Creates entries from LLM_FORMAT_SPEC.md and LLM_REFERENCE.md on first load.
+ */
+async function ensureDefaultLorebook(store) {
+  const books = store.getState().lorebooks;
+  let book = books.find(b => b.name === '宗门志');
+  let created = false;
+
+  if (!book) {
+    book = {
+      id: crypto.randomUUID(),
+      name: '宗门志',
+      description: '宗门志游戏默认世界书，包含LLM输出格式规范和变量参考',
+      entries: [],
+      recursiveScanning: false,
+      caseSensitive: false,
+      matchWholeWords: false,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    created = true;
+  }
+
+  const hasFormatEntry = book.entries.some(e => e.comment === '格式规范');
+  const hasVarEntry = book.entries.some(e => e.comment === '变量规范');
+
+  if (!hasFormatEntry || !hasVarEntry) {
+    try {
+      const [formatRes, varRes] = await Promise.all([
+        fetch('./LLM_FORMAT_SPEC.md'),
+        fetch('./LLM_REFERENCE.md')
+      ]);
+
+      const formatContent = formatRes.ok ? await formatRes.text() : '';
+      const varContent = varRes.ok ? await varRes.text() : '';
+
+      if (!hasFormatEntry && formatContent) {
+        book.entries.push({
+          id: crypto.randomUUID(),
+          keys: [],
+          secondaryKeys: [],
+          content: formatContent,
+          order: 100,
+          position: 'at_depth',
+          depth: 0,
+          selective: false,
+          selectiveLogic: 'not_all',
+          constant: true,
+          probability: 100,
+          enabled: true,
+          role: 'system',
+          addMemo: false,
+          comment: '格式规范'
+        });
+      }
+
+      if (!hasVarEntry && varContent) {
+        book.entries.push({
+          id: crypto.randomUUID(),
+          keys: [],
+          secondaryKeys: [],
+          content: varContent,
+          order: 101,
+          position: 'at_depth',
+          depth: 0,
+          selective: false,
+          selectiveLogic: 'not_all',
+          constant: true,
+          probability: 100,
+          enabled: true,
+          role: 'system',
+          addMemo: false,
+          comment: '变量规范'
+        });
+      }
+
+      await store.saveLorebook(book);
+    } catch (e) {
+      console.warn('[DefaultLorebook] 创建默认世界书条目失败:', e);
+      return;
+    }
+  }
+
+  // Activate the book if it isn't already
+  const settings = store.getState().settings;
+  if (!settings.activeLorebookIds.includes(book.id)) {
+    settings.activeLorebookIds.push(book.id);
+    try {
+      await db.settings.put(settings);
+      store.setState({ settings: { ...settings } });
+    } catch (e) {
+      console.warn('[DefaultLorebook] 激活默认世界书失败:', e);
+    }
+  }
+
+  if (created) {
+    console.log('[DefaultLorebook] 已创建默认世界书《宗门志》并激活');
   }
 }
 
