@@ -156,12 +156,28 @@
       font-size: 14px;
       color: var(--jade-pale);
       text-align: right;
+      line-height: 1.3;
+    }
+
+    .player-dao-name {
+      font-size: 11px;
+      color: rgba(168, 230, 230, 0.6);
+      text-align: right;
+      line-height: 1.3;
     }
 
     .player-realm {
       font-size: 11px;
       color: var(--gold-spirit);
       text-align: right;
+      line-height: 1.3;
+    }
+
+    .player-talent {
+      font-size: 10px;
+      color: var(--jade-glow);
+      text-align: right;
+      line-height: 1.3;
     }
 
     .player-avatar {
@@ -3097,7 +3113,7 @@
             <path d="M20 8 L20 32 M8 20 L32 20" stroke="#6ecfcf" stroke-width="1" opacity="0.4"/>
           </svg>
         </div>
-        <div class="logo-text">掌门模拟器</div>
+        <div class="logo-text">宗门志</div>
       </div>
 
       <div class="st-button-container"></div>
@@ -3194,7 +3210,9 @@
       <div class="player-info" onclick="openModal('player')">
         <div>
           <div class="player-name">—</div>
+          <div class="player-dao-name">—</div>
           <div class="player-realm">—</div>
+          <div class="player-talent">—</div>
         </div>
         <div class="player-avatar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--jade-pale)">
@@ -5846,8 +5864,14 @@
       if (typeof renderSectInfo === 'function') renderSectInfo();
       const p = window.gameStateManager?.state?.player;
       if (p) {
-        document.querySelector('.player-name').textContent = p.name || '—';
-        document.querySelector('.player-realm').textContent = p.realm || '—';
+        const nameEl = document.querySelector('.player-name');
+        const daoEl = document.querySelector('.player-dao-name');
+        const realmEl = document.querySelector('.player-realm');
+        const talentEl = document.querySelector('.player-talent');
+        if (nameEl) nameEl.textContent = p.name || '—';
+        if (daoEl) daoEl.textContent = p.daoName || '';
+        if (realmEl) realmEl.textContent = p.realm || '—';
+        if (talentEl) talentEl.textContent = p.talent ? `天赋：${p.talent}` : '';
         document.title = (p.name ? p.name + ' · ' : '') + '宗门志';
       }
     });
