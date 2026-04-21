@@ -182,6 +182,291 @@
       display: block;
     }
 
+    /* 天机推演按钮 */
+    .tianji-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--mist-purple);
+      font-size: 13px;
+      transition: background 0.3s;
+      margin-right: 8px;
+    }
+    .tianji-btn:hover {
+      background: rgba(139, 126, 200, 0.15);
+    }
+    .tianji-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    .tianji-btn .tianji-badge {
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      background: var(--lotus-pink);
+      color: var(--ink-dark);
+      font-size: 10px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+
+    /* 天机推演面板 */
+    .tianji-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(13, 31, 31, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .tianji-overlay.active {
+      display: flex;
+    }
+    .tianji-panel {
+      width: 560px;
+      max-height: 70vh;
+      background: var(--ink-mid);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .tianji-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .tianji-header h3 {
+      font-size: 16px;
+      color: var(--jade-pale);
+      font-weight: 500;
+      margin: 0;
+    }
+    .tianji-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: rgba(168, 230, 230, 0.5);
+      transition: all 0.2s;
+    }
+    .tianji-close:hover {
+      background: rgba(212, 114, 140, 0.2);
+      color: var(--lotus-pink);
+    }
+    .tianji-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--glass-border);
+      padding: 0 20px;
+    }
+    .tianji-tab {
+      padding: 10px 16px;
+      font-size: 13px;
+      color: rgba(168, 230, 230, 0.5);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .tianji-tab:hover {
+      color: var(--jade-pale);
+    }
+    .tianji-tab.active {
+      color: var(--jade-glow);
+      border-bottom-color: var(--jade-glow);
+    }
+    .tianji-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+    }
+    .tianji-section-title {
+      font-size: 12px;
+      color: var(--gold-spirit);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tianji-section-title button {
+      padding: 4px 10px;
+      font-size: 11px;
+      background: rgba(110, 207, 207, 0.1);
+      border: 1px solid var(--glass-border);
+      border-radius: 4px;
+      color: var(--jade-glow);
+      cursor: pointer;
+    }
+    .tianji-section-title button:hover {
+      background: rgba(110, 207, 207, 0.2);
+    }
+    .tianji-item {
+      padding: 12px;
+      background: rgba(26, 58, 58, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .tianji-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .tianji-item-title {
+      color: var(--jade-pale);
+      font-weight: 500;
+    }
+    .tianji-item-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .tianji-item-actions span {
+      cursor: pointer;
+      color: rgba(168, 230, 230, 0.4);
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .tianji-item-actions span:hover {
+      color: var(--lotus-pink);
+      background: rgba(212, 114, 140, 0.1);
+    }
+    .tianji-item-meta {
+      color: rgba(168, 230, 230, 0.5);
+      font-size: 11px;
+    }
+    .tianji-item-meta .countdown {
+      color: var(--gold-spirit);
+    }
+    .tianji-form {
+      padding: 12px;
+      background: rgba(26, 58, 58, 0.2);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .tianji-form-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .tianji-input {
+      flex: 1;
+      padding: 8px 10px;
+      background: rgba(13, 31, 31, 0.6);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: var(--cloud-white);
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .tianji-input:focus {
+      outline: none;
+      border-color: var(--jade-glow);
+    }
+    .tianji-input::placeholder {
+      color: rgba(168, 230, 230, 0.3);
+    }
+    .tianji-input-sm {
+      width: 80px;
+      flex: none;
+    }
+    .tianji-textarea {
+      width: 100%;
+      min-height: 60px;
+      padding: 8px 10px;
+      background: rgba(13, 31, 31, 0.6);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      color: var(--cloud-white);
+      font-size: 12px;
+      font-family: inherit;
+      resize: vertical;
+      margin-bottom: 8px;
+    }
+    .tianji-textarea:focus {
+      outline: none;
+      border-color: var(--jade-glow);
+    }
+    .tianji-btn-sm {
+      padding: 6px 14px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      border: none;
+    }
+    .tianji-btn-primary {
+      background: var(--jade-mid);
+      color: var(--cloud-white);
+    }
+    .tianji-btn-primary:hover {
+      background: var(--jade-light);
+    }
+    .tianji-btn-secondary {
+      background: rgba(168, 230, 230, 0.1);
+      color: rgba(168, 230, 230, 0.7);
+      border: 1px solid var(--glass-border);
+    }
+    .tianji-btn-secondary:hover {
+      background: rgba(168, 230, 230, 0.2);
+    }
+    .tianji-empty {
+      text-align: center;
+      padding: 24px;
+      color: rgba(168, 230, 230, 0.3);
+      font-size: 13px;
+    }
+    .tianji-probability-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .tianji-probability-track {
+      flex: 1;
+      height: 4px;
+      background: rgba(168, 230, 230, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .tianji-probability-fill {
+      height: 100%;
+      background: var(--jade-glow);
+      border-radius: 2px;
+    }
+    .tianji-probability-label {
+      font-size: 11px;
+      color: var(--gold-spirit);
+      min-width: 60px;
+      text-align: right;
+    }
+
     /* 体力条 */
     .stamina-bar {
       display: flex;
@@ -3191,6 +3476,15 @@
         </div>
       </div>
 
+      <div class="tianji-btn" onclick="openTianjiPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2V4M12 20V22M4.93 4.93L6.34 6.34M17.66 17.66L19.07 19.07M2 12H4M20 12H22M4.93 19.07L6.34 17.66M17.66 6.34L19.07 4.93"/>
+        </svg>
+        <span>天机推演</span>
+        <span class="tianji-badge" id="tianji-badge" style="display:none">0</span>
+      </div>
+
       <div class="player-info" onclick="openModal('player')">
         <div>
           <div class="player-name">—</div>
@@ -3765,6 +4059,61 @@
       <button class="recap-panel-close" onclick="closeRecapPanel()">×</button>
     </div>
     <div class="recap-panel-body" id="recap-panel-body"></div>
+  </div>
+
+  <!-- 天机推演面板 -->
+  <div class="tianji-overlay" id="tianji-overlay" onclick="if(event.target===this)closeTianjiPanel()">
+    <div class="tianji-panel">
+      <div class="tianji-header">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"><circle cx="12" cy="12" r="3"/><path d="M12 2V4M12 20V22M4.93 4.93L6.34 6.34M17.66 17.66L19.07 19.07M2 12H4M20 12H22M4.93 19.07L6.34 17.66M17.66 6.34L19.07 4.93"/></svg>天机推演</h3>
+        <div class="tianji-close" onclick="closeTianjiPanel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+      </div>
+      <div class="tianji-tabs">
+        <button class="tianji-tab active" data-tab="foreshadowing" onclick="switchTianjiTab('foreshadowing')">伏笔谱</button>
+        <button class="tianji-tab" data-tab="random-events" onclick="switchTianjiTab('random-events')">天机动向</button>
+      </div>
+      <div class="tianji-content" id="tianji-content-foreshadowing">
+        <div class="tianji-section-title">
+          <span>当前伏笔</span>
+          <button onclick="showForeshadowingForm()">+ 新增</button>
+        </div>
+        <div id="foreshadowing-form" style="display:none">
+          <div class="tianji-form">
+            <textarea class="tianji-textarea" id="fs-content" placeholder="伏笔内容（如：九幽教暗中派遣探子潜入宗门）"></textarea>
+            <div class="tianji-form-row">
+              <input type="number" class="tianji-input tianji-input-sm" id="fs-delay" placeholder="爆发间隔" min="1" max="20" value="3">
+              <span style="color:rgba(168,230,230,0.4);font-size:11px">轮后爆发</span>
+              <div style="flex:1"></div>
+              <button class="tianji-btn-sm tianji-btn-secondary" onclick="hideForeshadowingForm()">取消</button>
+              <button class="tianji-btn-sm tianji-btn-primary" onclick="saveForeshadowing()">保存</button>
+            </div>
+          </div>
+        </div>
+        <div id="foreshadowing-list"></div>
+      </div>
+      <div class="tianji-content" id="tianji-content-random-events" style="display:none">
+        <div class="tianji-section-title">
+          <span>随机事件池</span>
+          <button onclick="showRandomEventForm()">+ 新增</button>
+        </div>
+        <div id="random-event-form" style="display:none">
+          <div class="tianji-form">
+            <input type="text" class="tianji-input" id="re-name" placeholder="事件名称（如：灵气潮汐）" style="margin-bottom:8px">
+            <textarea class="tianji-textarea" id="re-desc" placeholder="事件描述（会注入提示词）"></textarea>
+            <div class="tianji-form-row">
+              <input type="number" class="tianji-input tianji-input-sm" id="re-prob-start" placeholder="起始概率" min="0" max="100" value="0">
+              <span style="color:rgba(168,230,230,0.4)">-</span>
+              <input type="number" class="tianji-input tianji-input-sm" id="re-prob-end" placeholder="结束概率" min="0" max="100" value="50">
+              <span style="color:rgba(168,230,230,0.4);font-size:11px">% 触发范围</span>
+              <div style="flex:1"></div>
+              <button class="tianji-btn-sm tianji-btn-secondary" onclick="hideRandomEventForm()">取消</button>
+              <button class="tianji-btn-sm tianji-btn-primary" onclick="saveRandomEvent()">保存</button>
+            </div>
+          </div>
+        </div>
+        <div id="random-event-list"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -4455,6 +4804,215 @@
       if (savedLogs) actionLogs = JSON.parse(savedLogs);
     } catch (e) { console.warn('恢复 session 状态失败:', e); }
 
+    // ====== 天机推演系统 ======
+    let foreshadowingStore = [];
+    let randomEventPool = [
+      { id: 're_none', name: '无事发生', desc: '', probStart: 0, probEnd: 50 },
+      { id: 're_spirit', name: '灵气潮汐', desc: '近日天地灵气异常涌动，宗门内修炼效率有所提升，但外出弟子需格外小心灵气暴走。', probStart: 51, probEnd: 65 },
+      { id: 're_raid', name: '山匪袭扰', desc: '山门附近出现了几股散修山匪，频繁骚扰周边村镇，影响宗门声誉和收入。', probStart: 66, probEnd: 75 },
+      { id: 're_visitor', name: '不速之客', desc: '一位神秘访客来到山门前，自称有重要情报要面见掌门，身份不明，目的未知。', probStart: 76, probEnd: 85 },
+      { id: 're_omen', name: '凶兆显现', desc: '天象有异，宗门护山大阵出现微弱波动，古籍记载这是大劫将至的征兆。', probStart: 86, probEnd: 95 },
+      { id: 're_miracle', name: '天降奇缘', desc: '一道灵光从天而降，落在宗门后山，似乎有什么天地异宝即将出世。', probStart: 96, probEnd: 100 }
+    ];
+    let _fsEditingId = null;
+    let _reEditingId = null;
+
+    function updateTianjiBadge() {
+      const badge = document.getElementById('tianji-badge');
+      if (!badge) return;
+      const total = foreshadowingStore.length;
+      if (total > 0) {
+        badge.textContent = total;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function openTianjiPanel() {
+      document.getElementById('tianji-overlay').classList.add('active');
+      renderForeshadowings();
+      renderRandomEvents();
+    }
+    function closeTianjiPanel() {
+      document.getElementById('tianji-overlay').classList.remove('active');
+      _fsEditingId = null;
+      _reEditingId = null;
+      hideForeshadowingForm();
+      hideRandomEventForm();
+    }
+    function switchTianjiTab(tab) {
+      document.querySelectorAll('.tianji-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      document.getElementById('tianji-content-foreshadowing').style.display = tab === 'foreshadowing' ? 'block' : 'none';
+      document.getElementById('tianji-content-random-events').style.display = tab === 'random-events' ? 'block' : 'none';
+    }
+
+    // 伏笔 CRUD
+    function showForeshadowingForm(id) {
+      _fsEditingId = id || null;
+      const form = document.getElementById('foreshadowing-form');
+      const content = document.getElementById('fs-content');
+      const delay = document.getElementById('fs-delay');
+      if (id) {
+        const fs = foreshadowingStore.find(f => f.id === id);
+        if (fs) { content.value = fs.content; delay.value = fs.delay; }
+      } else {
+        content.value = ''; delay.value = 3;
+      }
+      form.style.display = 'block';
+      content.focus();
+    }
+    function hideForeshadowingForm() {
+      document.getElementById('foreshadowing-form').style.display = 'none';
+      _fsEditingId = null;
+    }
+    function saveForeshadowing() {
+      const content = document.getElementById('fs-content').value.trim();
+      const delay = parseInt(document.getElementById('fs-delay').value, 10);
+      if (!content || isNaN(delay) || delay < 1) { alert('请填写完整信息'); return; }
+      if (_fsEditingId) {
+        const idx = foreshadowingStore.findIndex(f => f.id === _fsEditingId);
+        if (idx !== -1) { foreshadowingStore[idx].content = content; foreshadowingStore[idx].delay = delay; }
+      } else {
+        foreshadowingStore.push({ id: crypto.randomUUID(), content, delay });
+      }
+      hideForeshadowingForm();
+      renderForeshadowings();
+      updateTianjiBadge();
+    }
+    function deleteForeshadowing(id) {
+      if (!confirm('确定删除此伏笔？')) return;
+      foreshadowingStore = foreshadowingStore.filter(f => f.id !== id);
+      renderForeshadowings();
+      updateTianjiBadge();
+    }
+    function renderForeshadowings() {
+      const container = document.getElementById('foreshadowing-list');
+      if (!container) return;
+      if (foreshadowingStore.length === 0) {
+        container.innerHTML = '<div class="tianji-empty">暂无伏笔</div>';
+        return;
+      }
+      container.innerHTML = foreshadowingStore.map(f => `
+        <div class="tianji-item">
+          <div class="tianji-item-header">
+            <span class="tianji-item-title">伏笔 #${f.id.slice(0,4)}</span>
+            <div class="tianji-item-actions">
+              <span onclick="showForeshadowingForm('${f.id}')">编辑</span>
+              <span onclick="deleteForeshadowing('${f.id}')">删除</span>
+            </div>
+          </div>
+          <div style="color:var(--cloud-white);margin-bottom:4px">${escapeHtml(f.content)}</div>
+          <div class="tianji-item-meta">还有 <span class="countdown">${f.delay}</span> 轮后爆发</div>
+        </div>
+      `).join('');
+    }
+
+    // 随机事件 CRUD
+    function showRandomEventForm(id) {
+      _reEditingId = id || null;
+      const form = document.getElementById('random-event-form');
+      const name = document.getElementById('re-name');
+      const desc = document.getElementById('re-desc');
+      const pStart = document.getElementById('re-prob-start');
+      const pEnd = document.getElementById('re-prob-end');
+      if (id) {
+        const re = randomEventPool.find(r => r.id === id);
+        if (re) { name.value = re.name; desc.value = re.desc; pStart.value = re.probStart; pEnd.value = re.probEnd; }
+      } else {
+        name.value = ''; desc.value = ''; pStart.value = 0; pEnd.value = 50;
+      }
+      form.style.display = 'block';
+      name.focus();
+    }
+    function hideRandomEventForm() {
+      document.getElementById('random-event-form').style.display = 'none';
+      _reEditingId = null;
+    }
+    function saveRandomEvent() {
+      const name = document.getElementById('re-name').value.trim();
+      const desc = document.getElementById('re-desc').value.trim();
+      const pStart = parseInt(document.getElementById('re-prob-start').value, 10);
+      const pEnd = parseInt(document.getElementById('re-prob-end').value, 10);
+      if (!name || isNaN(pStart) || isNaN(pEnd) || pStart < 0 || pEnd > 100 || pStart >= pEnd) { alert('请填写正确信息，起始概率必须小于结束概率'); return; }
+      if (_reEditingId) {
+        const idx = randomEventPool.findIndex(r => r.id === _reEditingId);
+        if (idx !== -1) { randomEventPool[idx] = { ...randomEventPool[idx], name, desc, probStart: pStart, probEnd: pEnd }; }
+      } else {
+        randomEventPool.push({ id: crypto.randomUUID(), name, desc, probStart: pStart, probEnd: pEnd });
+      }
+      // 按概率范围排序
+      randomEventPool.sort((a, b) => a.probStart - b.probStart);
+      hideRandomEventForm();
+      renderRandomEvents();
+    }
+    function deleteRandomEvent(id) {
+      if (!confirm('确定删除此随机事件？')) return;
+      randomEventPool = randomEventPool.filter(r => r.id !== id);
+      renderRandomEvents();
+    }
+    function renderRandomEvents() {
+      const container = document.getElementById('random-event-list');
+      if (!container) return;
+      if (randomEventPool.length === 0) {
+        container.innerHTML = '<div class="tianji-empty">暂无随机事件</div>';
+        return;
+      }
+      container.innerHTML = randomEventPool.map(r => {
+        const probWidth = r.probEnd - r.probStart;
+        return `
+        <div class="tianji-item">
+          <div class="tianji-item-header">
+            <span class="tianji-item-title">${escapeHtml(r.name)}</span>
+            <div class="tianji-item-actions">
+              <span onclick="showRandomEventForm('${r.id}')">编辑</span>
+              <span onclick="deleteRandomEvent('${r.id}')">删除</span>
+            </div>
+          </div>
+          <div style="color:var(--cloud-white);margin-bottom:4px">${r.desc ? escapeHtml(r.desc) : '<span style="color:rgba(168,230,230,0.3)">无描述</span>'}</div>
+          <div class="tianji-probability-bar">
+            <div class="tianji-probability-track"><div class="tianji-probability-fill" style="width:${probWidth}%"></div></div>
+            <span class="tianji-probability-label">${r.probStart}-${r.probEnd}%</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // 发送请求前：处理伏笔和随机事件
+    function processForeshadowingBeforeRequest() {
+      // 所有伏笔延迟 -1
+      for (const fs of foreshadowingStore) { fs.delay = Math.max(0, fs.delay - 1); }
+      // 收集已爆发的伏笔
+      const triggered = foreshadowingStore.filter(f => f.delay === 0);
+      return triggered;
+    }
+    function processRandomEventBeforeRequest() {
+      const roll = Math.floor(Math.random() * 101); // 0-100
+      const event = randomEventPool.find(r => roll >= r.probStart && roll <= r.probEnd);
+      return { roll, event };
+    }
+
+    // 解析 foreshadowing 标签
+    function extractForeshadowingTags(text) {
+      const results = [];
+      const regex = /<foreshadowing>([\s\S]*?)<\/foreshadowing>/gi;
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const parts = match[1].split('|');
+        if (parts.length >= 2) {
+          const content = parts.slice(0, -1).join('|').trim();
+          const delay = parseInt(parts[parts.length - 1].trim(), 10);
+          if (content && !isNaN(delay) && delay > 0) {
+            results.push({ id: crypto.randomUUID(), content, delay });
+          }
+        }
+      }
+      return results;
+    }
+    function stripForeshadowingTags(text) {
+      return text.replace(/<foreshadowing>[\s\S]*?<\/foreshadowing>/gi, '');
+    }
+
     function saveSessionState() {
       try {
         sessionStorage.setItem('zhangmen_stamina', JSON.stringify(stamina));
@@ -4694,6 +5252,7 @@
         .replace(/<option>[\s\S]*?<\/option>/gi, '')
         .replace(/<sum>[\s\S]*?<\/sum>/gi, '')
         .replace(/<vars>[\s\S]*?<\/vars>/gi, '')
+        .replace(/<foreshadowing>[\s\S]*?<\/foreshadowing>/gi, '')
         .replace(/<var\s+[^>]*\/?>/gi, '')
         .trim();
     }
@@ -5119,7 +5678,21 @@
         return `执行了「${log.title}」：${log.content}`;
       }).join('\n');
 
-      const userInput = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}\n\n请根据这些操作，给出接下来的剧情发展和可选择的应对策略。`;
+      let userInput = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}\n\n请根据这些操作，给出接下来的剧情发展和可选择的应对策略。`;
+
+      // ===== 天机推演预处理 =====
+      // 1. 伏笔检查：间隔 -1，收集已爆发的
+      const triggeredForeshadowings = processForeshadowingBeforeRequest();
+      if (triggeredForeshadowings.length > 0) {
+        const fsText = triggeredForeshadowings.map((f, i) => `${i + 1}. ${f.content}`).join('\n');
+        userInput += `\n\n【伏笔爆发】此前曾经发生一件事，为后续剧情埋下了伏笔。\n${fsText}\n\n请思考本次剧情的时间推动部分，是否要围绕该伏笔的爆发来推动剧情？还是只是一笔带过？还是直接不启用？请合理地思考后选择其中一个方案。如果选择不启用或一笔带过，该伏笔将被视为机缘巧合下化解。`;
+      }
+      // 2. 随机事件选择
+      const randomEventResult = processRandomEventBeforeRequest();
+      if (randomEventResult.event && randomEventResult.event.desc) {
+        userInput += `\n\n【天机动向】天道运转之际，发生了一件意料之外的事：${randomEventResult.event.desc}（本次骰点：${randomEventResult.roll}，落在「${randomEventResult.event.name}」区间 ${randomEventResult.event.probStart}-${randomEventResult.event.probEnd}%）\n请在剧情中自然地融入此事，作为时间流逝部分的补充内容。`;
+      }
+      console.log('[天机推演] 伏笔爆发:', triggeredForeshadowings.length, '| 随机事件:', randomEventResult.event?.name || '无');
 
       // ===== 发送前快照 =====
       const panel = document.getElementById('action-log-panel');
@@ -5284,6 +5857,21 @@
 
         flushStreamProcessing();
         console.log('=== [LLM Raw] 返回的完整原始信息 ===', fullRawResponse);
+
+        // 解析新伏笔并存储
+        const newForeshadowings = extractForeshadowingTags(fullRawResponse);
+        if (newForeshadowings.length > 0) {
+          foreshadowingStore.push(...newForeshadowings);
+          updateTianjiBadge();
+          console.log('[天机推演] 新增伏笔:', newForeshadowings);
+        }
+        // 删除已爆发的伏笔（在请求前处理时已间隔-1，此处删除delay=0的）
+        const beforeCount = foreshadowingStore.length;
+        foreshadowingStore = foreshadowingStore.filter(f => f.delay > 0);
+        if (foreshadowingStore.length !== beforeCount) {
+          updateTianjiBadge();
+          console.log('[天机推演] 已删除爆发后的伏笔，剩余:', foreshadowingStore.length);
+        }
       } catch (err) {
         if (err.name !== 'AbortError') {
           console.error('LLM 请求失败:', err);
@@ -5303,7 +5891,9 @@
               if (chat) {
                 const { extractVariables } = await import('./sillytavern/st-variables.js');
                 const { cleanedText, updates } = extractVariables(fullRawResponse);
-                const strippedText = stripInternalTags(cleanedText || fullRawResponse);
+                // 保存时去除 foreshadowing 标签
+                const cleanedWithFs = stripForeshadowingTags(cleanedText || fullRawResponse);
+                const strippedText = stripInternalTags(cleanedWithFs);
                 await store.addMessage(chat.id, { role: 'assistant', content: strippedText });
                 if (Object.keys(updates).length > 0) {
                   await store.setChatVariables(chat.id, updates);
