@@ -2981,6 +2981,37 @@
       color: rgba(168,230,230,0.85);
       white-space: pre-wrap;
     }
+    .think-section {
+      margin-bottom: 20px;
+    }
+    .think-section:last-child {
+      margin-bottom: 0;
+    }
+    .think-section-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gold-spirit);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .think-section-content {
+      font-size: 13px;
+      line-height: 1.8;
+      color: rgba(168,230,230,0.85);
+    }
+    .think-section-content ul {
+      margin: 0;
+      padding-left: 16px;
+    }
+    .think-section-content li {
+      margin-bottom: 4px;
+    }
+    .think-empty {
+      text-align: center;
+      color: rgba(168,230,230,0.3);
+      padding: 40px 0;
+    }
 
     /* === RECAP PANEL === */
     .story-recap-btn {
@@ -4055,7 +4086,17 @@
       <h3>天道推演</h3>
       <button class="think-panel-close" onclick="closeThinkPanel()">×</button>
     </div>
-    <div class="think-panel-body" id="think-panel-body"></div>
+    <div class="think-panel-body" id="think-panel-body" style="overflow-y:auto">
+      <div class="think-section" id="think-section-thinking" style="display:none">
+        <div class="think-section-title">🧠 推演思路</div>
+        <div class="think-section-content" id="think-content-thinking"></div>
+      </div>
+      <div class="think-section" id="think-section-vars" style="display:none">
+        <div class="think-section-title">⚡ 天道变动</div>
+        <div class="think-section-content" id="think-content-vars"></div>
+      </div>
+      <div class="think-empty" id="think-empty" style="display:block">暂无推演内容</div>
+    </div>
   </div>
 
   <!-- 回顾前文面板 -->
@@ -5053,6 +5094,7 @@
     }
     let capturedSumText = '';
     let capturedVarsText = '';
+    let capturedVarsEffects = [];
     let currentSkillTypeFilter = 'all';
     let currentSkillRankFilter = 'all';
 
@@ -5224,6 +5266,7 @@
       capturedThinkText = '';
       capturedSumText = '';
       capturedVarsText = '';
+      capturedVarsEffects = [];
       currentMainParagraph = null;
       updateThinkButton();
     }
@@ -5309,17 +5352,46 @@
     function updateThinkButton() {
       const btn = document.getElementById('think-view-btn');
       if (btn) {
-        btn.classList.toggle('empty', !capturedThinkText.trim());
+        const hasContent = !!capturedThinkText.trim() || capturedVarsEffects.length > 0;
+        btn.classList.toggle('empty', !hasContent);
       }
     }
 
     function openThinkPanel() {
       const panel = document.getElementById('think-panel');
-      const body = document.getElementById('think-panel-body');
-      if (panel && body) {
-        body.textContent = capturedThinkText.trim() || '暂无推演内容';
-        panel.classList.add('active');
+      if (!panel) return;
+      const thinkingSection = document.getElementById('think-section-thinking');
+      const varsSection = document.getElementById('think-section-vars');
+      const thinkingContent = document.getElementById('think-content-thinking');
+      const varsContent = document.getElementById('think-content-vars');
+      const emptyMsg = document.getElementById('think-empty');
+
+      const hasThinking = !!capturedThinkText.trim();
+      const hasVars = capturedVarsEffects.length > 0;
+
+      if (!hasThinking && !hasVars) {
+        if (emptyMsg) emptyMsg.style.display = 'block';
+        if (thinkingSection) thinkingSection.style.display = 'none';
+        if (varsSection) varsSection.style.display = 'none';
+      } else {
+        if (emptyMsg) emptyMsg.style.display = 'none';
+
+        if (thinkingSection) {
+          thinkingSection.style.display = hasThinking ? 'block' : 'none';
+        }
+        if (thinkingContent) {
+          thinkingContent.textContent = capturedThinkText.trim();
+        }
+
+        if (varsSection) {
+          varsSection.style.display = hasVars ? 'block' : 'none';
+        }
+        if (varsContent) {
+          varsContent.innerHTML = capturedVarsEffects.map(e => `<li>${escapeHtml(e)}</li>`).join('');
+        }
       }
+
+      panel.classList.add('active');
     }
 
     function closeThinkPanel() {
@@ -5442,10 +5514,155 @@
         const patch = JSON.parse(raw);
         if (window.gameStateManager && Array.isArray(patch)) {
           window.gameStateManager.applyPatch(patch);
+          // 保存解析后的效果用于显示
+          capturedVarsEffects = patch.map(formatVarOp).filter(Boolean);
         }
       } catch (e) {
         console.warn('[Vars] Failed to parse patch:', raw, e);
       }
+    }
+
+    // 将单个 vars 操作转换为人类可读描述
+    function formatVarOp(op) {
+      if (!op || !op.op || !op.path) return null;
+      const path = op.path;
+      const value = op.value;
+
+      // 路径解析
+      const parts = path.split('/').filter(Boolean);
+
+      // finance
+      if (path === '/finance/gold') return `灵石 ${formatDelta(value)}`;
+      if (path === '/finance/prestige') return `威望 ${formatDelta(value)}`;
+      if (path === '/finance/income') return `月收入 ${formatDelta(value)}`;
+      if (path === '/finance/expense') return `月支出 ${formatDelta(value)}`;
+      if (path === '/finance/realmTitle') return `位阶称号 → ${value}`;
+
+      // members
+      const memberMatch = path.match(/^\/members\/([^/]+)(?:\/(.+))?$/);
+      if (memberMatch) {
+        const name = memberMatch[1];
+        const field = memberMatch[2] || '';
+        if (op.op === 'remove') return `${name} 离开宗门`;
+        if (op.op === 'insert') return `新增成员 ${name}`;
+        if (field === 'status') return `${name} 状态 → ${value}`;
+        if (field === 'realm') return `${name} 境界 → ${value}`;
+        if (field === 'loyalty') return `${name} 忠诚度 ${formatDelta(value)}`;
+        if (field === 'mood') return `${name} 心情 ${formatDelta(value)}`;
+        if (field === 'lifespan/current') return `${name} 寿元 ${formatDelta(value)}`;
+        if (field === 'skills/-') return `${name} 习得功法 ${value}`;
+        if (field === 'equipment/-') return `${name} 获得装备 ${value?.name || ''}`;
+        if (field.startsWith('stats/')) return `${name} ${field.replace('stats/', '')} ${formatDelta(value)}`;
+        if (field.startsWith('baseStats/')) return `${name} 基础${field.replace('baseStats/', '')} ${formatDelta(value)}`;
+        return `${name} ${field} → ${value}`;
+      }
+
+      // diplomacy
+      const dipMatch = path.match(/^\/diplomacy\/([^/]+)(?:\/(.+))?$/);
+      if (dipMatch) {
+        const faction = dipMatch[1];
+        const field = dipMatch[2] || '';
+        if (op.op === 'remove') return `与 ${faction} 外交关系断绝`;
+        if (op.op === 'insert') return `新增外交势力 ${faction}`;
+        if (field === 'relation') return `与 ${faction} 关系 → ${value}`;
+        if (field === 'value') return `与 ${faction} 关系值 ${formatDelta(value)}`;
+        return `与 ${faction} ${field} → ${value}`;
+      }
+
+      // treasury
+      if (path === '/treasury/items/-') return `宝库 新增物品 ${value?.name || ''}`;
+      if (path === '/treasury/arrayName') return `护山大阵名称 → ${value}`;
+      if (path === '/treasury/arrayRank') return `护山大阵品阶 → ${value}`;
+      if (path === '/treasury/arrayDesc') return `护山大阵描述更新`;
+      const treasuryItemMatch = path.match(/^\/treasury\/items\/(\d+)(?:\/.+)?$/);
+      if (treasuryItemMatch) {
+        if (op.op === 'remove') return `宝库 移除第${parseInt(treasuryItemMatch[1])+1}件物品`;
+        return `宝库 物品更新`;
+      }
+
+      // library
+      if (path === '/library/-') return `藏经阁 新增功法 ${value?.name || ''}`;
+      const libMatch = path.match(/^\/library\/(\d+)$/);
+      if (libMatch && op.op === 'remove') return `藏经阁 移除第${parseInt(libMatch[1])+1}卷功法`;
+
+      // opportunities
+      if (path === '/opportunities/-') return `新增机遇 ${value?.title || ''}`;
+      const oppMatch = path.match(/^\/opportunities\/(\d+)$/);
+      if (oppMatch && op.op === 'remove') return `移除第${parseInt(oppMatch[1])+1}个机遇`;
+      if (oppMatch && op.op === 'replace') return `机遇状态更新`;
+
+      // quests
+      if (path === '/quests/main/currentStage') return `主线阶段 → ${value}`;
+      if (path === '/quests/main/completedStages/-') return `主线 记录完成阶段 ${value}`;
+      if (path === '/quests/side/-') return `新增支线 ${value?.name || ''}`;
+      const questSideMatch = path.match(/^\/quests\/side\/(\d+)(?:\/.+)?$/);
+      if (questSideMatch) {
+        const idx = parseInt(questSideMatch[1]);
+        if (op.op === 'remove') return `支线 移除第${idx+1}个任务`;
+        const subField = questSideMatch[2] || '';
+        if (subField === 'status') return `支线${idx+1} 状态 → ${value}`;
+        if (subField === 'progress') return `支线${idx+1} 进度 → ${value}%`;
+      }
+
+      // world/buildings
+      if (path === '/world/buildings/-') return `新增建筑 ${value?.name || ''}`;
+      const bldMatch = path.match(/^\/world\/buildings\/(\d+)(?:\/.+)?$/);
+      if (bldMatch) {
+        const idx = parseInt(bldMatch[1]);
+        if (op.op === 'remove') return `拆除建筑`;
+        const subField = bldMatch[2] || '';
+        if (subField === 'level') return `建筑${idx+1} 等级 → ${value}`;
+        if (subField === 'unlocked') return `建筑${idx+1} ${value ? '解锁' : '锁定'}`;
+      }
+
+      // world/regions
+      if (path === '/world/regions/-') return `新增区域 ${value?.name || ''}`;
+      const regMatch = path.match(/^\/world\/regions\/(\d+)(?:\/.+)?$/);
+      if (regMatch) {
+        const idx = parseInt(regMatch[1]);
+        if (op.op === 'remove') return `移除区域`;
+        const subField = regMatch[2] || '';
+        if (subField === 'unlocked') return `区域${idx+1} ${value ? '解锁' : '锁定'}`;
+        if (subField === 'controlledBy') return `区域${idx+1} 控制权 → ${value}`;
+      }
+
+      // player
+      const playerMatch = path.match(/^\/player\/(?:stats\/|baseStats\/)?(.+)$/);
+      if (playerMatch) {
+        const field = playerMatch[1];
+        if (field === 'realm') return `掌门 境界 → ${value}`;
+        if (field === 'name') return `掌门 名称 → ${value}`;
+        if (field === 'daoName') return `掌门 道号 → ${value}`;
+        if (field === 'talent') return `掌门 天赋 → ${value}`;
+        if (field === 'lifespan/current') return `掌门 寿元 ${formatDelta(value)}`;
+        if (field === 'skills/-') return `掌门 习得功法 ${value}`;
+        if (field.startsWith('stats/')) return `掌门 ${field.replace('stats/', '')} ${formatDelta(value)}`;
+        if (field.startsWith('baseStats/')) return `掌门 基础${field.replace('baseStats/', '')} ${formatDelta(value)}`;
+        return `掌门 ${field} → ${value}`;
+      }
+
+      // sect
+      const sectMatch = path.match(/^\/sect\/(?:lineage\/)?(.+)$/);
+      if (sectMatch) {
+        const field = sectMatch[1];
+        if (field === 'name') return `宗门名称 → ${value}`;
+        if (field === 'motto') return `宗门箴言更新`;
+        if (field === 'description') return `宗门简介更新`;
+        if (field === 'lineage/-') return `历代掌门 新增 ${value}`;
+        return `宗门 ${field} → ${value}`;
+      }
+
+      // events (usually auto-generated but handle just in case)
+      if (path === '/events/-') return `新增事件 ${value?.text?.slice(0, 20) || ''}...`;
+
+      // fallback
+      return `${op.op} ${path}`;
+    }
+
+    function formatDelta(v) {
+      const n = typeof v === 'number' ? v : parseFloat(v);
+      if (isNaN(n)) return String(v);
+      return n >= 0 ? `+${n}` : `${n}`;
     }
 
     function renderEvents() {
