@@ -4107,9 +4107,9 @@
             <input type="text" class="tianji-input" id="re-name" placeholder="事件名称（如：灵气潮汐）" style="margin-bottom:8px">
             <textarea class="tianji-textarea" id="re-desc" placeholder="事件描述（会注入提示词）"></textarea>
             <div class="tianji-form-row">
-              <input type="number" class="tianji-input tianji-input-sm" id="re-prob-start" placeholder="起始概率" min="0" max="100" value="0">
+              <input type="number" class="tianji-input tianji-input-sm" id="re-prob-start" placeholder="起始" min="1" max="100" value="1">
               <span style="color:rgba(168,230,230,0.4)">-</span>
-              <input type="number" class="tianji-input tianji-input-sm" id="re-prob-end" placeholder="结束概率" min="0" max="100" value="50">
+              <input type="number" class="tianji-input tianji-input-sm" id="re-prob-end" placeholder="结束" min="1" max="100" value="50">
               <span style="color:rgba(168,230,230,0.4);font-size:11px">% 触发范围</span>
               <div style="flex:1"></div>
               <button class="tianji-btn-sm tianji-btn-secondary" onclick="hideRandomEventForm()">取消</button>
@@ -4813,7 +4813,7 @@
     // ====== 天机推演系统 ======
     let foreshadowingStore = [];
     let randomEventPool = [
-      { id: 're_none', name: '无事发生', desc: '', probStart: 0, probEnd: 50 },
+      { id: 're_none', name: '无事发生', desc: '', probStart: 1, probEnd: 50 },
       { id: 're_spirit', name: '灵气潮汐', desc: '近日天地灵气异常涌动，宗门内修炼效率有所提升，但外出弟子需格外小心灵气暴走。', probStart: 51, probEnd: 65 },
       { id: 're_raid', name: '山匪袭扰', desc: '山门附近出现了几股散修山匪，频繁骚扰周边村镇，影响宗门声誉和收入。', probStart: 66, probEnd: 75 },
       { id: 're_visitor', name: '不速之客', desc: '一位神秘访客来到山门前，自称有重要情报要面见掌门，身份不明，目的未知。', probStart: 76, probEnd: 85 },
@@ -4921,7 +4921,7 @@
         const re = randomEventPool.find(r => r.id === id);
         if (re) { name.value = re.name; desc.value = re.desc; pStart.value = re.probStart; pEnd.value = re.probEnd; }
       } else {
-        name.value = ''; desc.value = ''; pStart.value = 0; pEnd.value = 50;
+        name.value = ''; desc.value = ''; pStart.value = 1; pEnd.value = 50;
       }
       form.style.display = 'block';
       name.focus();
@@ -4930,20 +4930,51 @@
       document.getElementById('random-event-form').style.display = 'none';
       _reEditingId = null;
     }
+    function validateRandomEventPool(editingId) {
+      if (randomEventPool.length === 0) return { valid: false, error: '事件池不能为空' };
+      for (const r of randomEventPool) {
+        if (r.probStart < 1 || r.probEnd > 100) return { valid: false, error: '范围必须在 1–100 之间' };
+        if (r.probStart > r.probEnd) return { valid: false, error: '起始值不能大于结束值' };
+      }
+      const sorted = [...randomEventPool].sort((a, b) => a.probStart - b.probStart);
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const curr = sorted[i], next = sorted[i + 1];
+        if (curr.probEnd >= next.probStart) {
+          return { valid: false, error: `「${curr.name}」(${curr.probStart}-${curr.probEnd}) 与 「${next.name}」(${next.probStart}-${next.probEnd}) 范围重叠` };
+        }
+      }
+      if (sorted[0].probStart !== 1) return { valid: false, error: '第一个事件必须从 1 开始，当前起始为 ' + sorted[0].probStart };
+      if (sorted[sorted.length - 1].probEnd !== 100) return { valid: false, error: '最后一个事件必须以 100 结束，当前结束为 ' + sorted[sorted.length - 1].probEnd };
+      for (let i = 0; i < sorted.length - 1; i++) {
+        if (sorted[i].probEnd + 1 !== sorted[i + 1].probStart) {
+          return { valid: false, error: `「${sorted[i].name}」结束于 ${sorted[i].probEnd}，「${sorted[i + 1].name}」开始于 ${sorted[i + 1].probStart}，之间存在空隙` };
+        }
+      }
+      return { valid: true };
+    }
     function saveRandomEvent() {
       const name = document.getElementById('re-name').value.trim();
       const desc = document.getElementById('re-desc').value.trim();
       const pStart = parseInt(document.getElementById('re-prob-start').value, 10);
       const pEnd = parseInt(document.getElementById('re-prob-end').value, 10);
-      if (!name || isNaN(pStart) || isNaN(pEnd) || pStart < 0 || pEnd > 100 || pStart >= pEnd) { alert('请填写正确信息，起始概率必须小于结束概率'); return; }
+      if (!name || isNaN(pStart) || isNaN(pEnd)) { alert('请填写完整信息'); return; }
+      if (pStart < 1 || pEnd > 100) { alert('范围必须在 1–100 之间'); return; }
+      if (pStart > pEnd) { alert('起始值不能大于结束值'); return; }
+      // 临时修改池子用于验证
+      const original = [...randomEventPool];
       if (_reEditingId) {
         const idx = randomEventPool.findIndex(r => r.id === _reEditingId);
         if (idx !== -1) { randomEventPool[idx] = { ...randomEventPool[idx], name, desc, probStart: pStart, probEnd: pEnd }; }
       } else {
         randomEventPool.push({ id: crypto.randomUUID(), name, desc, probStart: pStart, probEnd: pEnd });
       }
-      // 按概率范围排序
       randomEventPool.sort((a, b) => a.probStart - b.probStart);
+      const validation = validateRandomEventPool();
+      if (!validation.valid) {
+        randomEventPool = original;
+        alert(validation.error);
+        return;
+      }
       hideRandomEventForm();
       renderRandomEvents();
     }
@@ -4973,7 +5004,7 @@
           <div style="color:var(--cloud-white);margin-bottom:4px">${r.desc ? escapeHtml(r.desc) : '<span style="color:rgba(168,230,230,0.3)">无描述</span>'}</div>
           <div class="tianji-probability-bar">
             <div class="tianji-probability-track"><div class="tianji-probability-fill" style="width:${probWidth}%"></div></div>
-            <span class="tianji-probability-label">${r.probStart}-${r.probEnd}%</span>
+            <span class="tianji-probability-label">${r.probStart}-${r.probEnd}</span>
           </div>
         </div>`;
       }).join('');
@@ -4988,7 +5019,7 @@
       return triggered;
     }
     function processRandomEventBeforeRequest() {
-      const roll = Math.floor(Math.random() * 101); // 0-100
+      const roll = Math.floor(Math.random() * 100) + 1; // 1D100: 1-100
       const event = randomEventPool.find(r => roll >= r.probStart && roll <= r.probEnd);
       return { roll, event };
     }
@@ -5691,7 +5722,7 @@
       // 2. 随机事件选择
       const randomEventResult = processRandomEventBeforeRequest();
       if (randomEventResult.event && randomEventResult.event.desc) {
-        userInput += `\n\n【天机动向】天道运转之际，发生了一件意料之外的事：${randomEventResult.event.desc}（本次骰点：${randomEventResult.roll}，落在「${randomEventResult.event.name}」区间 ${randomEventResult.event.probStart}-${randomEventResult.event.probEnd}%）\n请在剧情中自然地融入此事，作为时间流逝部分的补充内容。`;
+        userInput += `\n\n【天机动向】天道运转之际，发生了一件意料之外的事：${randomEventResult.event.desc}（本次骰点：${randomEventResult.roll}，落在「${randomEventResult.event.name}」区间 ${randomEventResult.event.probStart}-${randomEventResult.event.probEnd}）\n请在剧情中自然地融入此事，作为时间流逝部分的补充内容。`;
       }
       console.log('[天机推演] 伏笔爆发:', triggeredForeshadowings.length, '| 随机事件:', randomEventResult.event?.name || '无');
 
