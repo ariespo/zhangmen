@@ -1736,6 +1736,15 @@
       background: rgba(200, 168, 110, 0.2);
       border-color: rgba(200, 168, 110, 0.4);
     }
+    .story-test-advanced {
+      top: 82px;
+      background: rgba(110, 207, 207, 0.1);
+      color: var(--jade-glow);
+    }
+    .story-test-advanced:hover {
+      background: rgba(110, 207, 207, 0.2);
+      border-color: rgba(110, 207, 207, 0.4);
+    }
 
     .story-content-editable {
       outline: none;
@@ -3491,6 +3500,13 @@
                 </svg>
                 <span>测试流</span>
               </div>
+              <div class="story-test-btn story-test-advanced" onclick="simulateLLMResponseAdvanced()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                  <path d="M12 6v6l4 2"/>
+                </svg>
+                <span>测试高级</span>
+              </div>
               <div id="story-content">
                 <div class="story-paragraph narrator" style="color:rgba(168,230,230,0.4)">
                   天机台静待启封，天道流转，因果将启……
@@ -3996,6 +4012,44 @@
           return;
         }
         const len = Math.floor(Math.random() * 10) + 3; // 3-12 chars
+        const chunk = mockText.slice(idx, idx + len);
+        processStreamChunk(chunk);
+        idx += len;
+        setTimeout(nextChunk, 30);
+      }
+      nextChunk();
+    }
+
+    function simulateLLMResponseAdvanced() {
+      const gs = window.gameStateManager?.state;
+      if (!gs || !gs.members || !gs.members['周明远']) {
+        simulateLLMResponse();
+        setTimeout(() => simulateLLMResponseAdvanced(), 4000);
+        return;
+      }
+
+      const mockText = `\u003cmaintext\u003e\n【高级变量测试】天道运转，万象更新。\n\n此乃高级测试流，涵盖 delta、remove 及未覆盖之 insert/replace 路径，以验证变量系统之完备。\n\n一、delta 运算：灵石减五百，威望增二百，周明远忠诚度微升、心情略降、寿元流逝。天剑宗关系值下滑。\n\n二、replace 运算：周明远闭关；聚灵阵升至五级；幽冥谷解锁，归青云宗掌控；主线推进至「秘境探索」阶段；天剑宗关系等级降至警惕。\n\n三、insert 运算：周明远新增功法「紫霄神雷诀」与装备「青霜剑」；藏经阁录入「太虚剑意」与「九转金丹诀」；机遇栏添「灵脉异动」与「上古遗迹」；任务系统记录「玄云密信」已完成，新增支线「古战场侦察」与「寻找灵草」；宝库收入「上古玉简」与「回气丹」；近日要事新增「天剑宗态度转冷」与「周明远闭关突破成功」。\n\n四、remove 运算：藏经阁移除首卷功法；机遇栏移除首项机遇；支线任务移除第二项；宝库移除第二件物品；成员柳如烟离去；九幽教外交关系断绝；炼丹房拆除。\n\n五、replace 运算（数组元素）：宝库首件物品「上古玉简」分配给周明远；支线「古战场侦察」进度推进至五成，状态标记为已完成。\n\n诸般变化，皆由变量系统实时承载，望道友细察各页面之变动。\n\u003c/maintext\u003e\n\u003coption\u003e\nA. 确认天道运转，诸般变化已悉知\n\u003c/option\u003e\n\u003csum\u003e\n时间：测试时刻 | 地点：天机台 | 人物：测试者 | 事件：执行高级变量操作测试，涵盖 delta、remove 及未覆盖的 insert/replace 路径，包括财务变动、成员状态更新、建筑升级、区域控制变更、功法与机遇管理、任务推进、物品分配及外交关系调整\n\u003c/sum\u003e\n\u003cvars\u003e\n[\n  {"op":"delta","path":"/finance/gold","value":"-500"},\n  {"op":"delta","path":"/finance/prestige","value":"200"},\n  {"op":"delta","path":"/finance/income","value":"300"},\n  {"op":"delta","path":"/members/周明远/loyalty","value":"5"},\n  {"op":"delta","path":"/members/周明远/mood","value":"-10"},\n  {"op":"delta","path":"/members/周明远/lifespan/current","value":"-20"},\n  {"op":"delta","path":"/diplomacy/天剑宗/value","value":"-15"},\n  {"op":"replace","path":"/members/周明远/status","value":"闭关"},\n  {"op":"replace","path":"/world/buildings/0/level","value":5},\n  {"op":"replace","path":"/world/regions/0/unlocked","value":true},\n  {"op":"replace","path":"/world/regions/0/controlledBy","value":"青云宗"},\n  {"op":"replace","path":"/quests/main/currentStage","value":"秘境探索"},\n  {"op":"replace","path":"/diplomacy/天剑宗/relation","value":"警惕"},\n  {"op":"insert","path":"/members/周明远/skills/-","value":"紫霄神雷诀（第一层）"},\n  {"op":"insert","path":"/members/周明远/equipment/-","value":{"name":"青霜剑","rank":"玄阶上品","color":"jade","type":"武器"}},\n  {"op":"insert","path":"/library/-","value":{"id":"s_a","name":"太虚剑意","type":"道修","rank":"天阶中品","desc":"以太虚之力化剑，一剑破万法","color":"jade"}},\n  {"op":"insert","path":"/library/-","value":{"id":"s_b","name":"九转金丹诀","type":"道修","rank":"地阶上品","desc":"炼丹秘法，九转成丹","color":"lotus-pink"}},\n  {"op":"remove","path":"/library/0"},\n  {"op":"insert","path":"/opportunities/-","value":{"id":"o_a","title":"灵脉异动","desc":"云璃峰地下灵脉出现异常波动","category":"dili","cost":2,"completed":false}},\n  {"op":"insert","path":"/opportunities/-","value":{"id":"o_b","title":"上古遗迹","desc":"青岚山脉发现上古修士洞府","category":"tianshi","cost":3,"completed":false}},\n  {"op":"remove","path":"/opportunities/0"},\n  {"op":"insert","path":"/quests/main/completedStages/-","value":"玄云密信"},\n  {"op":"insert","path":"/quests/side/-","value":{"id":"q_a","name":"古战场侦察","status":"进行中","progress":20}},\n  {"op":"insert","path":"/quests/side/-","value":{"id":"q_b","name":"寻找灵草","status":"未触发","progress":0}},\n  {"op":"replace","path":"/quests/side/0/progress","value":50},\n  {"op":"replace","path":"/quests/side/0/status","value":"已完成"},\n  {"op":"remove","path":"/quests/side/1"},\n  {"op":"insert","path":"/treasury/items/-","value":{"id":"t_a","name":"上古玉简","type":"法宝","rank":"天阶下品","quantity":1,"color":"gold","description":"记载上古遗迹坐标的玉简","owner":"","effects":{"杀伐":0,"防御":0,"身法":0}}},\n  {"op":"insert","path":"/treasury/items/-","value":{"id":"t_b","name":"回气丹","type":"丹药","rank":"黄阶上品","quantity":10,"color":"jade","description":"快速恢复灵气的丹药","owner":"","effects":{"杀伐":0,"防御":0,"身法":0}}},\n  {"op":"replace","path":"/treasury/items/0/owner","value":"周明远"},\n  {"op":"remove","path":"/treasury/items/1"},\n  {"op":"insert","path":"/events/-","value":{"id":"e_a","text":"天剑宗态度转冷，需密切关注","time":"半日前","location":"天剑宗","people":"天剑宗使者","type":"urgent"}},\n  {"op":"insert","path":"/events/-","value":{"id":"e_b","text":"周明远闭关突破成功","time":"三日前","location":"修炼室","people":"周明远","type":"success"}},\n  {"op":"remove","path":"/members/柳如烟"},\n  {"op":"remove","path":"/diplomacy/九幽教"},\n  {"op":"remove","path":"/world/buildings/1"}\n]\n\u003c/vars\u003e`;
+
+      switchPage('story');
+      resetStreamState();
+      const storyContent = document.getElementById('story-content');
+      if (storyContent) storyContent.innerHTML = '';
+      const choicesContainer = document.getElementById('story-choices');
+      if (choicesContainer) choicesContainer.innerHTML = '';
+      setLLMProcessing(true);
+      setTimeout(() => {
+        const overlay = document.getElementById('llm-overlay');
+        if (overlay) overlay.classList.remove('active');
+      }, 1000);
+
+      let idx = 0;
+      function nextChunk() {
+        if (idx >= mockText.length) {
+          flushStreamProcessing();
+          setLLMProcessing(false);
+          return;
+        }
+        const len = Math.floor(Math.random() * 10) + 3;
         const chunk = mockText.slice(idx, idx + len);
         processStreamChunk(chunk);
         idx += len;
