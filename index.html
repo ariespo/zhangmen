@@ -5173,12 +5173,19 @@ ${discipleLines || '无'}
 
 【输出要求】
 1. <analysis>：分析当前局势——困境的核心矛盾、各弟子的立场与潜在作用、周边势力的威胁与机遇
-2. <maintext>：围绕「${meta.crisis || '开局'}」困境展开开局剧情。正文必须逐一交代玩家的全部选择，不可遗漏：
-   - 修行法门「${meta.path || ''}」：在剧情中通过宗门氛围、功法特点、弟子修行方式等体现
+2. <maintext>：正文分为两段——先"序章概述"，再"剧情正文"。
+   【序章概述】以 `【天机台 · 序章 · 问道之始】` 为标题，用第三人称概括性陈述以下内容（约200-400字）：
+   - 宗门${sect.name}，以${meta.path || '某'}为修行法门，专长于${meta.specialty || '某'}，在修仙界中${statusFlavor[fin.realmTitle] || ''}
+   - 掌门${player.name}，${player.gender || ''}，${player.age}岁，${player.realm}修为，天赋${player.talent}${player.personality?.length ? '。性格' + player.personality.join('、') : ''}${player.appearance?.length ? '，' + player.appearance.join('、') : ''}，是${sect.name}的现任掌门
+   - ${crisisFlavor[meta.crisis] || '开局困境'}
+   - 现有弟子${disciples.length}人${disciples.length > 0 ? '：' + disciples.map(d => d.name + '（' + d.realm + '·' + d.role + '·天赋' + d.talent + (d.personality?.length ? '·性格' + d.personality.join('、') : '') + (d.appearance?.length ? '·' + d.appearance.join('、') : '') + '）').join('、') : ''}
+   概述需文笔优美，像一部修仙小说的开篇序言，把所有玩家选择自然融入叙述，不可遗漏任何信息。
+   【剧情正文】在概述之后，展开具体场景和对话，继续逐一交代：
+   - 修行法门「${meta.path || ''}」：通过宗门氛围、功法特点、弟子修行方式等体现
    - 宗门专长「${meta.specialty || ''}」：在场景描写或对话中体现宗门的核心技艺传统
    - 开局地位「${fin.realmTitle || ''}」：通过资源匮乏程度、建筑破旧程度、弟子数量等体现
    - 开局困境「${meta.crisis || ''}」：作为核心冲突贯穿剧情始终
-   - 掌门性格「${(player.personality || []).join('、') || '未设定'}」：通过掌门的言行举止、决策倾向体现
+   - 掌门性格「${(player.personality || []).join('、') || '未设定'}」：通过言行举止、决策倾向体现
    - 掌门外貌「${(player.appearance || []).join('、') || '未设定'}」：通过他人视角或场景中的外貌描写体现
    - 弟子个性：每个弟子必须在对话中体现其性格标签和外貌标签，忠诚度差异必须通过态度差异展现
    - 弟子境界与天赋：通过其能力表现、旁人评价等侧面体现
