@@ -5082,6 +5082,106 @@
       return { roll, event };
     }
 
+    // 检测是否是第一次LLM交互（开局）
+    function isFirstInteraction() {
+      const stStore = window.sillyTavernStore;
+      if (!stStore) return false;
+      const chat = stStore.getActiveChat();
+      if (!chat || !chat.messages) return true;
+      return chat.messages.filter(m => m.role !== 'system').length === 0;
+    }
+
+    // 构建开局提示词
+    function buildOpeningPrompt(state) {
+      const player = state.player || {};
+      const meta = state._creationMeta || {};
+      const members = Object.values(state.members || {});
+      const disciples = members.filter(m => m.name !== player.name && !m.id?.startsWith('player_'));
+      const sect = state.sect || {};
+      const fin = state.finance || {};
+
+      const statusDesc = {
+        '末流小派': '末流小派，在修仙界中名不见经传，随时可能被吞并',
+        '四流小宗': '四流小宗，在方圆百里内略有薄名，但根基不稳',
+        '三流门派': '三流门派，在当地修仙界中有一席之地，但暗流涌动'
+      };
+      const crisisDesc = {
+        '临危受命': '前任掌门突然陨落，你仓促接任，宗门内部人心惶惶，外部势力虎视眈眈',
+        '白手起家': '你与几位志同道合的弟子从零开始，一砖一瓦地建立宗门，资源极度匮乏',
+        '仇敌环伺': '你的宗门被多个敌对势力包围，稍有不慎便会万劫不复',
+        '天降机缘': '一场天地异象带来了前所未有的机遇，但也引来了无数觊觎者',
+        '宗门内乱': '宗门内部出现分裂，部分长老和弟子对你阳奉阴违，甚至暗中图谋不轨'
+      };
+
+      let prompt = `【天道诏令·开局推演】\n\n`;
+      prompt += `道友，此乃「宗门志」开局之际。你需根据以下信息，为玩家构建一段引人入胜的开局剧情，`;
+      prompt += `并通过 <vars> 标签输出完整的开局状态变量。\n\n`;
+
+      prompt += `【掌门】${player.name || '无名'}，${player.gender || '未详'}，${player.age || 0}岁，${player.realm || '未详'}修为，天赋${player.talent || '未详'}\n`;
+      if (player.personality && player.personality.length > 0) {
+        prompt += `性格：${player.personality.join('、')}\n`;
+      }
+      if (player.appearance && player.appearance.length > 0) {
+        prompt += `外貌：${player.appearance.join('、')}\n`;
+      }
+      prompt += `\n`;
+
+      prompt += `【宗门】${sect.name || '无名宗门'}\n`;
+      prompt += `修行法门：${meta.path || '未详'}\n`;
+      prompt += `专长：${meta.specialty || '未详'}\n`;
+      prompt += `开局地位：${fin.realmTitle || '未详'} — ${statusDesc[fin.realmTitle] || '未详'}\n`;
+      prompt += `开局困境：${meta.crisis || '未详'} — ${crisisDesc[meta.crisis] || '未详'}\n`;
+      prompt += `护山大阵：${state.treasury?.arrayName || '基础护山阵'}（${state.treasury?.arrayRank || '凡阶'}）\n\n`;
+
+      if (disciples.length > 0) {
+        prompt += `【弟子】共${disciples.length}人\n`;
+        disciples.forEach((d, i) => {
+          prompt += `${i+1}. ${d.name}（道号：${d.daoName || d.name}），${d.realm || '未详'}，${d.role || '未详'}，天赋${d.talent || '未详'}，忠诚度${d.loyalty || 0}\n`;
+          const pTags = d.personality?.join('、');
+          const aTags = d.appearance?.join('、');
+          const tags = [];
+          if (pTags) tags.push(`性格：${pTags}`);
+          if (aTags) tags.push(`外貌：${aTags}`);
+          if (tags.length > 0) prompt += `   ${tags.join(' | ')}\n`;
+        });
+        prompt += `\n`;
+      }
+
+      prompt += `【已初始化数据（供参考，无需重复设置这些字段）】\n`;
+      prompt += `- 灵石：${fin.gold || 0} | 威望：${fin.prestige || 0} | 月收入：${fin.income || 0} | 月支出：${fin.expense || 0}\n`;
+      const buildings = (state.world?.buildings || []).map(b => `${b.name}(Lv.${b.level})`).join('、');
+      prompt += `- 建筑：${buildings || '无'}\n`;
+      const regions = (state.world?.regions || []).map(r => `${r.name}${r.controlledBy ? '（' + r.controlledBy + '）' : ''}`).join('、');
+      prompt += `- 疆域：${regions || '无'}\n`;
+      const memberNames = members.map(m => `${m.name}(${m.realm})`).join('、');
+      prompt += `- 成员：${memberNames}\n\n`;
+
+      prompt += `【请通过 <vars> 标签补充以下开局变量】\n`;
+      prompt += `1. /sect：补充 motto（宗门格言，一句话）、foundedYear（创立年份，如"天历三百二十一年"）、location（宗门所在地，如"东荒·青岚山脉"）、founder（创派祖师名）、history（简要历史，2-3句话）、description（宗门描述，3-5句话，体现法门特点和宗门氛围）\n`;
+      prompt += `2. /library：根据修行法门「${meta.path || '未详'}」和专长「${meta.specialty || '未详'}」，设计2-4部宗门功法。每部包含：id（唯一ID）、name（功法名）、type（类型，从"道修/神修/魔修/体修/修行百艺"中选与法门匹配者）、rank（品阶，如"黄阶上品"）、desc（描述）、color（颜色标识：jade/purple/pink/gold）\n`;
+      prompt += `3. /diplomacy：根据开局困境「${meta.crisis || '未详'}」和地位「${fin.realmTitle || '未详'}」，设计2-4个周边势力。每个包含：name（势力名）、relation（关系：盟友/友好/中立/警惕/敌对）、value（关系值0-100）、desc（描述，需与困境相关）、color（颜色：jade/purple/pink/gold）、leader（首领名）\n`;
+      prompt += `4. /treasury/items：根据宗门地位，设计3-6件宝库物品。每件包含：id（唯一ID）、name（名称）、type（类型：武器/防具/遁具/饰品/丹药/材料/功法/法宝/杂物）、rank（品阶）、quantity（数量）、color（颜色）、description（描述）、owner（所有者，空字符串表示无主）、effects（效果对象：{杀伐:0, 防御:0, 身法:0}，如有加成请填入数值）\n`;
+      prompt += `5. /opportunities：设计1-3个当前可把握的机缘。每个包含：id（唯一ID）、title（标题）、desc（描述）、category（类型：tianshi天时/dili地利/renhe人和）、cost（消耗行动点，1-3）、completed（false）\n`;
+      prompt += `6. /events：记录开局时发生的一件要事。包含：id（唯一ID）、text（事件文本）、time（时间，如"今日"）、location（地点）、people（涉及人物）、type（类型：normal/success/warning/urgent）\n`;
+      prompt += `7. /quests/main/currentStage：设置主线当前阶段名称，建议为「${meta.crisis || '开局'}」\n\n`;
+
+      prompt += `【正文剧情要求】\n`;
+      prompt += `1. 剧情需围绕「${meta.crisis || '开局'}」这一开局困境展开，交代宗门面临的最初危机或挑战\n`;
+      prompt += `2. 通过对话或场景描写，展现掌门${player.name || ''}与各弟子之间的关系、互动和信任度差异。注意：忠诚度高的弟子更亲近掌门，忠诚度低的弟子可能有所保留\n`;
+      if (disciples.length > 0) {
+        disciples.forEach(d => {
+          prompt += `3. ${d.name}：${d.personality?.join('、') || '性格鲜明'}，${d.appearance?.join('、') || '外貌出众'}。忠诚度${d.loyalty}，${d.loyalty >= 80 ? '对掌门忠心耿耿' : d.loyalty >= 60 ? '对掌门有所信任' : '对掌门心存疑虑'}\n`;
+        });
+      }
+      prompt += `4. 剧情需自然引出若干可选的应对策略（<option>标签），至少4个选项\n`;
+      prompt += `5. 整体语气风格需符合修仙世界观，文字优美，有画面感和氛围感\n`;
+      prompt += `6. 剧情结尾需自然过渡到选项选择，不要强行收束\n\n`;
+
+      prompt += `请严格按照格式规范输出：<maintext>剧情正文</maintext>、<option>选项</option>、<sum>摘要</sum>、<vars>变量更新</vars>。分析模块<analysis>和伏笔<foreshadowing>为可选。`;
+
+      return prompt;
+    }
+
     // 解析 foreshadowing 标签
     function extractForeshadowingTags(text) {
       const results = [];
@@ -5931,20 +6031,27 @@
     }
 
     async function submitActions() {
-      if (actionLogs.length === 0) return;
+      const isFirst = isFirstInteraction();
+      if (!isFirst && actionLogs.length === 0) return;
 
       const playerName = window.gameStateManager?.state?.player?.name || '掌门';
       const sectName = window.gameStateManager?.state?.sect?.name || '宗门';
-      const operations = actionLogs.map(log => {
-        if (log.opportunityId) {
-          return `对「${log.title}」的决定是：${log.content}`;
-        } else if (log.type === '天机') {
-          return `在天机台剧情中做出抉择：${log.content}`;
-        }
-        return `执行了「${log.title}」：${log.content}`;
-      }).join('\n');
 
-      let userInput = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}\n\n请根据这些操作，给出接下来的剧情发展和可选择的应对策略。`;
+      let userInput;
+      if (isFirst) {
+        userInput = buildOpeningPrompt(window.gameStateManager.state);
+      } else {
+        const operations = actionLogs.map(log => {
+          if (log.opportunityId) {
+            return `对「${log.title}」的决定是：${log.content}`;
+          } else if (log.type === '天机') {
+            return `在天机台剧情中做出抉择：${log.content}`;
+          }
+          return `执行了「${log.title}」：${log.content}`;
+        }).join('\n');
+
+        userInput = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}\n\n请根据这些操作，给出接下来的剧情发展和可选择的应对策略。`;
+      }
 
       // ===== 天机推演预处理 =====
       // 1. 伏笔检查：间隔 -1，收集已爆发的
