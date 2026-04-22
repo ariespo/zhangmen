@@ -5128,8 +5128,24 @@
         return `${i+1}. ${d.name}（${d.daoName || d.name}）— ${d.realm}·${d.role}·天赋${d.talent}·忠诚度${d.loyalty}（${loyaltyDesc}）${tagStr}`;
       }).join('\n');
 
-      const buildings = (state.world?.buildings || []).map(b => b.name).join('、');
-      const regions = (state.world?.regions || []).map(r => r.name).join('、');
+      const buildings = (state.world?.buildings || []).map(b => `${b.name}(Lv.${b.level})`).join('、');
+      const regions = (state.world?.regions || []).map(r => `${r.name}${r.controlledBy ? '（' + r.controlledBy + '）' : ''}`).join('、');
+      const memberNames = members.map(m => `${m.name}(${m.realm})`).join('、');
+
+      const pathFlavor = {
+        '道修': '顺应天道，万法自然，讲究天人合一',
+        '神修': '香火成神，信仰之力，与凡人世界联系紧密',
+        '魔修': '弱肉强食，百无禁忌，手段凌厉狠辣',
+        '体修': '淬炼肉身，金刚不坏，以力破万法',
+        '旁门左道': '另辟蹊径，出奇制胜，手段诡谲多变'
+      };
+      const specialtyFlavor = {
+        '剑': '宗门以剑道立派，剑气纵横，杀伐无双',
+        '丹': '宗门以炼丹著称，丹香四溢，救死扶伤',
+        '炼器': '宗门精于锻造，炉火通明，攻守兼备',
+        '法阵': '宗门擅布大阵，阵纹密布，困敌护山',
+        '符箓': '宗门以符箓见长，符光流转，变化万千'
+      };
 
       return `【天道诏令·开局推演】
 
@@ -5140,7 +5156,8 @@ ${playerLine}
 
 【宗门】
 名称：${sect.name}
-法门：${meta.path || '未详'} | 专长：${meta.specialty || '未详'}
+法门：${meta.path || '未详'}（${pathFlavor[meta.path] || ''}）
+专长：${meta.specialty || '未详'}（${specialtyFlavor[meta.specialty] || ''}）
 地位：${fin.realmTitle || '未详'}（${statusFlavor[fin.realmTitle] || ''}）
 困境：${meta.crisis || '未详'}（${crisisFlavor[meta.crisis] || ''}）
 大阵：${treasury.arrayName || '基础护山阵'}（${treasury.arrayRank || '凡阶'}）
@@ -5148,14 +5165,24 @@ ${playerLine}
 【弟子】${disciples.length}人
 ${discipleLines || '无'}
 
-【现状】
-灵石${fin.gold} | 威望${fin.prestige} | 月收${fin.income} | 月支${fin.expense}
-建筑：${buildings || '无'}
-疆域：${regions || '无'}
+【已初始化数据（供参考，无需重复设置）】
+- 灵石：${fin.gold} | 威望：${fin.prestige} | 月收入：${fin.income} | 月支出：${fin.expense}
+- 建筑：${buildings || '无'}
+- 疆域：${regions || '无'}
+- 成员：${memberNames || '无'}
 
 【输出要求】
 1. <analysis>：分析当前局势——困境的核心矛盾、各弟子的立场与潜在作用、周边势力的威胁与机遇
-2. <maintext>：围绕「${meta.crisis || '开局'}」困境展开剧情。交代危机，通过对话展现各弟子性格外貌与忠诚差异（高忠诚度亲近，低忠诚度保留）。自然过渡到选项。
+2. <maintext>：围绕「${meta.crisis || '开局'}」困境展开开局剧情。正文必须逐一交代玩家的全部选择，不可遗漏：
+   - 修行法门「${meta.path || ''}」：在剧情中通过宗门氛围、功法特点、弟子修行方式等体现
+   - 宗门专长「${meta.specialty || ''}」：在场景描写或对话中体现宗门的核心技艺传统
+   - 开局地位「${fin.realmTitle || ''}」：通过资源匮乏程度、建筑破旧程度、弟子数量等体现
+   - 开局困境「${meta.crisis || ''}」：作为核心冲突贯穿剧情始终
+   - 掌门性格「${(player.personality || []).join('、') || '未设定'}」：通过掌门的言行举止、决策倾向体现
+   - 掌门外貌「${(player.appearance || []).join('、') || '未设定'}」：通过他人视角或场景中的外貌描写体现
+   - 弟子个性：每个弟子必须在对话中体现其性格标签和外貌标签，忠诚度差异必须通过态度差异展现
+   - 弟子境界与天赋：通过其能力表现、旁人评价等侧面体现
+   剧情需自然过渡到选项，不要强行收束。
 3. <option>：至少4个应对选项，每个选项需暗示不同的发展走向
 4. <sum>：时间·地点·人物·事件摘要
 5. <vars>：补充以下开局变量（严格使用给定枚举值，不可自创）
