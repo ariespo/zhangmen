@@ -6048,8 +6048,8 @@
           history: chat?.messages || window.storyHistory || [],
           preset: preset || { promptOrder: [], parameters: {}, contextLength: 4096 },
           lorebooks: activeBooks || [],
-          userName: settings?.userName || playerName,
-          characterName: settings?.characterName || '云璃仙子',
+          userName: window.gameStateManager?.state?.player?.name || playerName || '掌门',
+          characterName: '宗门模拟器',
           variables: { ...(chat?.variables || {}), ...(window.gameStateManager?.state?._vars || {}) },
           gameState: window.gameStateManager?.state
         });

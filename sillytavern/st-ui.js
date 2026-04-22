@@ -672,19 +672,14 @@ function renderApiSettings(state) {
 }
 
 function renderProfileSettings(state) {
+  const playerName = window.gameStateManager?.state?.player?.name || state.settings.userName || '掌门';
   return `
     <div style="max-width:500px">
       <div class="st-form-group">
-        <label class="st-label">你的名称 (User)</label>
-        <input type="text" class="st-input" id="st-user-name" value="${escapeHtml(state.settings.userName)}" placeholder="清虚子">
-        <p style="font-size:12px;color:rgba(168,230,230,0.4);margin-top:4px">用于替换 {{user}} 宏变量</p>
+        <label class="st-label">你的名称</label>
+        <input type="text" class="st-input" value="${escapeHtml(playerName)}" readonly style="background:rgba(0,0,0,0.2);color:rgba(168,230,230,0.6);cursor:not-allowed">
+        <p style="font-size:12px;color:rgba(168,230,230,0.4);margin-top:4px">与当前角色同步，用于替换 {{user}} 宏变量</p>
       </div>
-      <div class="st-form-group">
-        <label class="st-label">AI角色名 (Character)</label>
-        <input type="text" class="st-input" id="st-char-name" value="${escapeHtml(state.settings.characterName)}" placeholder="云璃仙子">
-        <p style="font-size:12px;color:rgba(168,230,230,0.4);margin-top:4px">用于替换 {{char}} 宏变量</p>
-      </div>
-      <button class="st-btn-primary" id="st-save-profile">保存设置</button>
     </div>
   `;
 }
@@ -801,8 +796,8 @@ export function bindEvents(store) {
       history: chat?.messages || [],
       preset: store.getActivePreset(),
       lorebooks: store.getActiveLorebooks(),
-      userName: state.settings.userName || '用户',
-      characterName: state.settings.characterName || 'AI',
+      userName: window.gameStateManager?.state?.player?.name || state.settings.userName || '掌门',
+      characterName: '宗门模拟器',
       variables: chat?.variables || {}
     });
     store.setState({ activeModal: 'prompt-preview', promptPreview: preview });
@@ -1286,13 +1281,6 @@ function attachSettingsListeners(state, store) {
     }
   });
 
-  body.querySelector('#st-save-profile')?.addEventListener('click', async () => {
-    await store.saveSettings({
-      userName: document.getElementById('st-user-name')?.value || '用户',
-      characterName: document.getElementById('st-char-name')?.value || 'AI'
-    });
-    store.showToast('角色设置已保存');
-  });
 
   body.querySelector('#st-export-all')?.addEventListener('click', () => exportAllData());
 
