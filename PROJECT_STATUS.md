@@ -30,6 +30,8 @@
 | **数据持久化** | 已完成 | 对话级独立存档（IndexedDB），每个对话有独立的 gameState；自动存档 300ms 防抖 |
 | **读档恢复** | 已完成 | 读档后自动刷新所有 UI 模块 |
 | **读取游戏（标题页）** | 已完成 | 按玩家名称分组，每个角色 N 个存档槽，支持读取/删除/新建 |
+| **开局提示词系统** | 已完成 | `isFirstInteraction()` 检测首次 LLM 交互，`buildOpeningPrompt()` 注入完整开局引导，包含玩家/宗门/弟子全部信息，要求 LLM 输出 `<vars>` 补充完整开局变量 |
+| **序章正文展示** | 已完成 | `generateOpeningStory` 根据创建向导数据生成序章，展示宗门、掌门（含天赋）、弟子（含性格/外貌/忠诚度描述词）及开局困境 |
 | **快照回滚** | 已完成 | 发送前 snapshot，API 失败时回滚 gameState、actionLogs、stamina、聊天记录 |
 | **体力/操作记录** | 已完成 | 按 session 持久化，刷新页面不丢失；提交成功后清除 |
 | **UI 响应式订阅修复** | 已完成 | player-realm 动态绑定、members subscribe 触发 renderMembers、diplomacy subscribe 触发 renderFactions |
@@ -217,6 +219,12 @@ LLM 在输出中可携带 `<vars>` 标签来更新游戏状态：
 | 2026-04-21 | 格式规范新增 `\u003canalysis\u003e` 模块：要求 LLM 在 `\u003cvars\u003e` 前分析变量影响 |
 | 2026-04-21 | 格式规范新增剧情结构要求：上次选择结果 + 时间流逝 + 弟子个性化 + 死亡机制 |
 | 2026-04-21 | 首次加载自动创建默认世界书《宗门志》，导入格式规范和变量规范为深度 0 条目 |
+| 2026-04-22 | **开局提示词系统**：`isFirstInteraction()` 检测首次 LLM 交互，`buildOpeningPrompt()` 注入完整开局引导，要求 LLM 通过 `<vars>` 补充功法/外交/宝库/机缘/事件/任务等变量 |
+| 2026-04-22 | **序章正文补全**：`generateOpeningStory` 新增弟子信息（姓名、道号、境界、角色、天赋、忠诚度、性格、外貌）和掌门天赋；忠诚度映射为描述词 |
+| 2026-04-22 | **设置面板角色同步**：userName 与 `player.name` 同步只读显示，AI 角色名硬编码为「宗门模拟器」 |
+| 2026-04-22 | **高级测试增强**：mockText 加入 `<foreshadowing>` 标签并解析入库；伪装天机推演预处理输出伏笔爆发和随机事件日志 |
+| 2026-04-22 | **修复反引号语法错误**：`buildOpeningPrompt` 模板字符串中嵌套反引号导致整段 `<script>` 无法执行，`switchPage` 等函数未定义 |
+| 2026-04-22 | **验证持久化与回滚**：确认 events 增量追加 + IndexedDB 自动持久化，读档后正确恢复；LLM 请求失败时快照回滚覆盖 gameState/聊天记录/体力/操作记录 |
 
 ---
 
@@ -238,8 +246,13 @@ LLM 在输出中可携带 `<vars>` 标签来更新游戏状态：
    - 当 player/sect 数据为空时，提供更友好的引导提示
 
 5. **完善 Prompt 指南**
-   - 更新 `PROMPT_GUIDE.md`，补充 `\u003canalysis\u003e`、`\u003cforeshadowing\u003e` 标签说明
+   - 更新 `PROMPT_GUIDE.md`，补充 `\u003canalysis\u003e`、`\u003cforeshadowing\u003e`、`<sum>` 标签说明
+
+6. **开局 LLM 交互验证**
+   - 验证首次交互时 `buildOpeningPrompt` 是否正确注入
+   - 验证 LLM 输出的 `<vars>` 是否完整补充了所有开局变量
+   - 验证序章概述和剧情正文是否正确展示了所有玩家选择
 
 ---
 
-*文档更新时间：2026-04-21*
+*文档更新时间：2026-04-22*
