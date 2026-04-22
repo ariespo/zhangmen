@@ -7476,6 +7476,23 @@ ${discipleLines || '无'}
       };
       const specialtyDesc = specialtyDescMap[data.specialty] || data.specialty;
 
+      // 弟子信息段落
+      let discipleHTML = '';
+      let discipleText = '';
+      if (data.disciples && data.disciples.length > 0) {
+        const loyaltyLabel = v => v >= 80 ? '忠心耿耿' : v >= 60 ? '心怀敬意' : v >= 40 ? '若即若离' : '心存芥蒂';
+        const lines = data.disciples.map(d => {
+          const dPersonality = d.personality?.length ? '，性格' + d.personality.join('、') : '';
+          const dAppearance = d.appearance?.length ? '，' + d.appearance.join('、') : '';
+          return `${d.name}（${d.daoName || d.name}），${d.realm}修为，${d.role}，天赋${d.talent}，忠诚度${d.loyalty}（${loyaltyLabel(d.loyalty)}）${dPersonality}${dAppearance}`;
+        });
+        discipleHTML = `
+        <div class="story-paragraph" style="animation-delay:0.45s">
+          随${data.name}一同撑起${data.sectName}的，还有${data.disciples.length}名弟子：${lines.join('；')}。
+        </div>`;
+        discipleText = `随${data.name}一同撑起${data.sectName}的，还有${data.disciples.length}名弟子：${lines.join('；')}。\n\n`;
+      }
+
       const storyHTML = `
         <div class="story-paragraph narrator" style="animation-delay:0s">
           【天机台 · 序章 · 问道之始】
@@ -7484,12 +7501,12 @@ ${discipleLines || '无'}
           ${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}
         </div>
         <div class="story-paragraph" style="animation-delay:0.3s">
-          ${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。
+          ${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为，天赋${data.talent || '未详'}。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。
         </div>
-        <div class="story-paragraph" style="animation-delay:0.45s">
+        <div class="story-paragraph" style="animation-delay:0.4s">
           ${crisisDesc}
-        </div>
-        <div class="story-paragraph narrator" style="animation-delay:0.6s">
+        </div>${discipleHTML}
+        <div class="story-paragraph narrator" style="animation-delay:0.7s">
           风云际会，正是你书写传奇的时刻——
         </div>
       `;
@@ -7512,7 +7529,7 @@ ${discipleLines || '无'}
       // 将开局剧情保存到 chat.messages，以便读档时恢复
       const chatId = window.gameStateManager?._chatId;
       if (chatId && window.sillyTavernStore) {
-        const plainText = `${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}\n\n${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。\n\n${crisisDesc}`;
+        const plainText = `${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}\n\n${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为，天赋${data.talent || '未详'}。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。\n\n${crisisDesc}\n\n${discipleText}`;
         window.sillyTavernStore.addMessage(chatId, {
           role: 'assistant',
           content: `<maintext>${plainText}</maintext>\n<option>开始你的宗门之旅</option>`
