@@ -31,9 +31,12 @@ npx serve .
 - **四步开局创建向导**：玩家信息 → 宗门概况 → **弟子信息** → 确认
 - **弟子个性化配置**：姓名、性别、道号、境界、年龄、职务、天赋、忠诚度、性格标签、外貌标签；骰子随机生成
 - **天赋资质系统**：甲乙丙丁 × 上中下（12 档），驱动角色三维计算
+- **多 API 模式**（可选）：主 API 专注剧情创作，第二 API 专注变量更新，任务拆分提升质量
 - **对话级独立存档**：每个对话 = 一个独立存档槽，自动持久化到 IndexedDB
 - **快照回滚**：发送前 snapshot，API 失败自动回滚全部状态
-- **LLM 标签解析**：`<maintext>`、`<option>`、`<sum>`、`<vars>`、`<var>` 流式解析
+- **长按菜单**：天机正文区域长按触发，支持编辑/重 roll/重新解析变量
+- **LLM 标签解析**：`<maintext>`、`<option>`、`<sum>`、`<vars>`、`<var>`、`<foreshadowing>` 流式解析
+- **手机端适配**：底部 Tab 导航、资源栏横向滚动、触控优化正文阅读
 
 ## 文档索引
 
@@ -43,6 +46,10 @@ npx serve .
 | `VARIABLES.md` | 完整变量表、`<vars>` 路径规则、操作示例 |
 | `INITIAL_STATE.md` | 默认初始状态（未经创建向导时） |
 | `PROMPT_GUIDE.md` | LLM Prompt 工程指南、输出标签规范、最佳实践 |
+| `LLM_FORMAT_SPEC.md` | 单 API 模式核心格式规范（注入 system prompt） |
+| `LLM_REFERENCE.md` | 变量参考文档（注入 system prompt） |
+| `docs/LLM_FORMAT_SPEC_MAIN.md` | 多 API 模式主 API 格式规范 |
+| `docs/LLM_FORMAT_SPEC_SECOND.md` | 多 API 模式第二 API 变量更新规范 |
 
 ---
 
