@@ -6046,6 +6046,8 @@ ${discipleLines || '无'}
       if (!currentMainParagraph) {
         const container = document.getElementById('story-content');
         if (!container) return null;
+        // 清空之前的内容，只显示最新一轮正文
+        container.innerHTML = '';
         currentMainParagraph = document.createElement('div');
         currentMainParagraph.className = 'story-paragraph';
         container.appendChild(currentMainParagraph);
@@ -6487,6 +6489,12 @@ ${discipleLines || '无'}
             // 保留可能的不完整起始标签后缀（最长 <thinking> = 10）
             const keepLen = 10;
             const processLen = Math.max(0, streamBuffer.length - keepLen);
+            if (processLen === 0 && streamBuffer.length > 0) {
+              // 缓冲区长度恰好等于 keepLen 且不包含任何标签开头
+              // 直接清空避免死循环（这些字符不是任何已知标签的开头）
+              streamBuffer = '';
+              break;
+            }
             const toProcess = streamBuffer.slice(0, processLen);
             const leftover = processNormalBufferImpl(toProcess);
             streamBuffer = leftover + streamBuffer.slice(processLen);
@@ -6835,12 +6843,25 @@ ${discipleLines || '无'}
           throw new Error(`API 错误 ${response.status}: ${errText}`);
         }
 
+        if (!response.body) {
+          throw new Error('API 响应体为空');
+        }
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
 
+        // 流式读取超时保护：60秒未收到数据自动中止
+        let lastChunkTime = Date.now();
+        const STREAM_TIMEOUT = 60000;
+
         while (true) {
+          if (Date.now() - lastChunkTime > STREAM_TIMEOUT) {
+            throw new Error('天道运转超时，未在60秒内收到回应');
+          }
+
           const { done, value } = await reader.read();
           if (done) break;
+
+          lastChunkTime = Date.now();
           const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split('\n');
           for (const line of lines) {
@@ -8260,17 +8281,15 @@ ${discipleLines || '无'}
         if (storyChoices) storyChoices.innerHTML = '';
 
         let lastOptions = '';
+        let lastMaintext = '';
 
         for (const msg of chat.messages) {
           const content = msg.content || '';
 
-          // 提取 maintext
+          // 提取 maintext（只保留最后一个）
           const mainMatch = content.match(/<maintext>([\s\S]*?)<\/maintext>/i);
           if (mainMatch) {
-            const p = document.createElement('div');
-            p.className = 'story-paragraph';
-            p.innerHTML = formatStoryText(mainMatch[1]);
-            storyContent.appendChild(p);
+            lastMaintext = mainMatch[1];
           }
 
           // 提取 options（保留最后一个）
@@ -8278,6 +8297,17 @@ ${discipleLines || '无'}
           if (optionMatch) {
             lastOptions = optionMatch[1];
           }
+        }
+
+        // 只渲染最新一轮 maintext
+        if (lastMaintext) {
+          const p = document.createElement('div');
+          p.className = 'story-paragraph';
+          p.innerHTML = formatStoryText(lastMaintext);
+          storyContent.appendChild(p);
+        } else {
+          // 还没有任何正文，显示默认提示
+          storyContent.innerHTML = '<div class="story-paragraph narrator" style="color:rgba(168,230,230,0.4)">天机台静待启封，天道流转，因果将启……</div>';
         }
 
         // 渲染最后一条 option
