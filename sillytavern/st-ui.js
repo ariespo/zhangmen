@@ -813,10 +813,6 @@ export function bindEvents(store) {
     store.setState({ activeModal: 'preset', activeTab: 'general' });
   });
 
-  document.getElementById('st-btn-settings')?.addEventListener('click', () => {
-    store.setState({ activeModal: 'settings', activeTab: 'api' });
-  });
-
   document.getElementById('st-btn-chat')?.addEventListener('click', () => {
     if (typeof window.loadGame === 'function') {
       window.loadGame();
