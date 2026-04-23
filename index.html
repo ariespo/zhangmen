@@ -4240,7 +4240,7 @@
           <span>机缘</span>
         </button>
         <div style="flex:1"></div>
-        <button class="nav-btn" onclick="openTitleSettings()">
+        <button class="nav-btn" onclick="openGameSettings()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
@@ -4784,65 +4784,6 @@
         </button>
       </div>
       <div class="modal-body" id="modal-body"></div>
-    </div>
-  </div>
-
-  <!-- Settings Panel -->
-  <div class="modal-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettingsPanel()">
-    <div class="modal-container" style="max-width:560px">
-      <div class="modal-header">
-        <h2>系统设置</h2>
-        <button class="modal-close" onclick="closeSettingsPanel()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M4 4l8 8M12 4l-8 8"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body" id="settings-body" style="padding:20px">
-        <div class="settings-section">
-          <div class="settings-section-title">API 模式</div>
-          <div class="settings-row">
-            <label class="settings-label">模式选择</label>
-            <select id="settings-api-mode" class="settings-select" onchange="toggleSecondaryApiSection()">
-              <option value="single">单 API 模式</option>
-              <option value="dual">多 API 模式</option>
-            </select>
-          </div>
-          <div class="settings-desc" id="api-mode-desc">单 API 模式下，一个 LLM 同时负责剧情和变量更新。</div>
-        </div>
-
-        <div class="settings-section" id="secondary-api-section" style="display:none">
-          <div class="settings-section-title">第二 API 配置</div>
-          <div class="settings-row">
-            <label class="settings-label">API Base URL</label>
-            <input type="text" id="settings-secondary-url" class="settings-input" placeholder="https://api.openai.com/v1">
-          </div>
-          <div class="settings-row">
-            <label class="settings-label">API Key</label>
-            <input type="password" id="settings-secondary-key" class="settings-input" placeholder="sk-...">
-          </div>
-          <div class="settings-row">
-            <label class="settings-label">模型</label>
-            <input type="text" id="settings-secondary-model" class="settings-input" placeholder="gpt-3.5-turbo">
-          </div>
-          <div class="settings-row">
-            <label class="settings-label">温度 (0-2)</label>
-            <input type="number" id="settings-secondary-temp" class="settings-input" min="0" max="2" step="0.1" value="0.7">
-          </div>
-          <div class="settings-row">
-            <label class="settings-label">Max Tokens</label>
-            <input type="number" id="settings-secondary-maxtokens" class="settings-input" min="1" max="8192" value="2048">
-          </div>
-          <div style="display:flex;gap:8px;margin-top:12px">
-            <button class="settings-btn" onclick="testSecondaryApi()">测试连通性</button>
-          </div>
-        </div>
-
-        <div class="settings-actions">
-          <button class="settings-btn secondary" onclick="closeSettingsPanel()">取消</button>
-          <button class="settings-btn primary" onclick="saveSettingsPanel()">保存</button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -8900,111 +8841,9 @@ ${discipleLines || '无'}
       }
     };
 
-    window.openTitleSettings = async function() {
-      const overlay = document.getElementById('settings-overlay');
-      if (!overlay) return;
-
-      // 加载当前设置
-      const settings = await loadSettingsFromDB();
-      const mode = settings.apiMode || 'single';
-      document.getElementById('settings-api-mode').value = mode;
-
-      const sec = settings.secondaryApi || {};
-      document.getElementById('settings-secondary-url').value = sec.baseUrl || '';
-      document.getElementById('settings-secondary-key').value = sec.apiKey || '';
-      document.getElementById('settings-secondary-model').value = sec.model || '';
-      document.getElementById('settings-secondary-temp').value = sec.temperature ?? 0.7;
-      document.getElementById('settings-secondary-maxtokens').value = sec.maxTokens ?? 2048;
-
-      toggleSecondaryApiSection();
-      overlay.classList.add('active');
-    };
-
-    window.closeSettingsPanel = function() {
-      document.getElementById('settings-overlay').classList.remove('active');
-    };
-
-    window.toggleSecondaryApiSection = function() {
-      const mode = document.getElementById('settings-api-mode').value;
-      const sec = document.getElementById('secondary-api-section');
-      const desc = document.getElementById('api-mode-desc');
-      if (sec) sec.style.display = mode === 'dual' ? 'block' : 'none';
-      if (desc) desc.textContent = mode === 'dual'
-        ? '多 API 模式下，主 API 负责剧情创作，第二 API 负责变量更新。'
-        : '单 API 模式下，一个 LLM 同时负责剧情和变量更新。';
-    };
-
-    window.saveSettingsPanel = async function() {
-      const mode = document.getElementById('settings-api-mode').value;
-      const secondaryApi = {
-        baseUrl: document.getElementById('settings-secondary-url').value.trim(),
-        apiKey: document.getElementById('settings-secondary-key').value.trim(),
-        model: document.getElementById('settings-secondary-model').value.trim() || 'gpt-3.5-turbo',
-        temperature: parseFloat(document.getElementById('settings-secondary-temp').value) || 0.7,
-        maxTokens: parseInt(document.getElementById('settings-secondary-maxtokens').value) || 2048
-      };
-
-      // 保存到 IndexedDB
-      try {
-        const { db } = await import('./sillytavern/st-core.js');
-        const s = await db.settings.get('settings');
-        if (s) {
-          s.apiMode = mode;
-          s.secondaryApi = secondaryApi;
-          await db.settings.put(s);
-        }
-      } catch (e) {
-        console.warn('[Settings] 保存失败:', e);
-      }
-
-      // 同步世界书条目
+    window.openGameSettings = function() {
       if (window.sillyTavernStore) {
-        const { switchApiLorebookMode } = await import('./sillytavern/st-integration.js');
-        await switchApiLorebookMode(mode, window.sillyTavernStore);
-      }
-
-      closeSettingsPanel();
-      showToast(mode === 'dual' ? '已切换至多 API 模式' : '已切换至单 API 模式');
-    };
-
-    async function loadSettingsFromDB() {
-      try {
-        const { db } = await import('./sillytavern/st-core.js');
-        const s = await db.settings.get('settings');
-        return s || {};
-      } catch (e) {
-        return {};
-      }
-    }
-
-    window.testSecondaryApi = async function() {
-      const url = document.getElementById('settings-secondary-url').value.trim();
-      const key = document.getElementById('settings-secondary-key').value.trim();
-      const model = document.getElementById('settings-secondary-model').value.trim() || 'gpt-3.5-turbo';
-
-      if (!url || !key) {
-        alert('请先填写 API Base URL 和 API Key');
-        return;
-      }
-
-      showToast('正在测试第二 API 连通性...');
-      try {
-        const response = await fetch(`${url.replace(/\/$/, '')}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${key}`
-          },
-          body: JSON.stringify({ model, messages: [{ role: 'user', content: 'Hi' }], max_tokens: 5 })
-        });
-        if (response.ok) {
-          showToast('第二 API 连通性测试通过');
-        } else {
-          const text = await response.text();
-          showToast(`测试失败: ${response.status} ${text.slice(0, 100)}`);
-        }
-      } catch (e) {
-        showToast(`测试失败: ${e.message}`);
+        window.sillyTavernStore.setState({ activeModal: 'settings', activeTab: 'api' });
       }
     };
   </script>

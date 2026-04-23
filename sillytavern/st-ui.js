@@ -642,6 +642,8 @@ function renderSettingsModal(state, store) {
 function renderApiSettings(state) {
   const modelList = state.apiModelList;
   const hasList = modelList && modelList.length > 0;
+  const isDual = state.settings.apiMode === 'dual';
+  const sec = state.settings.secondaryApi || {};
   return `
     <div style="max-width:500px">
       <div class="st-form-group">
@@ -663,6 +665,46 @@ function renderApiSettings(state) {
         <input type="text" class="st-input" id="st-base-url" value="${escapeHtml(state.settings.api.baseUrl)}" placeholder="https://api.openai.com/v1">
         <p style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:4px">支持 OpenAI / DeepSeek / Kimi / 本地模型等兼容端点</p>
       </div>
+
+      <hr style="border:none;border-top:1px solid var(--glass-border);margin:20px 0">
+
+      <div class="st-form-group">
+        <label class="st-label">API 模式</label>
+        <select class="st-input" id="st-api-mode" onchange="toggleSecondaryApiSection(this.value)">
+          <option value="single" ${!isDual ? 'selected' : ''}>单 API 模式</option>
+          <option value="dual" ${isDual ? 'selected' : ''}>多 API 模式</option>
+        </select>
+        <p style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:4px" id="st-api-mode-desc">
+          ${isDual ? '多 API 模式下，主 API 负责剧情创作，第二 API 负责变量更新。' : '单 API 模式下，一个 LLM 同时负责剧情和变量更新。'}
+        </p>
+      </div>
+
+      <div id="st-secondary-api-section" style="display:${isDual ? 'block' : 'none'}">
+        <div class="st-form-group">
+          <label class="st-label">第二 API Base URL</label>
+          <input type="text" class="st-input" id="st-secondary-url" value="${escapeHtml(sec.baseUrl || '')}" placeholder="https://api.openai.com/v1">
+        </div>
+        <div class="st-form-group">
+          <label class="st-label">第二 API Key</label>
+          <input type="password" class="st-input" id="st-secondary-key" value="${escapeHtml(sec.apiKey || '')}" placeholder="sk-...">
+        </div>
+        <div class="st-form-group">
+          <label class="st-label">第二 API 模型</label>
+          <input type="text" class="st-input" id="st-secondary-model" value="${escapeHtml(sec.model || '')}" placeholder="gpt-3.5-turbo">
+        </div>
+        <div class="st-form-group">
+          <label class="st-label">温度 (0-2)</label>
+          <input type="number" class="st-input" id="st-secondary-temp" min="0" max="2" step="0.1" value="${sec.temperature ?? 0.7}">
+        </div>
+        <div class="st-form-group">
+          <label class="st-label">Max Tokens</label>
+          <input type="number" class="st-input" id="st-secondary-maxtokens" min="1" max="8192" value="${sec.maxTokens ?? 2048}">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+          <button class="st-btn-secondary" id="st-test-secondary-api">测试连通性</button>
+        </div>
+      </div>
+
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="st-btn-primary" id="st-save-api">保存设置</button>
         <button class="st-btn-secondary" id="st-fetch-models">获取模型列表</button>
@@ -1213,14 +1255,27 @@ function attachSettingsListeners(state, store) {
   });
 
   body.querySelector('#st-save-api')?.addEventListener('click', async () => {
+    const mode = document.getElementById('st-api-mode')?.value || 'single';
     await store.saveSettings({
       api: {
         ...state.settings.api,
         apiKey: (document.getElementById('st-api-key')?.value || '').trim(),
         model: (document.getElementById('st-model')?.value || '').trim(),
         baseUrl: (document.getElementById('st-base-url')?.value || '').trim().replace(/\/$/, '')
-      }
+      },
+      apiMode: mode,
+      secondaryApi: mode === 'dual' ? {
+        baseUrl: (document.getElementById('st-secondary-url')?.value || '').trim().replace(/\/$/, ''),
+        apiKey: (document.getElementById('st-secondary-key')?.value || '').trim(),
+        model: (document.getElementById('st-secondary-model')?.value || '').trim() || 'gpt-3.5-turbo',
+        temperature: parseFloat(document.getElementById('st-secondary-temp')?.value) || 0.7,
+        maxTokens: parseInt(document.getElementById('st-secondary-maxtokens')?.value) || 2048
+      } : (state.settings.secondaryApi || null)
     });
+    // 同步切换世界书模式
+    if (typeof window.switchApiLorebookMode === 'function' && window.sillyTavernStore) {
+      await window.switchApiLorebookMode(mode, window.sillyTavernStore);
+    }
     store.showToast('API 设置已保存');
   });
 
@@ -1270,6 +1325,38 @@ function attachSettingsListeners(state, store) {
     const fallbackModels = getCommonModels(baseUrl);
     store.setState({ apiModelList: fallbackModels.list });
     alert(`获取模型列表失败 (${lastErr?.message || 'Unknown'})，已显示常用模型供选择。`);
+  });
+
+  body.querySelector('#st-test-secondary-api')?.addEventListener('click', async () => {
+    const url = (document.getElementById('st-secondary-url')?.value || '').trim().replace(/\/$/, '');
+    const key = (document.getElementById('st-secondary-key')?.value || '').trim();
+    const model = (document.getElementById('st-secondary-model')?.value || '').trim() || 'gpt-3.5-turbo';
+    if (!url || !key) {
+      alert('请先填写第二 API 的 URL 和 Key');
+      return;
+    }
+    try {
+      const res = await fetch(`${url}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: 'user', content: '你好' }],
+          max_tokens: 5
+        })
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        alert(`测试失败: ${res.status}\n${err.slice(0, 200)}`);
+        return;
+      }
+      store.showToast('第二 API 连通性测试通过');
+    } catch (err) {
+      alert('测试失败: ' + err.message);
+    }
   });
 
   body.querySelector('#st-model-select')?.addEventListener('change', async () => {
@@ -1403,3 +1490,15 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+// 切换第二 API 配置区域显示（全局函数，供 inline onchange 调用）
+window.toggleSecondaryApiSection = function(mode) {
+  const sec = document.getElementById('st-secondary-api-section');
+  const desc = document.getElementById('st-api-mode-desc');
+  if (sec) sec.style.display = mode === 'dual' ? 'block' : 'none';
+  if (desc) {
+    desc.textContent = mode === 'dual'
+      ? '多 API 模式下，主 API 负责剧情创作，第二 API 负责变量更新。'
+      : '单 API 模式下，一个 LLM 同时负责剧情和变量更新。';
+  }
+};
