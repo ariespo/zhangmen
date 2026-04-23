@@ -6423,7 +6423,7 @@ ${discipleLines || '无'}
         currentRoundMaintext = capturedMainText;
         const mode = window._currentApiMode;
         if (mode === 'dual' && !secondaryApiPromise) {
-          secondaryApiPromise = callSecondaryApi(currentRoundMaintext);
+          secondaryApiPromise = callSecondaryApi(currentRoundMaintext, window._currentRoundIsFirst || false);
           showSecondaryApiStatus(true);
         }
       }
@@ -6435,7 +6435,7 @@ ${discipleLines || '无'}
       if (el) el.style.display = show ? 'flex' : 'none';
     }
 
-    async function callSecondaryApi(maintext) {
+    async function callSecondaryApi(maintext, isFirst = false) {
       secondaryApiCompleted = false;
       secondaryApiError = null;
 
@@ -6465,7 +6465,7 @@ ${discipleLines || '无'}
         gameState = rest;
       }
 
-      const prompt = `【本次剧情正文】\n${maintext}\n\n【当前完整变量表】\n${JSON.stringify(gameState, null, 2)}\n\n请根据剧情正文，分析需要更新的变量，输出 <analysis> 和 <vars>。`;
+      let prompt = `【本次剧情正文】\n${maintext}\n\n【当前完整变量表】\n${JSON.stringify(gameState, null, 2)}\n\n请根据剧情正文和当前完整的变量表，逐一对照分析，找出剧情中提到的所有变化，输出 <analysis> 和 <vars>。务必确保变量表中的每一条变更都能在剧情正文中找到依据，且剧情中提到的所有数值变化、状态变更都必须在 <vars> 中体现。\n\n额外规则：\n- 尽可能确保机缘列表中总是有4条机缘同时存在。\n- 如果剧情中玩家已经安排了某个机缘的分配，则该机缘应该从机缘变量里删除（remove），并立即分配一条新的机缘（insert）。\n- 如果某条机缘已经过期或不再适用，也应删除并补充新的机缘。`;\n\n      if (isFirst) {\n        prompt += `\n\n【重要：本次为游戏开局】\n这是游戏的第一次交互，剧情正文为宗门开局的背景设定。请根据开局剧情，补充完善变量表中的以下信息：\n1. 【功法】根据玩家境界和宗门地位，为藏经阁补充开局应有的基础功法（至少3-5部）\n2. 【外交】根据剧情设定，补充开局存在的外交势力及其关系值（至少2-3个）\n3. 【法宝/物品】根据剧情，为宝库补充开局宗门拥有的法宝、丹药、材料等\n4. 【护山大阵】设定开局宗门的护山大阵名称和品阶\n5. 【机缘】补充开局即存在的4条机缘，涵盖天时、地利、人和三类\n6. 【成员】如有剧情提到的新成员加入，完整添加到成员列表\n7. 【建筑】确保开局建筑列表完整且等级合理\n\n请一次性将上述开局信息全部补充到变量表中，不要遗漏。`;\n      }
 
       try {
         const response = await fetch(`${config.baseUrl}/chat/completions`, {
@@ -7180,6 +7180,18 @@ ${discipleLines || '无'}
 
       // 进入 LLM 交互阶段
       window._currentApiMode = await getApiMode();
+      window._currentRoundIsFirst = isFirst;
+
+      // 单 API 模式下注入额外变量更新规则
+      if (window._currentApiMode === 'single') {
+        userInput += '\n\n【变量更新规则提醒】\n- 务必根据当前变量表的实际情况来思考本次应该更新哪些变量。\n- 尽可能确保机缘列表中总是有4条机缘同时存在。\n- 如果玩家已经在上一轮安排了某个机缘的分配，则该机缘应该从机缘变量里删除（remove），并立即分配一条新的机缘（insert）。\n- 如果某条机缘已经过期或不再适用，也应删除并补充新的机缘。';
+      }
+
+      // 开局时额外注入提示词（单 API 模式）
+      if (isFirst && window._currentApiMode === 'single') {
+        userInput += '\n\n【重要：本次为游戏开局】\n这是游戏的第一次交互。请在剧情正文中充分描写宗门的开局背景设定，并通过 <vars> 补充完善以下信息：\n1. 【功法】根据玩家境界和宗门地位，为藏经阁补充开局应有的基础功法（至少3-5部）\n2. 【外交】根据剧情设定，补充开局存在的外交势力及其关系值（至少2-3个）\n3. 【法宝/物品】根据剧情，为宝库补充开局宗门拥有的法宝、丹药、材料等\n4. 【护山大阵】设定开局宗门的护山大阵名称和品阶\n5. 【机缘】补充开局即存在的4条机缘，涵盖天时、地利、人和三类\n6. 【成员】如有剧情提到的新成员加入，完整添加到成员列表\n7. 【建筑】确保开局建筑列表完整且等级合理\n\n请确保剧情正文和变量表都充分体现上述开局设定，不要遗漏。';
+      }
+
       switchPage('story');
       setLLMProcessing(true);
       setTimeout(() => {
