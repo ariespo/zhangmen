@@ -2760,6 +2760,307 @@
       max-height: calc(80vh - 60px);
     }
 
+    /* === MEMBER DETAIL === */
+    .member-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .member-detail-header {
+      text-align: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .member-detail-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(110,207,207,0.12);
+      border: 2px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      color: var(--jade-glow);
+      transition: all 0.3s;
+    }
+
+    .member-detail-avatar svg {
+      width: 36px;
+      height: 36px;
+    }
+
+    .member-detail-name {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--jade-pale);
+      margin-bottom: 4px;
+      letter-spacing: 2px;
+    }
+
+    .member-detail-dao {
+      font-size: 14px;
+      color: var(--gold-spirit);
+      margin-bottom: 12px;
+    }
+
+    .member-detail-badges {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .member-detail-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      border: 1px solid var(--glass-border);
+      background: rgba(0,0,0,0.2);
+    }
+
+    .member-detail-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .member-detail-section-title {
+      font-size: 11px;
+      color: rgba(168,230,230,0.45);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+    }
+
+    .member-detail-section-title::before,
+    .member-detail-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--glass-border));
+    }
+
+    .member-detail-section-title::after {
+      background: linear-gradient(90deg, var(--glass-border), transparent);
+    }
+
+    /* 进度条 */
+    .member-detail-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .member-detail-bar-label {
+      font-size: 13px;
+      color: rgba(168,230,230,0.7);
+      width: 56px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .member-detail-bar-track {
+      flex: 1;
+      height: 10px;
+      background: rgba(0,0,0,0.35);
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid rgba(110,207,207,0.08);
+    }
+
+    .member-detail-bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.6s ease;
+    }
+
+    .member-detail-bar-value {
+      font-size: 13px;
+      color: var(--jade-pale);
+      width: 40px;
+      text-align: right;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+
+    /* 三维属性卡片 */
+    .member-detail-stat-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .member-detail-stat-card {
+      text-align: center;
+      padding: 14px 8px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .member-detail-stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--jade-glow), transparent);
+      opacity: 0.4;
+    }
+
+    .member-detail-stat-card-label {
+      font-size: 11px;
+      color: rgba(168,230,230,0.5);
+      margin-bottom: 6px;
+    }
+
+    .member-detail-stat-card-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--jade-pale);
+      line-height: 1;
+    }
+
+    .member-detail-stat-card-diff {
+      font-size: 11px;
+      color: var(--jade-glow);
+      margin-top: 4px;
+    }
+
+    .member-detail-stat-card-diff.negative {
+      color: var(--lotus-pink);
+    }
+
+    /* 基本信息网格 */
+    .member-detail-info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .member-detail-info-item {
+      text-align: center;
+      padding: 10px 6px;
+      background: rgba(0,0,0,0.18);
+      border-radius: 8px;
+      border: 1px solid rgba(110,207,207,0.06);
+    }
+
+    .member-detail-info-label {
+      font-size: 10px;
+      color: rgba(168,230,230,0.45);
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+
+    .member-detail-info-value {
+      font-size: 13px;
+      color: var(--jade-pale);
+      font-weight: 500;
+    }
+
+    /* 标签 chip */
+    .member-detail-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .member-detail-chip {
+      padding: 5px 12px;
+      background: rgba(110,207,207,0.08);
+      border: 1px solid rgba(110,207,207,0.15);
+      border-radius: 14px;
+      font-size: 12px;
+      color: rgba(168,230,230,0.85);
+      transition: all 0.2s;
+    }
+
+    .member-detail-chip:hover {
+      background: rgba(110,207,207,0.15);
+      border-color: rgba(110,207,207,0.3);
+    }
+
+    /* 功法列表 */
+    .member-detail-skill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .member-detail-skill-item {
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.18);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--jade-pale);
+      border-left: 3px solid var(--jade-glow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .member-detail-skill-item::before {
+      content: '《';
+      color: var(--gold-spirit);
+      font-weight: 500;
+    }
+
+    .member-detail-skill-item::after {
+      content: '》';
+      color: var(--gold-spirit);
+      font-weight: 500;
+    }
+
+    /* 装备网格 */
+    .member-detail-equip-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .member-detail-equip-item {
+      padding: 10px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .member-detail-equip-item:hover {
+      border-color: rgba(110,207,207,0.3);
+      transform: translateY(-1px);
+    }
+
+    .member-detail-equip-name {
+      font-size: 13px;
+      color: var(--jade-pale);
+      margin-bottom: 2px;
+      font-weight: 500;
+    }
+
+    .member-detail-equip-rank {
+      font-size: 11px;
+      color: var(--gold-spirit);
+    }
+
+    .member-detail-empty {
+      color: rgba(168,230,230,0.35);
+      font-size: 12px;
+      text-align: center;
+      padding: 12px;
+    }
+
     /* === SCROLLBAR === */
     ::-webkit-scrollbar {
       width: 6px;
@@ -2943,6 +3244,20 @@
       .card-select-group { grid-template-columns: 1fr; }
       .creation-nav { gap: 10px; margin-top: 24px; }
       .creation-btn { padding: 12px 24px; font-size: 14px; flex: 1; max-width: 160px; }
+      /* member detail mobile */
+      .member-detail-name { font-size: 18px; }
+      .member-detail-dao { font-size: 13px; }
+      .member-detail-avatar { width: 56px; height: 56px; }
+      .member-detail-avatar svg { width: 28px; height: 28px; }
+      .member-detail-badge { padding: 3px 10px; font-size: 11px; }
+      .member-detail-stat-card-value { font-size: 18px; }
+      .member-detail-stat-cards { gap: 8px; }
+      .member-detail-stat-card { padding: 10px 6px; }
+      .member-detail-info-grid { gap: 8px; }
+      .member-detail-info-item { padding: 8px 4px; }
+      .member-detail-info-value { font-size: 12px; }
+      .member-detail-equip-grid { grid-template-columns: 1fr; }
+      .member-detail-chip { padding: 4px 10px; font-size: 11px; }
     }
 
     /* === LLM PROCESSING OVERLAY === */
@@ -4755,73 +5070,142 @@
       const base = m.baseStats;
       const equippedItems = getMemberEquippedItems(name);
       const overlay = document.getElementById('modal-overlay');
-      document.getElementById('modal-title').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg> ${m.name}`;
+      const colorMap = {
+        jade: 'var(--jade-glow)',
+        purple: 'var(--mist-purple)',
+        pink: 'var(--lotus-pink)',
+        gold: 'var(--gold-spirit)'
+      };
+      const memberColor = colorMap[m.color] || 'var(--jade-glow)';
 
-      const statDiff = (key) => {
+      const barColor = (val, type) => {
+        if (type === 'loyalty') {
+          if (val >= 80) return 'var(--jade-glow)';
+          if (val >= 50) return 'var(--gold-spirit)';
+          return 'var(--lotus-pink)';
+        }
+        if (type === 'mood') {
+          if (val >= 70) return 'var(--jade-glow)';
+          if (val >= 40) return 'var(--gold-spirit)';
+          return 'var(--lotus-pink)';
+        }
+        return 'var(--jade-glow)';
+      };
+
+      const statDiffHtml = (key) => {
         const diff = stats[key] - base[key];
-        if (diff > 0) return ` <span style="color:var(--jade-glow);font-size:11px">(+${diff})</span>`;
-        if (diff < 0) return ` <span style="color:var(--lotus-pink);font-size:11px">(${diff})</span>`;
+        if (diff > 0) return `<div class="member-detail-stat-card-diff">+${diff}</div>`;
+        if (diff < 0) return `<div class="member-detail-stat-card-diff negative">${diff}</div>`;
         return '';
       };
 
-      const equipmentHtml = equippedItems.length > 0
+      const skillListHtml = Array.isArray(m.skills) && m.skills.length > 0
+        ? m.skills.map(s => `<div class="member-detail-skill-item">${s}</div>`).join('')
+        : '<div class="member-detail-empty">暂无修习功法</div>';
+
+      const equipListHtml = equippedItems.length > 0
         ? equippedItems.map(item => {
-            const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
-            const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.1)' : item.color === 'purple' ? 'rgba(139,126,200,0.1)' : item.color === 'pink' ? 'rgba(212,114,140,0.1)' : 'rgba(200,168,110,0.1)';
-            return `<span style="padding:4px 12px;background:${bgVar};border:1px solid var(--glass-border);border-radius:8px;font-size:12px;color:${colorVar}">${item.name} · ${item.rank}</span>`;
+            const c = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
+            return `<div class="member-detail-equip-item" style="border-color:${c}33"><div class="member-detail-equip-name" style="color:${c}">${item.name}</div><div class="member-detail-equip-rank">${item.rank}</div></div>`;
           }).join('')
-        : '<span style="color:rgba(168,230,230,0.4);font-size:12px">暂无装备</span>';
+        : '<div class="member-detail-empty" style="grid-column:1/-1">暂无佩戴装备</div>';
+
+      const personalityChips = (m.personality || []).length > 0
+        ? m.personality.map(p => `<span class="member-detail-chip">${p}</span>`).join('')
+        : '<span class="member-detail-empty">—</span>';
+
+      const appearanceChips = (m.appearance || []).length > 0
+        ? m.appearance.map(a => `<span class="member-detail-chip">${a}</span>`).join('')
+        : '<span class="member-detail-empty">—</span>';
+
+      document.getElementById('modal-title').textContent = '成员详情';
 
       document.getElementById('modal-body').innerHTML = `
-        <div class="sect-info-grid">
-          <div class="info-block"><h4>道号</h4><div class="info-value text-gold">${m.daoName}</div></div>
-          <div class="info-block"><h4>境界</h4><div class="info-value">${m.realm}</div></div>
-          <div class="info-block"><h4>寿元</h4><div class="info-value">${m.lifespan.max === Infinity ? m.lifespan.current + ' / 长生久视' : m.lifespan.current + ' / ' + m.lifespan.max}</div></div>
-          <div class="info-block"><h4>职务</h4><div class="info-value">${m.role}</div></div>
-          <div class="info-block"><h4>当前状态</h4><div class="info-value">${m.status}</div></div>
-          <div class="info-block"><h4>天赋资质</h4><div class="info-value text-gold">${m.talent}</div></div>
-          <div class="info-block"><h4>忠诚度</h4><div class="info-value">${m.loyalty}</div></div>
-          <div class="info-block"><h4>心情</h4><div class="info-value">${m.mood}</div></div>
-          <div class="info-block full-width" style="grid-column:1/-1"><h4>性格标签</h4><div class="info-value">${(m.personality || []).join('、') || '—'}</div></div>
-          <div class="info-block full-width" style="grid-column:1/-1"><h4>外貌标签</h4><div class="info-value">${(m.appearance || []).join('、') || '—'}</div></div>
-
-          <div class="info-block">
-            <h4>杀伐</h4>
-            <div class="info-value">
-              ${stats.杀伐}${statDiff('杀伐')}
-              <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.杀伐}</div>
+        <div class="member-detail">
+          <div class="member-detail-header">
+            <div class="member-detail-avatar" style="color:${memberColor};border-color:${memberColor}33">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg>
             </div>
-          </div>
-          <div class="info-block">
-            <h4>防御</h4>
-            <div class="info-value">
-              ${stats.防御}${statDiff('防御')}
-              <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.防御}</div>
-            </div>
-          </div>
-          <div class="info-block">
-            <h4>身法</h4>
-            <div class="info-value">
-              ${stats.身法}${statDiff('身法')}
-              <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.身法}</div>
+            <div class="member-detail-name">${m.name}</div>
+            <div class="member-detail-dao">${m.daoName} · ${m.realm}</div>
+            <div class="member-detail-badges">
+              <span class="member-detail-badge" style="color:var(--jade-pale)">${m.role}</span>
+              <span class="member-detail-badge" style="color:${m.status === '闭关' ? 'var(--mist-purple)' : m.status === '巡查' ? 'var(--jade-glow)' : m.status === '炼丹' ? 'var(--lotus-pink)' : 'rgba(168,230,230,0.6)'}">${m.status}</span>
+              <span class="member-detail-badge" style="color:var(--gold-spirit)">${m.talent}</span>
             </div>
           </div>
 
-          <div class="info-block full-width">
-            <h4>已修功法</h4>
-            <div class="info-value" style="font-size:13px;line-height:2">${Array.isArray(m.skills) && m.skills.length > 0 ? m.skills.join('、') : '<span style="color:rgba(168,230,230,0.4)">暂无</span>'}</div>
+          <div class="member-detail-section">
+            <div class="member-detail-section-title">心性</div>
+            <div class="member-detail-bar-row">
+              <span class="member-detail-bar-label">忠诚度</span>
+              <div class="member-detail-bar-track"><div class="member-detail-bar-fill" style="width:${m.loyalty}%;background:${barColor(m.loyalty, 'loyalty')}"></div></div>
+              <span class="member-detail-bar-value">${m.loyalty}</span>
+            </div>
+            <div class="member-detail-bar-row">
+              <span class="member-detail-bar-label">心情</span>
+              <div class="member-detail-bar-track"><div class="member-detail-bar-fill" style="width:${m.mood}%;background:${barColor(m.mood, 'mood')}"></div></div>
+              <span class="member-detail-bar-value">${m.mood}</span>
+            </div>
           </div>
-          <div class="info-block full-width">
-            <h4>佩戴装备</h4>
-            <div class="info-value" style="font-size:13px;line-height:2">
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                ${equipmentHtml}
+
+          <div class="member-detail-section">
+            <div class="member-detail-section-title">修为</div>
+            <div class="member-detail-stat-cards">
+              <div class="member-detail-stat-card">
+                <div class="member-detail-stat-card-label">杀伐</div>
+                <div class="member-detail-stat-card-value" style="color:${stats.杀伐 > base.杀伐 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.杀伐}</div>
+                ${statDiffHtml('杀伐')}
+              </div>
+              <div class="member-detail-stat-card">
+                <div class="member-detail-stat-card-label">防御</div>
+                <div class="member-detail-stat-card-value" style="color:${stats.防御 > base.防御 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.防御}</div>
+                ${statDiffHtml('防御')}
+              </div>
+              <div class="member-detail-stat-card">
+                <div class="member-detail-stat-card-label">身法</div>
+                <div class="member-detail-stat-card-value" style="color:${stats.身法 > base.身法 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.身法}</div>
+                ${statDiffHtml('身法')}
               </div>
             </div>
           </div>
-          <div class="info-block full-width" style="display:flex;gap:8px;justify-content:flex-end;background:transparent;border:none;padding:8px 0 0 0">
-            <button class="action-btn-sm" style="background:rgba(139,126,200,0.12);border-color:rgba(139,126,200,0.3);color:var(--mist-purple)">调整职务</button>
-            <button class="action-btn-sm" style="background:rgba(110,207,207,0.12);border-color:rgba(110,207,207,0.3);color:var(--jade-glow)">安排修炼</button>
+
+          <div class="member-detail-section">
+            <div class="member-detail-section-title">命数</div>
+            <div class="member-detail-info-grid">
+              <div class="member-detail-info-item">
+                <div class="member-detail-info-label">寿元</div>
+                <div class="member-detail-info-value">${m.lifespan.max === Infinity ? m.lifespan.current + '/∞' : m.lifespan.current + '/' + m.lifespan.max}</div>
+              </div>
+              <div class="member-detail-info-item">
+                <div class="member-detail-info-label">天赋</div>
+                <div class="member-detail-info-value" style="color:var(--gold-spirit)">${m.talent}</div>
+              </div>
+              <div class="member-detail-info-item">
+                <div class="member-detail-info-label">状态</div>
+                <div class="member-detail-info-value">${m.status}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="member-detail-section">
+            <div class="member-detail-section-title">性格</div>
+            <div class="member-detail-chips">${personalityChips}</div>
+          </div>
+
+          <div class="member-detail-section">
+            <div class="member-detail-section-title">外貌</div>
+            <div class="member-detail-chips">${appearanceChips}</div>
+          </div>
+
+          <div class="member-detail-section">
+            <div class="member-detail-section-title">功法</div>
+            <div class="member-detail-skill-list">${skillListHtml}</div>
+          </div>
+
+          <div class="member-detail-section">
+            <div class="member-detail-section-title">装备</div>
+            <div class="member-detail-equip-grid">${equipListHtml}</div>
           </div>
         </div>
       `;
