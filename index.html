@@ -2799,9 +2799,80 @@
       }
     }
 
+    /* === BOTTOM NAV (mobile) === */
+    #bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(64px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(0deg, rgba(13,31,31,0.98) 0%, rgba(13,31,31,0.92) 100%);
+      border-top: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .bottom-nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: 64px;
+      padding: 0 8px;
+    }
+    .bottom-nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex: 1;
+      height: 100%;
+      background: none;
+      border: none;
+      color: rgba(168,230,230,0.5);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      position: relative;
+      max-width: 80px;
+    }
+    .bottom-nav-btn svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+    }
+    .bottom-nav-btn span {
+      font-size: 10px;
+      line-height: 1.2;
+    }
+    .bottom-nav-btn.active {
+      color: var(--jade-glow);
+    }
+    .bottom-nav-btn.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 32px;
+      height: 3px;
+      background: var(--jade-glow);
+      border-radius: 0 0 3px 3px;
+    }
+
     @media (max-width: 768px) {
       #side-nav {
-        width: 60px;
+        display: none;
+      }
+      #bottom-nav {
+        display: block;
+      }
+      #main-content {
+        padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+      }
+      #center-area .page-content {
+        padding-bottom: calc(24px + 64px);
       }
       .sect-overview {
         grid-template-columns: 1fr;
@@ -2818,6 +2889,60 @@
       .info-block.full-width {
         grid-column: span 1;
       }
+      /* top-bar mobile */
+      #top-bar {
+        padding: 8px 12px;
+        height: auto;
+        min-height: 56px;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .resource-bar {
+        gap: 4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        flex: 1;
+        min-width: 0;
+      }
+      .resource-bar::-webkit-scrollbar { display: none; }
+      .resource-item {
+        padding: 5px 8px;
+        font-size: 11px;
+        flex-shrink: 0;
+      }
+      .resource-icon { width: 14px; height: 14px; }
+      .resource-icon svg { width: 14px; height: 14px; }
+      .resource-label { display: none; }
+      .player-info { padding: 4px 8px; gap: 6px; }
+      .player-name { font-size: 12px; }
+      .player-realm { display: none; }
+      .player-avatar { width: 28px; height: 28px; }
+      .tianji-btn { display: none; }
+      .logo-text { font-size: 16px; letter-spacing: 2px; }
+      /* creation wizard mobile */
+      #creation-page { padding: 20px 16px; }
+      .creation-container { max-width: 100%; }
+      .creation-title { font-size: 20px; margin-bottom: 20px; }
+      .form-grid { grid-template-columns: 1fr; gap: 14px; }
+      .step-line { width: 20px; }
+      .step-label { font-size: 10px; }
+      .step-num { width: 30px; height: 30px; font-size: 12px; }
+      /* story page mobile */
+      .story-text-area { padding: 16px; }
+      #story-content { padding-top: 44px; }
+      .story-paragraph { font-size: 16px; line-height: 1.85; margin-bottom: 16px; }
+      .story-choice-btn { min-height: 48px; padding: 14px 16px; }
+      .story-send-btn { min-height: 48px; }
+      .story-input { font-size: 16px; min-height: 48px; }
+      /* member detail modal mobile */
+      .modal-container { width: 96%; max-height: 90vh; }
+      .tag { padding: 5px 10px; font-size: 12px; }
+      .disciple-card { padding: 14px; padding-top: 48px; }
+      .disciple-random { left: 50%; top: 10px; transform: translateX(-50%); width: 28px; height: 28px; }
+      .card-select-group { grid-template-columns: 1fr; }
+      .creation-nav { gap: 10px; margin-top: 24px; }
+      .creation-btn { padding: 12px 24px; font-size: 14px; flex: 1; max-width: 160px; }
     }
 
     /* === LLM PROCESSING OVERLAY === */
@@ -4065,6 +4190,50 @@
     </div>
   </div>
 
+  <!-- BOTTOM NAV (mobile only) -->
+  <nav id="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="bottom-nav-btn" data-page="story" onclick="switchPage('story')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 3C7 3 3 6 3 10c0 3 2 5.5 5 7l-1 4 4-2c.3 0 .7.03 1 .03 5 0 9-3 9-7s-4-9-9-9z"/>
+        </svg>
+        <span>天机台</span>
+      </button>
+      <button class="bottom-nav-btn" data-page="home" onclick="switchPage('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 12L12 4l9 8"/>
+          <path d="M9 21V10h6v11"/>
+        </svg>
+        <span>总览</span>
+      </button>
+      <button class="bottom-nav-btn" data-page="members" onclick="switchPage('members')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="9" cy="7" r="3"/>
+          <circle cx="15" cy="7" r="3"/>
+          <path d="M2 18c0-3 3-5 7-5s7 2 7 5"/>
+          <path d="M22 18c0-3-3-5-7-5"/>
+        </svg>
+        <span>成员</span>
+      </button>
+      <button class="bottom-nav-btn" data-page="world" onclick="switchPage('world')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 21h18"/>
+          <path d="M5 21V7l8-4 8 4v14"/>
+          <path d="M9 21v-6h6v6"/>
+        </svg>
+        <span>山河</span>
+      </button>
+      <button class="bottom-nav-btn" data-page="diplomacy" onclick="switchPage('diplomacy')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 3a9 9 0 010 18"/>
+          <path d="M3 12h18"/>
+        </svg>
+        <span>外交</span>
+      </button>
+    </div>
+  </nav>
+
   <!-- MODAL -->
   <div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
     <div class="modal-container" id="modal-container">
@@ -4253,12 +4422,15 @@
     function switchPage(page) {
       if (isLLMProcessing && page !== 'story') return;
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active-page'));
 
       const btn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+      const bbtn = document.querySelector(`.bottom-nav-btn[data-page="${page}"]`);
       const pg = document.getElementById(`${page}-page`);
 
       if (btn) btn.classList.add('active');
+      if (bbtn) bbtn.classList.add('active');
       if (pg) pg.classList.add('active-page');
 
       // 清除当前页面的红点
