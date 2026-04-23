@@ -2760,6 +2760,85 @@
       max-height: calc(80vh - 60px);
     }
 
+    /* === SETTINGS PANEL === */
+    .settings-section {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .settings-section:last-of-type {
+      border-bottom: none;
+    }
+    .settings-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--jade-pale);
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    .settings-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .settings-label {
+      font-size: 12px;
+      color: rgba(168,230,230,0.7);
+    }
+    .settings-input,
+    .settings-select {
+      padding: 9px 12px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--cloud-white);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .settings-input:focus,
+    .settings-select:focus {
+      border-color: rgba(110,207,207,0.45);
+      background: rgba(110,207,207,0.06);
+    }
+    .settings-desc {
+      font-size: 12px;
+      color: rgba(168,230,230,0.5);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .settings-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .settings-btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      color: var(--jade-pale);
+    }
+    .settings-btn:hover {
+      background: rgba(110,207,207,0.12);
+      border-color: rgba(110,207,207,0.3);
+    }
+    .settings-btn.primary {
+      background: linear-gradient(135deg, var(--jade-mid), var(--jade-deep));
+      border-color: var(--jade-light);
+      color: var(--jade-pale);
+    }
+    .settings-btn.primary:hover {
+      background: linear-gradient(135deg, var(--jade-light), var(--jade-mid));
+    }
+
     /* === MEMBER DETAIL === */
     .member-detail {
       display: flex;
@@ -3377,6 +3456,37 @@
       background: rgba(110, 207, 207, 0.05);
       border-color: var(--glass-border);
     }
+    .secondary-api-status {
+      position: absolute;
+      top: 12px;
+      left: 110px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(200, 168, 110, 0.12);
+      border: 1px solid rgba(200, 168, 110, 0.3);
+      border-radius: 6px;
+      color: var(--gold-spirit);
+      font-size: 12px;
+      z-index: 60;
+      animation: saPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes saPulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+    .secondary-api-spinner {
+      width: 10px;
+      height: 10px;
+      border: 1.5px solid rgba(200, 168, 110, 0.3);
+      border-top-color: var(--gold-spirit);
+      border-radius: 50%;
+      animation: saSpin 0.8s linear infinite;
+    }
+    @keyframes saSpin {
+      to { transform: rotate(360deg); }
+    }
     .think-panel {
       position: fixed;
       top: 80px;
@@ -3581,6 +3691,48 @@
       text-align: center;
       color: var(--ink-light);
       padding: 40px 20px;
+    }
+
+    /* 长按菜单 */
+    .long-press-menu {
+      position: fixed;
+      background: var(--surface-solid);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 6px 0;
+      z-index: 1000;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      min-width: 160px;
+      backdrop-filter: blur(12px);
+      animation: lpmFadeIn 0.15s ease-out;
+    }
+    @keyframes lpmFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .lpm-item {
+      padding: 10px 16px;
+      color: var(--text-primary);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.15s;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .lpm-item:hover {
+      background: rgba(110,207,207,0.1);
+    }
+    .lpm-item:active {
+      background: rgba(110,207,207,0.2);
+    }
+    .lpm-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      stroke: var(--jade-glow);
     }
   </style>
 </head>
@@ -4271,6 +4423,10 @@
                 </svg>
                 <span>天道运转</span>
               </div>
+              <div class="secondary-api-status" id="secondary-api-status" style="display:none">
+                <div class="secondary-api-spinner"></div>
+                <span>天道推演中</span>
+              </div>
               <div class="story-edit-btn" onclick="toggleStoryEdit()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
@@ -4614,6 +4770,65 @@
         </button>
       </div>
       <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Settings Panel -->
+  <div class="modal-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettingsPanel()">
+    <div class="modal-container" style="max-width:560px">
+      <div class="modal-header">
+        <h2>系统设置</h2>
+        <button class="modal-close" onclick="closeSettingsPanel()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 4l8 8M12 4l-8 8"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" id="settings-body" style="padding:20px">
+        <div class="settings-section">
+          <div class="settings-section-title">API 模式</div>
+          <div class="settings-row">
+            <label class="settings-label">模式选择</label>
+            <select id="settings-api-mode" class="settings-select" onchange="toggleSecondaryApiSection()">
+              <option value="single">单 API 模式</option>
+              <option value="dual">多 API 模式</option>
+            </select>
+          </div>
+          <div class="settings-desc" id="api-mode-desc">单 API 模式下，一个 LLM 同时负责剧情和变量更新。</div>
+        </div>
+
+        <div class="settings-section" id="secondary-api-section" style="display:none">
+          <div class="settings-section-title">第二 API 配置</div>
+          <div class="settings-row">
+            <label class="settings-label">API Base URL</label>
+            <input type="text" id="settings-secondary-url" class="settings-input" placeholder="https://api.openai.com/v1">
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">API Key</label>
+            <input type="password" id="settings-secondary-key" class="settings-input" placeholder="sk-...">
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">模型</label>
+            <input type="text" id="settings-secondary-model" class="settings-input" placeholder="gpt-3.5-turbo">
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">温度 (0-2)</label>
+            <input type="number" id="settings-secondary-temp" class="settings-input" min="0" max="2" step="0.1" value="0.7">
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Max Tokens</label>
+            <input type="number" id="settings-secondary-maxtokens" class="settings-input" min="1" max="8192" value="2048">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="settings-btn" onclick="testSecondaryApi()">测试连通性</button>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="settings-btn secondary" onclick="closeSettingsPanel()">取消</button>
+          <button class="settings-btn primary" onclick="saveSettingsPanel()">保存</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -5027,6 +5242,135 @@
         content.contentEditable = 'false';
         content.classList.remove('story-content-editable');
         label.textContent = '编辑';
+      }
+    }
+
+    // ========== 长按菜单 ==========
+    let longPressTimer = null;
+    let longPressMenu = null;
+    let isLongPressTriggered = false;
+
+    function initStoryLongPressMenu() {
+      const area = document.getElementById('story-text-area');
+      if (!area) return;
+
+      area.addEventListener('touchstart', handleLongPressStart, { passive: false });
+      area.addEventListener('touchend', handleLongPressEnd);
+      area.addEventListener('touchmove', handleLongPressEnd);
+      area.addEventListener('mousedown', handleLongPressStart);
+      area.addEventListener('mouseup', handleLongPressEnd);
+      area.addEventListener('mouseleave', handleLongPressEnd);
+
+      document.addEventListener('click', (e) => {
+        if (longPressMenu && !longPressMenu.contains(e.target)) {
+          hideLongPressMenu();
+        }
+      });
+    }
+
+    function handleLongPressStart(e) {
+      if (isLLMProcessing) return;
+      if (e.target.closest('.story-recap-btn') || e.target.closest('.think-view-btn') ||
+          e.target.closest('.story-edit-btn') || e.target.closest('.story-test-btn')) return;
+      isLongPressTriggered = false;
+      longPressTimer = setTimeout(() => {
+        isLongPressTriggered = true;
+        try { e.preventDefault(); } catch (_) {}
+        const touch = e.touches ? e.touches[0] : e;
+        showLongPressMenu(touch.clientX, touch.clientY);
+      }, 800);
+    }
+
+    function handleLongPressEnd(e) {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    }
+
+    function showLongPressMenu(x, y) {
+      hideLongPressMenu();
+      const menu = document.createElement('div');
+      menu.className = 'long-press-menu';
+      menu.innerHTML = `
+        <div class="lpm-item" data-action="edit">
+          <svg class="lpm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          编辑正文
+        </div>
+        <div class="lpm-item" data-action="reroll">
+          <svg class="lpm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 111.13-8.36"/></svg>
+          重 roll
+        </div>
+        <div class="lpm-item" data-action="reparse">
+          <svg class="lpm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          重新解析变量
+        </div>
+      `;
+      menu.querySelectorAll('.lpm-item').forEach(item => {
+        item.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const action = item.dataset.action;
+          hideLongPressMenu();
+          if (action === 'edit') toggleStoryEdit();
+          else if (action === 'reroll') rerollLastRequest();
+          else if (action === 'reparse') reparseVarsFromStory();
+        });
+      });
+      document.body.appendChild(menu);
+      longPressMenu = menu;
+
+      const rect = menu.getBoundingClientRect();
+      let left = x;
+      let top = y;
+      if (left + rect.width > window.innerWidth) left = window.innerWidth - rect.width - 8;
+      if (top + rect.height > window.innerHeight) top = window.innerHeight - rect.height - 8;
+      if (left < 8) left = 8;
+      if (top < 8) top = 8;
+      menu.style.left = left + 'px';
+      menu.style.top = top + 'px';
+    }
+
+    function hideLongPressMenu() {
+      if (longPressMenu) {
+        longPressMenu.remove();
+        longPressMenu = null;
+      }
+    }
+
+    function rerollLastRequest() {
+      if (isLLMProcessing) return;
+      if (!window._lastSnapshot) {
+        alert('暂无历史记录可供重 roll');
+        return;
+      }
+      if (!confirm('确定要回退到上次请求前的状态并重新发送吗？')) return;
+      rollbackSnapshot(window._lastSnapshot);
+      submitActions();
+    }
+
+    async function reparseVarsFromStory() {
+      if (isLLMProcessing) return;
+      const content = document.getElementById('story-content');
+      if (!content) return;
+      const text = content.innerText.trim();
+      if (!text || text === '天机台静待启封，天道流转，因果将启……') {
+        alert('当前无正文内容');
+        return;
+      }
+      if (window._currentApiMode !== 'dual') {
+        alert('单 API 模式下，变量由主 API 直接输出。请切换到多 API 模式使用此功能。');
+        return;
+      }
+      setLLMProcessing(true);
+      try {
+        await callSecondaryApi(text);
+        if (secondaryApiError) {
+          alert('天道推演受阻：' + secondaryApiError.message);
+        } else {
+          alert('变量重新解析完成');
+        }
+      } finally {
+        setLLMProcessing(false);
       }
     }
 
@@ -5994,6 +6338,41 @@ ${discipleLines || '无'}
       return { baseUrl: 'https://api.openai.com/v1', apiKey: '', model: 'gpt-3.5-turbo' };
     }
 
+    async function getSecondaryApiConfig() {
+      let cfg = null;
+      // 1. SillyTavern IndexedDB
+      try {
+        const { db } = await import('./sillytavern/st-core.js');
+        const s = await db.settings.get('settings');
+        if (s && s.secondaryApi) cfg = s.secondaryApi;
+      } catch (e) {}
+      // 2. Fallback
+      if (!cfg) {
+        const saved = localStorage.getItem('zhangmen_secondary_api_config');
+        if (saved) { try { cfg = JSON.parse(saved); } catch(e) {} }
+      }
+      if (cfg) {
+        return {
+          baseUrl: (cfg.baseUrl || '').trim().replace(/\/$/, ''),
+          apiKey: (cfg.apiKey || '').trim(),
+          model: (cfg.model || '').trim() || 'gpt-3.5-turbo',
+          temperature: cfg.temperature ?? 0.7,
+          maxTokens: cfg.maxTokens ?? 2048
+        };
+      }
+      return null;
+    }
+
+    async function getApiMode() {
+      try {
+        const { db } = await import('./sillytavern/st-core.js');
+        const s = await db.settings.get('settings');
+        return s?.apiMode || 'single';
+      } catch (e) {
+        return 'single';
+      }
+    }
+
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
@@ -6018,6 +6397,10 @@ ${discipleLines || '无'}
       capturedVarsText = '';
       capturedVarsEffects = [];
       currentMainParagraph = null;
+      currentRoundMaintext = '';
+      secondaryApiPromise = null;
+      secondaryApiCompleted = false;
+      secondaryApiError = null;
       updateThinkButton();
     }
 
@@ -6065,9 +6448,106 @@ ${discipleLines || '无'}
       if (area) area.scrollTop = area.scrollHeight;
     }
 
+    // 多 API 模式下，保存当前轮次的 maintext 全文供第二 API 使用
+    let currentRoundMaintext = '';
+    let secondaryApiPromise = null;
+    let secondaryApiCompleted = false;
+    let secondaryApiError = null;
+
     function finalizeMainParagraph() {
       currentMainParagraph = null;
+      if (capturedMainText) {
+        currentRoundMaintext = capturedMainText;
+        const mode = window._currentApiMode;
+        if (mode === 'dual' && !secondaryApiPromise) {
+          secondaryApiPromise = callSecondaryApi(currentRoundMaintext);
+          showSecondaryApiStatus(true);
+        }
+      }
       capturedMainText = '';
+    }
+
+    function showSecondaryApiStatus(show) {
+      const el = document.getElementById('secondary-api-status');
+      if (el) el.style.display = show ? 'flex' : 'none';
+    }
+
+    async function callSecondaryApi(maintext) {
+      secondaryApiCompleted = false;
+      secondaryApiError = null;
+
+      const config = await getSecondaryApiConfig();
+      if (!config || !config.apiKey) {
+        console.warn('[SecondaryAPI] 未配置第二 API');
+        secondaryApiError = new Error('未配置第二 API');
+        secondaryApiCompleted = true;
+        showSecondaryApiStatus(false);
+        return;
+      }
+
+      let systemPrompt = '';
+      try {
+        const res = await fetch('./docs/LLM_FORMAT_SPEC_SECOND.md');
+        if (res.ok) {
+          systemPrompt = await res.text();
+        }
+      } catch (e) {
+        console.warn('[SecondaryAPI] 读取规范文档失败:', e);
+      }
+
+      let gameState = {};
+      if (window.gameStateManager) {
+        const raw = window.gameStateManager.toRaw();
+        const { _creationMeta, events, foreshadowing, randomEvents, ...rest } = raw;
+        gameState = rest;
+      }
+
+      const prompt = `【本次剧情正文】\n${maintext}\n\n【当前完整变量表】\n${JSON.stringify(gameState, null, 2)}\n\n请根据剧情正文，分析需要更新的变量，输出 <analysis> 和 <vars>。`;
+
+      try {
+        const response = await fetch(`${config.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`
+          },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: 'system', content: systemPrompt || '你是天道推演官，负责根据剧情正文分析并输出变量更新 <vars>。' },
+              { role: 'user', content: prompt }
+            ],
+            stream: false,
+            temperature: config.temperature,
+            max_tokens: config.maxTokens
+          })
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`API 错误 ${response.status}: ${errText}`);
+        }
+
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content || '';
+
+        const varsMatch = content.match(/<vars>([\s\S]*?)<\/vars>/i);
+        if (varsMatch) {
+          const varsText = varsMatch[1].trim();
+          parseVarsAndApplyPatch(varsText);
+          console.log('[SecondaryAPI] 变量更新成功');
+        } else {
+          console.warn('[SecondaryAPI] 响应中未找到 <vars> 标签');
+        }
+
+        secondaryApiCompleted = true;
+        showSecondaryApiStatus(false);
+      } catch (err) {
+        console.error('[SecondaryAPI] 请求失败:', err);
+        secondaryApiError = err;
+        secondaryApiCompleted = true;
+        showSecondaryApiStatus(false);
+      }
     }
 
     function stripInternalTags(text) {
@@ -6736,6 +7216,7 @@ ${discipleLines || '无'}
       toggleActionLog();
 
       // 进入 LLM 交互阶段
+      window._currentApiMode = await getApiMode();
       switchPage('story');
       setLLMProcessing(true);
       setTimeout(() => {
@@ -6906,6 +7387,18 @@ ${discipleLines || '无'}
         }
         await rollbackSnapshot(snapshot);
       } finally {
+        // 多 API 模式下等待第二 API 完成
+        if (window._currentApiMode === 'dual' && secondaryApiPromise) {
+          try {
+            await secondaryApiPromise;
+            if (secondaryApiError) {
+              alert('天道推演受阻：' + secondaryApiError.message + '\n\n剧情正文已保留，可在设置中切换回单 API 模式重试。');
+            }
+          } catch (e) {
+            console.warn('[submitActions] 等待第二 API 失败:', e);
+          }
+        }
+
         setLLMProcessing(false);
         llmAbortController = null;
 
@@ -6938,6 +7431,10 @@ ${discipleLines || '无'}
           } catch (e) {
             console.warn('保存聊天记录失败:', e);
           }
+        }
+        // 保存成功请求的 snapshot 用于重 roll
+        if (fullRawResponse.trim()) {
+          window._lastSnapshot = snapshot;
         }
         // 本轮提交成功，清除 session 中的临时状态
         if (fullRawResponse.trim()) {
@@ -7388,6 +7885,7 @@ ${discipleLines || '无'}
     window.gameStateManager = gameStateManager;
     window.GameStateSchema = GameStateSchema;
     await initSillyTavernEnhancer();
+    initStoryLongPressMenu();
     const settingsData = await db.settings.get('settings');
     if (settingsData?.activeChatId) {
       await gameStateManager.load(settingsData.activeChatId);
@@ -8380,8 +8878,112 @@ ${discipleLines || '无'}
       }
     };
 
-    window.openTitleSettings = function() {
-      alert('设置功能即将上线');
+    window.openTitleSettings = async function() {
+      const overlay = document.getElementById('settings-overlay');
+      if (!overlay) return;
+
+      // 加载当前设置
+      const settings = await loadSettingsFromDB();
+      const mode = settings.apiMode || 'single';
+      document.getElementById('settings-api-mode').value = mode;
+
+      const sec = settings.secondaryApi || {};
+      document.getElementById('settings-secondary-url').value = sec.baseUrl || '';
+      document.getElementById('settings-secondary-key').value = sec.apiKey || '';
+      document.getElementById('settings-secondary-model').value = sec.model || '';
+      document.getElementById('settings-secondary-temp').value = sec.temperature ?? 0.7;
+      document.getElementById('settings-secondary-maxtokens').value = sec.maxTokens ?? 2048;
+
+      toggleSecondaryApiSection();
+      overlay.classList.add('active');
+    };
+
+    window.closeSettingsPanel = function() {
+      document.getElementById('settings-overlay').classList.remove('active');
+    };
+
+    window.toggleSecondaryApiSection = function() {
+      const mode = document.getElementById('settings-api-mode').value;
+      const sec = document.getElementById('secondary-api-section');
+      const desc = document.getElementById('api-mode-desc');
+      if (sec) sec.style.display = mode === 'dual' ? 'block' : 'none';
+      if (desc) desc.textContent = mode === 'dual'
+        ? '多 API 模式下，主 API 负责剧情创作，第二 API 负责变量更新。'
+        : '单 API 模式下，一个 LLM 同时负责剧情和变量更新。';
+    };
+
+    window.saveSettingsPanel = async function() {
+      const mode = document.getElementById('settings-api-mode').value;
+      const secondaryApi = {
+        baseUrl: document.getElementById('settings-secondary-url').value.trim(),
+        apiKey: document.getElementById('settings-secondary-key').value.trim(),
+        model: document.getElementById('settings-secondary-model').value.trim() || 'gpt-3.5-turbo',
+        temperature: parseFloat(document.getElementById('settings-secondary-temp').value) || 0.7,
+        maxTokens: parseInt(document.getElementById('settings-secondary-maxtokens').value) || 2048
+      };
+
+      // 保存到 IndexedDB
+      try {
+        const { db } = await import('./sillytavern/st-core.js');
+        const s = await db.settings.get('settings');
+        if (s) {
+          s.apiMode = mode;
+          s.secondaryApi = secondaryApi;
+          await db.settings.put(s);
+        }
+      } catch (e) {
+        console.warn('[Settings] 保存失败:', e);
+      }
+
+      // 同步世界书条目
+      if (window.sillyTavernStore) {
+        const { switchApiLorebookMode } = await import('./sillytavern/st-integration.js');
+        await switchApiLorebookMode(mode, window.sillyTavernStore);
+      }
+
+      closeSettingsPanel();
+      showToast(mode === 'dual' ? '已切换至多 API 模式' : '已切换至单 API 模式');
+    };
+
+    async function loadSettingsFromDB() {
+      try {
+        const { db } = await import('./sillytavern/st-core.js');
+        const s = await db.settings.get('settings');
+        return s || {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    window.testSecondaryApi = async function() {
+      const url = document.getElementById('settings-secondary-url').value.trim();
+      const key = document.getElementById('settings-secondary-key').value.trim();
+      const model = document.getElementById('settings-secondary-model').value.trim() || 'gpt-3.5-turbo';
+
+      if (!url || !key) {
+        alert('请先填写 API Base URL 和 API Key');
+        return;
+      }
+
+      showToast('正在测试第二 API 连通性...');
+      try {
+        const response = await fetch(`${url.replace(/\/$/, '')}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`
+          },
+          body: JSON.stringify({ model, messages: [{ role: 'user', content: 'Hi' }], max_tokens: 5 })
+        });
+        if (response.ok) {
+          showToast('第二 API 连通性测试通过');
+        } else {
+          const text = await response.text();
+          showToast(`测试失败: ${response.status} ${text.slice(0, 100)}`);
+        }
+      } catch (e) {
+        showToast(`测试失败: ${e.message}`);
+      }
     };
   </script>
 </body>

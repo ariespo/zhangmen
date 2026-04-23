@@ -220,17 +220,26 @@ async function ensureDefaultLorebook(store) {
 
   const hasFormatEntry = book.entries.some(e => e.comment === '格式规范');
   const hasVarEntry = book.entries.some(e => e.comment === '变量规范');
+  const hasMainFormatEntry = book.entries.some(e => e.comment === '多API主格式');
+  const hasSecondFormatEntry = book.entries.some(e => e.comment === '多API第二格式');
 
-  if (!hasFormatEntry || !hasVarEntry) {
+  const needsEntries = !hasFormatEntry || !hasVarEntry || !hasMainFormatEntry || !hasSecondFormatEntry;
+
+  if (needsEntries) {
     try {
-      const [formatRes, varRes] = await Promise.all([
+      const [formatRes, varRes, mainRes, secondRes] = await Promise.all([
         fetch('./LLM_FORMAT_SPEC.md'),
-        fetch('./LLM_REFERENCE.md')
+        fetch('./LLM_REFERENCE.md'),
+        fetch('./docs/LLM_FORMAT_SPEC_MAIN.md'),
+        fetch('./docs/LLM_FORMAT_SPEC_SECOND.md')
       ]);
 
       const formatContent = formatRes.ok ? await formatRes.text() : '';
       const varContent = varRes.ok ? await varRes.text() : '';
+      const mainContent = mainRes.ok ? await mainRes.text() : '';
+      const secondContent = secondRes.ok ? await secondRes.text() : '';
 
+      // 单 API 模式条目
       if (!hasFormatEntry && formatContent) {
         book.entries.push({
           id: crypto.randomUUID(),
@@ -271,11 +280,73 @@ async function ensureDefaultLorebook(store) {
         });
       }
 
+      // 多 API 模式条目
+      if (!hasMainFormatEntry && mainContent) {
+        book.entries.push({
+          id: crypto.randomUUID(),
+          keys: [],
+          secondaryKeys: [],
+          content: mainContent,
+          order: 200,
+          position: 'at_depth',
+          depth: 0,
+          selective: false,
+          selectiveLogic: 'not_all',
+          constant: true,
+          probability: 100,
+          enabled: false,
+          role: 'system',
+          addMemo: false,
+          comment: '多API主格式'
+        });
+      }
+
+      if (!hasSecondFormatEntry && secondContent) {
+        book.entries.push({
+          id: crypto.randomUUID(),
+          keys: [],
+          secondaryKeys: [],
+          content: secondContent,
+          order: 201,
+          position: 'at_depth',
+          depth: 0,
+          selective: false,
+          selectiveLogic: 'not_all',
+          constant: true,
+          probability: 100,
+          enabled: false,
+          role: 'system',
+          addMemo: false,
+          comment: '多API第二格式'
+        });
+      }
+
       await store.saveLorebook(book);
     } catch (e) {
       console.warn('[DefaultLorebook] 创建默认世界书条目失败:', e);
       return;
     }
+  }
+
+  // 根据 apiMode 设置条目启用状态
+  const apiMode = store.getState().settings?.apiMode || 'single';
+  let needsUpdate = false;
+  for (const entry of book.entries) {
+    if (entry.comment === '格式规范' || entry.comment === '变量规范') {
+      const shouldEnable = apiMode === 'single';
+      if (entry.enabled !== shouldEnable) { entry.enabled = shouldEnable; needsUpdate = true; }
+    }
+    if (entry.comment === '多API主格式') {
+      const shouldEnable = apiMode === 'dual';
+      if (entry.enabled !== shouldEnable) { entry.enabled = shouldEnable; needsUpdate = true; }
+    }
+    if (entry.comment === '多API第二格式') {
+      const shouldEnable = apiMode === 'dual';
+      if (entry.enabled !== shouldEnable) { entry.enabled = shouldEnable; needsUpdate = true; }
+    }
+  }
+  if (needsUpdate) {
+    await store.saveLorebook(book);
   }
 
   // Activate the book if it isn't already
@@ -296,6 +367,34 @@ async function ensureDefaultLorebook(store) {
 }
 
 // Auto-initialize
+/**
+ * 切换 API 模式时更新世界书条目启用状态
+ * @param {string} mode - 'single' 或 'dual'
+ * @param {object} store - SillyTavern store
+ */
+export async function switchApiLorebookMode(mode, store) {
+  const books = store.getState().lorebooks;
+  const book = books.find(b => b.name === '宗门志');
+  if (!book) return;
+
+  let needsUpdate = false;
+  for (const entry of book.entries) {
+    if (entry.comment === '格式规范' || entry.comment === '变量规范') {
+      const shouldEnable = mode === 'single';
+      if (entry.enabled !== shouldEnable) { entry.enabled = shouldEnable; needsUpdate = true; }
+    }
+    if (entry.comment === '多API主格式' || entry.comment === '多API第二格式') {
+      const shouldEnable = mode === 'dual';
+      if (entry.enabled !== shouldEnable) { entry.enabled = shouldEnable; needsUpdate = true; }
+    }
+  }
+
+  if (needsUpdate) {
+    await store.saveLorebook(book);
+    console.log('[Lorebook] 已切换至', mode === 'dual' ? '多API' : '单API', '模式');
+  }
+}
+
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
   setTimeout(() => initSillyTavernEnhancer(), 100);
 } else {
