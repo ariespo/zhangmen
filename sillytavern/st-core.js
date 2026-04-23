@@ -589,7 +589,8 @@ export function createStore() {
     editingMessageId: null,
     promptPreview: null,
     toast: null,
-    apiModelList: null
+    apiModelList: null,
+    secondaryApiModelList: null
   };
 
   const listeners = new Set();

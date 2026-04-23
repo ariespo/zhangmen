@@ -641,11 +641,14 @@ function renderSettingsModal(state, store) {
 
 function renderApiSettings(state) {
   const modelList = state.apiModelList;
+  const secondaryModelList = state.secondaryApiModelList;
   const hasList = modelList && modelList.length > 0;
+  const hasSecondaryList = secondaryModelList && secondaryModelList.length > 0;
   const isDual = state.settings.apiMode === 'dual';
   const sec = state.settings.secondaryApi || {};
   return `
     <div style="max-width:500px">
+      <h4 style="color:var(--jade-glow);margin:0 0 12px 0;font-size:14px">主 API（剧情创作）</h4>
       <div class="st-form-group">
         <label class="st-label">API Key</label>
         <input type="password" class="st-input" id="st-api-key" value="${escapeHtml(state.settings.api.apiKey)}" placeholder="sk-...">
@@ -661,9 +664,13 @@ function renderApiSettings(state) {
         ` : ''}
       </div>
       <div class="st-form-group">
-        <label class="st-label">API基础URL</label>
+        <label class="st-label">API 基础 URL</label>
         <input type="text" class="st-input" id="st-base-url" value="${escapeHtml(state.settings.api.baseUrl)}" placeholder="https://api.openai.com/v1">
         <p style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:4px">支持 OpenAI / DeepSeek / Kimi / 本地模型等兼容端点</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="st-btn-secondary" id="st-fetch-models">获取模型列表</button>
+        <button class="st-btn-secondary" id="st-test-primary-api">测试连通性</button>
       </div>
 
       <hr style="border:none;border-top:1px solid var(--glass-border);margin:20px 0">
@@ -680,17 +687,25 @@ function renderApiSettings(state) {
       </div>
 
       <div id="st-secondary-api-section" style="display:${isDual ? 'block' : 'none'}">
+        <hr style="border:none;border-top:1px solid var(--glass-border);margin:16px 0">
+        <h4 style="color:var(--gold-spirit);margin:0 0 12px 0;font-size:14px">第二 API（变量更新）</h4>
         <div class="st-form-group">
-          <label class="st-label">第二 API Base URL</label>
-          <input type="text" class="st-input" id="st-secondary-url" value="${escapeHtml(sec.baseUrl || '')}" placeholder="https://api.openai.com/v1">
-        </div>
-        <div class="st-form-group">
-          <label class="st-label">第二 API Key</label>
+          <label class="st-label">API Key</label>
           <input type="password" class="st-input" id="st-secondary-key" value="${escapeHtml(sec.apiKey || '')}" placeholder="sk-...">
         </div>
         <div class="st-form-group">
-          <label class="st-label">第二 API 模型</label>
+          <label class="st-label">模型名称</label>
           <input type="text" class="st-input" id="st-secondary-model" value="${escapeHtml(sec.model || '')}" placeholder="gpt-3.5-turbo">
+          ${hasSecondaryList ? `
+            <select class="st-input" id="st-secondary-model-select" style="margin-top:8px;background:rgba(0,0,0,0.3)">
+              <option value="">-- 选择模型 --</option>
+              ${secondaryModelList.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('')}
+            </select>
+          ` : ''}
+        </div>
+        <div class="st-form-group">
+          <label class="st-label">API 基础 URL</label>
+          <input type="text" class="st-input" id="st-secondary-url" value="${escapeHtml(sec.baseUrl || '')}" placeholder="https://api.openai.com/v1">
         </div>
         <div class="st-form-group">
           <label class="st-label">温度 (0-2)</label>
@@ -700,14 +715,14 @@ function renderApiSettings(state) {
           <label class="st-label">Max Tokens</label>
           <input type="number" class="st-input" id="st-secondary-maxtokens" min="1" max="8192" value="${sec.maxTokens ?? 2048}">
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <button class="st-btn-secondary" id="st-fetch-secondary-models">获取模型列表</button>
           <button class="st-btn-secondary" id="st-test-secondary-api">测试连通性</button>
         </div>
       </div>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
         <button class="st-btn-primary" id="st-save-api">保存设置</button>
-        <button class="st-btn-secondary" id="st-fetch-models">获取模型列表</button>
       </div>
     </div>
   `;
@@ -1323,6 +1338,86 @@ function attachSettingsListeners(state, store) {
     alert(`获取模型列表失败 (${lastErr?.message || 'Unknown'})，已显示常用模型供选择。`);
   });
 
+  // 主 API 测试连通性
+  body.querySelector('#st-test-primary-api')?.addEventListener('click', async () => {
+    const url = (document.getElementById('st-base-url')?.value || '').trim().replace(/\/$/, '');
+    const key = (document.getElementById('st-api-key')?.value || '').trim();
+    const model = (document.getElementById('st-model')?.value || '').trim() || 'gpt-3.5-turbo';
+    if (!url || !key) {
+      alert('请先填写主 API 的 URL 和 Key');
+      return;
+    }
+    try {
+      const res = await fetch(`${url}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: 'user', content: '你好' }],
+          max_tokens: 5
+        })
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        alert(`测试失败: ${res.status}\n${err.slice(0, 200)}`);
+        return;
+      }
+      store.showToast('主 API 连通性测试通过');
+    } catch (err) {
+      alert('测试失败: ' + err.message);
+    }
+  });
+
+  // 第二 API 获取模型列表
+  body.querySelector('#st-fetch-secondary-models')?.addEventListener('click', async () => {
+    const baseUrl = (document.getElementById('st-secondary-url')?.value || '').trim().replace(/\/$/, '');
+    let apiKey = (document.getElementById('st-secondary-key')?.value || '').trim();
+    if (!baseUrl) {
+      alert('请先填写第二 API 基础 URL');
+      return;
+    }
+
+    async function tryFetch(authHeaders) {
+      const res = await fetch(`${baseUrl}/models`, {
+        headers: {
+          'Accept': 'application/json',
+          ...authHeaders
+        }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return (data.data || []).map(m => m.id).filter(Boolean).sort();
+    }
+
+    let models = [];
+    let lastErr = null;
+
+    try {
+      models = await tryFetch(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {});
+    } catch (err1) {
+      lastErr = err1;
+      try {
+        models = await tryFetch(apiKey ? { 'api-key': apiKey } : {});
+      } catch (err2) {
+        lastErr = err2;
+      }
+    }
+
+    if (models.length > 0) {
+      store.setState({ secondaryApiModelList: models });
+      store.showToast(`已获取 ${models.length} 个模型`);
+      return;
+    }
+
+    const fallbackModels = getCommonModels(baseUrl);
+    store.setState({ secondaryApiModelList: fallbackModels.list });
+    alert(`获取模型列表失败 (${lastErr?.message || 'Unknown'})，已显示常用模型供选择。`);
+  });
+
+  // 第二 API 测试连通性
   body.querySelector('#st-test-secondary-api')?.addEventListener('click', async () => {
     const url = (document.getElementById('st-secondary-url')?.value || '').trim().replace(/\/$/, '');
     const key = (document.getElementById('st-secondary-key')?.value || '').trim();
@@ -1364,6 +1459,15 @@ function attachSettingsListeners(state, store) {
     }
   });
 
+  body.querySelector('#st-secondary-model-select')?.addEventListener('change', async () => {
+    const select = document.getElementById('st-secondary-model-select');
+    const modelInput = document.getElementById('st-secondary-model');
+    if (select && modelInput && select.value) {
+      modelInput.value = select.value;
+      const sec = state.settings.secondaryApi || {};
+      await store.saveSettings({ secondaryApi: { ...sec, model: select.value } });
+    }
+  });
 
   body.querySelector('#st-export-all')?.addEventListener('click', () => exportAllData());
 
@@ -1488,7 +1592,7 @@ function escapeHtml(text) {
 }
 
 // 切换第二 API 配置区域显示（全局函数，供 inline onchange 调用）
-window.toggleSecondaryApiSection = function(mode) {
+window.toggleSecondaryApiSection = async function(mode) {
   const sec = document.getElementById('st-secondary-api-section');
   const desc = document.getElementById('st-api-mode-desc');
   if (sec) sec.style.display = mode === 'dual' ? 'block' : 'none';
@@ -1496,5 +1600,12 @@ window.toggleSecondaryApiSection = function(mode) {
     desc.textContent = mode === 'dual'
       ? '多 API 模式下，主 API 负责剧情创作，第二 API 负责变量更新。'
       : '单 API 模式下，一个 LLM 同时负责剧情和变量更新。';
+  }
+  // 立即保存 apiMode，避免重新渲染时重置
+  if (window.sillyTavernStore) {
+    await window.sillyTavernStore.saveSettings({ apiMode: mode });
+    if (typeof window.switchApiLorebookMode === 'function') {
+      await window.switchApiLorebookMode(mode, window.sillyTavernStore);
+    }
   }
 };
