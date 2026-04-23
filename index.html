@@ -3117,17 +3117,22 @@
     .bottom-nav-inner {
       display: flex;
       align-items: center;
-      justify-content: space-around;
+      justify-content: flex-start;
       height: 64px;
-      padding: 0 8px;
+      padding: 0 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .bottom-nav-inner::-webkit-scrollbar { display: none; }
     .bottom-nav-btn {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 3px;
-      flex: 1;
+      flex-shrink: 0;
+      width: 64px;
       height: 100%;
       background: none;
       border: none;
@@ -3136,7 +3141,6 @@
       font-family: inherit;
       transition: all 0.2s;
       position: relative;
-      max-width: 80px;
     }
     .bottom-nav-btn svg {
       width: 24px;
@@ -3192,12 +3196,14 @@
       }
       /* top-bar mobile */
       #top-bar {
-        padding: 8px 12px;
-        height: auto;
-        min-height: 56px;
-        flex-wrap: wrap;
-        gap: 6px;
+        padding: 6px 10px;
+        height: 52px;
+        flex-wrap: nowrap;
+        gap: 8px;
       }
+      .logo-text { display: none; }
+      .logo-icon { width: 28px; height: 28px; }
+      .logo-icon svg { width: 28px; height: 28px; }
       .resource-bar {
         gap: 4px;
         overflow-x: auto;
@@ -3205,22 +3211,30 @@
         scrollbar-width: none;
         flex: 1;
         min-width: 0;
+        mask-image: linear-gradient(90deg, black 85%, transparent 100%);
+        -webkit-mask-image: linear-gradient(90deg, black 85%, transparent 100%);
       }
       .resource-bar::-webkit-scrollbar { display: none; }
       .resource-item {
-        padding: 5px 8px;
+        padding: 4px 8px;
+        gap: 4px;
         font-size: 11px;
         flex-shrink: 0;
+        border-radius: 12px;
       }
       .resource-icon { width: 14px; height: 14px; }
       .resource-icon svg { width: 14px; height: 14px; }
       .resource-label { display: none; }
-      .player-info { padding: 4px 8px; gap: 6px; }
-      .player-name { font-size: 12px; }
+      .player-info {
+        padding: 0;
+        background: none;
+        gap: 0;
+      }
+      .player-info:hover { background: none; }
+      .player-name { display: none; }
       .player-realm { display: none; }
-      .player-avatar { width: 28px; height: 28px; }
+      .player-avatar { width: 32px; height: 32px; }
       .tianji-btn { display: none; }
-      .logo-text { font-size: 16px; letter-spacing: 2px; }
       /* creation wizard mobile */
       #creation-page { padding: 20px 16px; }
       .creation-container { max-width: 100%; }
@@ -4541,10 +4555,49 @@
       <button class="bottom-nav-btn" data-page="diplomacy" onclick="switchPage('diplomacy')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="9"/>
-          <path d="M12 3a9 9 0 010 18"/>
-          <path d="M3 12h18"/>
+          <path d="M2 12h20"/>
+          <ellipse cx="12" cy="12" rx="4" ry="9"/>
         </svg>
         <span>外交</span>
+      </button>
+      <button class="bottom-nav-btn" data-page="sectinfo" onclick="switchPage('sectinfo')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+        <span>宗门</span>
+      </button>
+      <button class="bottom-nav-btn" data-page="library" onclick="switchPage('library')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 19V5a2 2 0 012-2h12a2 2 0 012 2v14"/>
+          <path d="M4 19h16"/>
+          <path d="M8 3v16"/>
+        </svg>
+        <span>藏经</span>
+      </button>
+      <button class="bottom-nav-btn" data-page="treasury" onclick="switchPage('treasury')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="8" width="18" height="13" rx="2"/>
+          <path d="M7 8V6a5 5 0 0110 0v2"/>
+          <circle cx="12" cy="15" r="2"/>
+        </svg>
+        <span>宝库</span>
+      </button>
+      <button class="bottom-nav-btn" data-page="quests" onclick="switchPage('quests')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+        <span>任务</span>
+      </button>
+      <button class="bottom-nav-btn" data-page="opportunity" onclick="switchPage('opportunity')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span>机缘</span>
       </button>
     </div>
   </nav>
@@ -7805,6 +7858,8 @@ ${discipleLines || '无'}
       window.startNewGame = function() {
         const titleScreen = document.getElementById('title-screen');
         if (titleScreen) titleScreen.classList.add('hidden');
+        const app = document.getElementById('app');
+        if (app) app.style.display = 'none';
         const creationPage = document.getElementById('creation-page');
         if (creationPage) {
           creationPage.style.display = 'block';
