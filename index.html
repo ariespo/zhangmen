@@ -1602,6 +1602,19 @@
       padding: 16px 0;
       gap: 4px;
       flex-shrink: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    #side-nav::-webkit-scrollbar {
+      display: none;
+    }
+    #side-nav.dragging {
+      cursor: grabbing;
     }
 
     .nav-btn {
@@ -8138,6 +8151,52 @@ ${discipleLines || '无'}
         p.innerHTML = formatStoryText(originalText);
       }
     });
+
+    // ===== 侧边栏拖拽滚动 =====
+    (function initSideNavDrag() {
+      const sideNav = document.getElementById('side-nav');
+      if (!sideNav) return;
+      let isDown = false;
+      let startY;
+      let scrollTop;
+
+      sideNav.addEventListener('mousedown', (e) => {
+        isDown = true;
+        sideNav.classList.add('dragging');
+        startY = e.pageY - sideNav.offsetTop;
+        scrollTop = sideNav.scrollTop;
+      });
+      sideNav.addEventListener('mouseleave', () => {
+        isDown = false;
+        sideNav.classList.remove('dragging');
+      });
+      sideNav.addEventListener('mouseup', () => {
+        isDown = false;
+        sideNav.classList.remove('dragging');
+      });
+      sideNav.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const y = e.pageY - sideNav.offsetTop;
+        const walk = (y - startY) * 1.2;
+        sideNav.scrollTop = scrollTop - walk;
+      });
+      // 触摸支持
+      sideNav.addEventListener('touchstart', (e) => {
+        isDown = true;
+        startY = e.touches[0].pageY - sideNav.offsetTop;
+        scrollTop = sideNav.scrollTop;
+      }, { passive: true });
+      sideNav.addEventListener('touchend', () => {
+        isDown = false;
+      });
+      sideNav.addEventListener('touchmove', (e) => {
+        if (!isDown) return;
+        const y = e.touches[0].pageY - sideNav.offsetTop;
+        const walk = (y - startY) * 1.2;
+        sideNav.scrollTop = scrollTop - walk;
+      }, { passive: true });
+    })();
   </script>
   <script type="module">
     import { initSillyTavernEnhancer, addChatMessage, getActiveChat } from './sillytavern/st-integration.js';
