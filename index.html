@@ -7547,33 +7547,62 @@ ${discipleLines || '无'}
 
       llmAbortController = new AbortController();
 
-      try {
-        const response = await fetch(`${config.baseUrl.replace(/\/$/, '')}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'text/event-stream',
-            'Authorization': `Bearer ${config.apiKey}`
-          },
-          body: JSON.stringify({
-            model: preset?.modelOverride || config.model,
-            messages,
-            stream: true,
-            ...apiParams
-          }),
-          signal: llmAbortController.signal
-        });
+      const requestBody = JSON.stringify({
+        model: preset?.modelOverride || config.model,
+        messages,
+        stream: true,
+        ...apiParams
+      });
+      console.log(`[API] 请求体大小: ${(requestBody.length / 1024).toFixed(1)} KB, messages: ${messages.length}, max_tokens: ${apiParams.max_tokens}`);
 
-        if (!response.ok) {
+      let fetchAttempt = 0;
+      const MAX_FETCH_RETRIES = 1;
+      let response;
+
+      while (fetchAttempt <= MAX_FETCH_RETRIES) {
+        try {
+          response = await fetch(`${config.baseUrl.replace(/\/$/, '')}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'text/event-stream',
+              'Authorization': `Bearer ${config.apiKey}`
+            },
+            body: requestBody,
+            signal: llmAbortController.signal
+          });
+
+          if (response.ok) break;
+
+          // 504 时重试一次
+          if (response.status === 504 && fetchAttempt < MAX_FETCH_RETRIES) {
+            console.warn(`[API] 504 超时，${fetchAttempt === 0 ? '第1次重试' : '重试也失败'}...`);
+            fetchAttempt++;
+            continue;
+          }
+
           const errText = await response.text();
           throw new Error(`API 错误 ${response.status}: ${errText}`);
+        } catch (fetchErr) {
+          if (fetchAttempt < MAX_FETCH_RETRIES && fetchErr.name !== 'AbortError') {
+            fetchAttempt++;
+            console.warn(`[API] fetch 失败，第${fetchAttempt}次重试...`, fetchErr.message);
+            continue;
+          }
+          throw fetchErr;
         }
+      }
 
-        if (!response.body) {
-          throw new Error('API 响应体为空');
-        }
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`API 错误 ${response.status}: ${errText}`);
+      }
+
+      if (!response.body) {
+        throw new Error('API 响应体为空');
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
 
         // 流式读取超时保护：60秒未收到数据自动中止
         let lastChunkTime = Date.now();
