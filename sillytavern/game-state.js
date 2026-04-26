@@ -290,13 +290,24 @@ function applySingleOp(root, op) {
   } else if (op.op === 'delta') {
     let delta = op.value;
     if (typeof delta === 'string') delta = parseFloat(delta);
-    if (typeof delta !== 'number') { console.warn('[GameState] delta requires number:', op); return; }
+    if (typeof delta !== 'number' || isNaN(delta)) { console.warn('[GameState] delta requires number:', op); return; }
     if (Array.isArray(target)) {
       const idx = parseInt(key, 10);
-      if (!isNaN(idx) && idx >= 0 && idx < target.length && typeof target[idx] === 'number') target[idx] += delta;
-    } else if (typeof target === 'object' && typeof target[key] === 'number') {
-      target[key] += delta;
-    } else { console.warn('[GameState] delta target not numeric:', op.path); }
+      if (!isNaN(idx) && idx >= 0 && idx < target.length) {
+        if (typeof target[idx] === 'number') target[idx] += delta;
+        else if (typeof target[idx] === 'string') { const cur = parseFloat(target[idx]); if (!isNaN(cur)) target[idx] = cur + delta; }
+      }
+    } else if (typeof target === 'object') {
+      if (typeof target[key] === 'number') {
+        target[key] += delta;
+      } else if (typeof target[key] === 'string') {
+        const cur = parseFloat(target[key]);
+        if (!isNaN(cur)) target[key] = cur + delta;
+        else console.warn('[GameState] delta target not numeric:', op.path);
+      } else {
+        console.warn('[GameState] delta target not numeric:', op.path);
+      }
+    }
   } else if (op.op === 'insert') {
     if (Array.isArray(target)) {
       if (key === '-') target.push(op.value);
@@ -317,6 +328,20 @@ function applySingleOp(root, op) {
 
 // ===== Persistence =====
 function mergeWithDefaults(data, schema) {
+  if (schema.t === 'number') {
+    const n = typeof data === 'number' ? data : parseFloat(data);
+    return isNaN(n) ? schema.d : n;
+  }
+  if (schema.t === 'string') {
+    return typeof data === 'string' ? data : String(data);
+  }
+  if (schema.t === 'boolean') {
+    return typeof data === 'boolean' ? data : Boolean(data);
+  }
+  if (schema.t === 'enum') {
+    const v = String(data);
+    return schema.values.includes(v) ? v : schema.d;
+  }
   if (schema.t === 'object') {
     const out = buildDefault(schema);
     for (const k of Object.keys(data)) {
