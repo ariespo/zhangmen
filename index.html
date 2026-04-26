@@ -7519,7 +7519,7 @@ ${discipleLines || '无'}
         const assembled = assemblePrompt({
           userInput,
           history: chat?.messages || window.storyHistory || [],
-          preset: preset || { promptOrder: [], parameters: {}, contextLength: 4096 },
+          preset: preset || null,
           lorebooks: activeBooks || [],
           userName: window.gameStateManager?.state?.player?.name || playerName || '掌门',
           characterName: '宗门模拟器',
