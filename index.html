@@ -7585,9 +7585,10 @@ ${discipleLines || '无'}
           const errText = await response.text();
           throw new Error(`API 错误 ${response.status}: ${errText}`);
         } catch (fetchErr) {
+          console.warn(`[API] fetch 错误详情 (attempt ${fetchAttempt}):`, fetchErr.name, fetchErr.message);
           if (fetchAttempt < MAX_FETCH_RETRIES && fetchErr.name !== 'AbortError') {
             fetchAttempt++;
-            console.warn(`[API] fetch 失败，第${fetchAttempt}次重试...`, fetchErr.message);
+            console.warn(`[API] 准备第${fetchAttempt}次重试...`);
             continue;
           }
           throw fetchErr;
@@ -7657,8 +7658,13 @@ ${discipleLines || '无'}
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
-          console.error('LLM 请求失败:', err);
-          alert('天道运转受阻：' + err.message);
+          console.error('[LLM] 请求失败详情:', err.name, err.message, err.stack);
+          console.error('[LLM] 请求配置:', { baseUrl: config?.baseUrl, model: config?.model });
+          let msg = '天道运转受阻：' + err.message;
+          if (err.message?.includes('Failed to fetch')) {
+            msg += '\n\n可能原因:\n1. CORS 被浏览器阻止（检查 Network 标签）\n2. 代理/VPN 拦截了 POST 请求\n3. 浏览器扩展（广告拦截器）阻止了请求\n4. 请求体过大导致连接被重置\n5. API 服务暂时不可用';
+          }
+          alert(msg);
         }
         await rollbackSnapshot(snapshot);
       } finally {

@@ -1347,18 +1347,22 @@ function attachSettingsListeners(state, store) {
       alert('请先填写主 API 的 URL 和 Key');
       return;
     }
+    const testBody = JSON.stringify({
+      model: model,
+      messages: [{ role: 'user', content: '你好' }],
+      max_tokens: 5
+    });
+    console.log('[API Test] URL:', `${url}/chat/completions`);
+    console.log('[API Test] Body:', testBody);
     try {
       const res = await fetch(`${url}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Authorization': `Bearer ${key}`
         },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: 'user', content: '你好' }],
-          max_tokens: 5
-        })
+        body: testBody
       });
       if (!res.ok) {
         const err = await res.text();
@@ -1367,7 +1371,8 @@ function attachSettingsListeners(state, store) {
       }
       store.showToast('主 API 连通性测试通过');
     } catch (err) {
-      alert('测试失败: ' + err.message);
+      console.error('[API Test] 详细错误:', err.name, err.message, err.stack);
+      alert(`测试失败: ${err.message}\n\n常见原因:\n1. CORS 被浏览器阻止（检查 Network 标签是否有红色 OPTIONS 请求）\n2. 代理/VPN 拦截了 POST 请求\n3. 浏览器扩展（广告拦截器）阻止了请求\n4. API 服务暂时不可用`);
     }
   });
 
@@ -1426,18 +1431,22 @@ function attachSettingsListeners(state, store) {
       alert('请先填写第二 API 的 URL 和 Key');
       return;
     }
+    const testBody = JSON.stringify({
+      model: model,
+      messages: [{ role: 'user', content: '你好' }],
+      max_tokens: 5
+    });
+    console.log('[API Test Secondary] URL:', `${url}/chat/completions`);
+    console.log('[API Test Secondary] Body:', testBody);
     try {
       const res = await fetch(`${url}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Authorization': `Bearer ${key}`
         },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: 'user', content: '你好' }],
-          max_tokens: 5
-        })
+        body: testBody
       });
       if (!res.ok) {
         const err = await res.text();
@@ -1446,7 +1455,8 @@ function attachSettingsListeners(state, store) {
       }
       store.showToast('第二 API 连通性测试通过');
     } catch (err) {
-      alert('测试失败: ' + err.message);
+      console.error('[API Test Secondary] 详细错误:', err.name, err.message, err.stack);
+      alert(`测试失败: ${err.message}\n\n常见原因:\n1. CORS 被浏览器阻止（检查 Network 标签是否有红色 OPTIONS 请求）\n2. 代理/VPN 拦截了 POST 请求\n3. 浏览器扩展（广告拦截器）阻止了请求\n4. API 服务暂时不可用`);
     }
   });
 
