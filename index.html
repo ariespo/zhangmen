@@ -7545,7 +7545,8 @@ ${discipleLines || '无'}
         console.warn('SillyTavern 提示词组装失败，使用默认 prompt:', e);
       }
 
-      llmAbortController = new AbortController();
+      try {
+        llmAbortController = new AbortController();
 
       const requestBody = JSON.stringify({
         model: preset?.modelOverride || config.model,
