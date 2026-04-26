@@ -1261,6 +1261,21 @@ function attachSettingsListeners(state, store) {
   const body = document.querySelector('.st-modal-body');
   if (!body) return;
 
+  async function saveApiConfig(apiType, { baseUrl, apiKey, model }) {
+    const isPrimary = apiType === 'primary';
+    const key = isPrimary ? 'api' : 'secondaryApi';
+    const current = isPrimary ? state.settings.api : (state.settings.secondaryApi || {});
+    const modelEl = document.getElementById(isPrimary ? 'st-model' : 'st-secondary-model');
+    await store.saveSettings({
+      [key]: {
+        ...current,
+        baseUrl,
+        apiKey,
+        model: model || modelEl?.value?.trim() || current.model || 'gpt-3.5-turbo'
+      }
+    });
+  }
+
   body.querySelectorAll('.st-tab').forEach(tab => {
     tab.addEventListener('click', () => store.setState({ activeTab: tab.dataset.tab }));
   });
@@ -1329,15 +1344,7 @@ function attachSettingsListeners(state, store) {
     if (models.length > 0) {
       store.setState({ apiModelList: models });
       store.showToast(`已获取 ${models.length} 个模型`);
-      // 获取成功 = 配置正确，自动保存当前输入的 URL / Key / Model
-      await store.saveSettings({
-        api: {
-          ...state.settings.api,
-          baseUrl: baseUrl,
-          apiKey: apiKey,
-          model: document.getElementById('st-model')?.value?.trim() || state.settings.api.model || 'gpt-3.5-turbo'
-        }
-      });
+      await saveApiConfig('primary', { baseUrl, apiKey });
       return;
     }
 
@@ -1379,15 +1386,7 @@ function attachSettingsListeners(state, store) {
         return;
       }
       store.showToast('主 API 连通性测试通过');
-      // 测试通过 = 配置正确，自动保存当前输入的 URL / Key / Model
-      await store.saveSettings({
-        api: {
-          ...state.settings.api,
-          baseUrl: url,
-          apiKey: key,
-          model: model
-        }
-      });
+      await saveApiConfig('primary', { baseUrl: url, apiKey: key, model });
     } catch (err) {
       console.error('[API Test] 详细错误:', err.name, err.message, err.stack);
       alert(`测试失败: ${err.message}\n\n常见原因:\n1. CORS 被浏览器阻止（检查 Network 标签是否有红色 OPTIONS 请求）\n2. 代理/VPN 拦截了 POST 请求\n3. 浏览器扩展（广告拦截器）阻止了请求\n4. API 服务暂时不可用`);
@@ -1432,15 +1431,7 @@ function attachSettingsListeners(state, store) {
     if (models.length > 0) {
       store.setState({ secondaryApiModelList: models });
       store.showToast(`已获取 ${models.length} 个模型`);
-      // 获取成功 = 配置正确，自动保存当前输入的 URL / Key / Model
-      await store.saveSettings({
-        secondaryApi: {
-          ...(state.settings.secondaryApi || {}),
-          baseUrl: baseUrl,
-          apiKey: apiKey,
-          model: document.getElementById('st-secondary-model')?.value?.trim() || state.settings.secondaryApi?.model || 'gpt-3.5-turbo'
-        }
-      });
+      await saveApiConfig('secondary', { baseUrl, apiKey });
       return;
     }
 
@@ -1481,15 +1472,7 @@ function attachSettingsListeners(state, store) {
         return;
       }
       store.showToast('第二 API 连通性测试通过');
-      // 测试通过 = 配置正确，自动保存当前输入的 URL / Key / Model
-      await store.saveSettings({
-        secondaryApi: {
-          ...(state.settings.secondaryApi || {}),
-          baseUrl: url,
-          apiKey: key,
-          model: model
-        }
-      });
+      await saveApiConfig('secondary', { baseUrl: url, apiKey: key, model });
     } catch (err) {
       console.error('[API Test Secondary] 详细错误:', err.name, err.message, err.stack);
       alert(`测试失败: ${err.message}\n\n常见原因:\n1. CORS 被浏览器阻止（检查 Network 标签是否有红色 OPTIONS 请求）\n2. 代理/VPN 拦截了 POST 请求\n3. 浏览器扩展（广告拦截器）阻止了请求\n4. API 服务暂时不可用`);

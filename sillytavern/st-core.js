@@ -669,10 +669,17 @@ export function createStore() {
     },
 
     // ---- Settings ----
+    let _settingsDebounceTimer = null;
     async saveSettings(settings) {
       Object.assign(state.settings, settings);
-      await db.settings.put(state.settings);
-      notify();
+      if (_settingsDebounceTimer) clearTimeout(_settingsDebounceTimer);
+      return new Promise((resolve) => {
+        _settingsDebounceTimer = setTimeout(async () => {
+          await db.settings.put(state.settings);
+          notify();
+          resolve();
+        }, 200);
+      });
     },
 
     // ---- Chats ----

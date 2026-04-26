@@ -6795,19 +6795,20 @@ ${discipleLines || '无'}
       }
     }
 
+    // 内部标签定义 —— strip 时去除，stream 时按名捕获
+    const STRIP_TAGS = ['thinking', 'think', 'analysis', 'option', 'sum', 'vars', 'foreshadowing'];
+    const EXTRACT_TAGS = { maintext: '$1' };
     function stripInternalTags(text) {
       if (!text) return '';
-      return text
-        .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
-        .replace(/<think>[\s\S]*?<\/think>/gi, '')
-        .replace(/<analysis>[\s\S]*?<\/analysis>/gi, '')
-        .replace(/<maintext>([\s\S]*?)<\/maintext>/gi, '$1')
-        .replace(/<option>[\s\S]*?<\/option>/gi, '')
-        .replace(/<sum>[\s\S]*?<\/sum>/gi, '')
-        .replace(/<vars>[\s\S]*?<\/vars>/gi, '')
-        .replace(/<foreshadowing>[\s\S]*?<\/foreshadowing>/gi, '')
-        .replace(/<var\s+[^>]*\/?>/gi, '')
-        .trim();
+      let result = text;
+      for (const tag of STRIP_TAGS) {
+        result = result.replace(new RegExp(`<${tag}>[\\s\\S]*?<\\/${tag}>`, 'gi'), '');
+      }
+      for (const [tag, repl] of Object.entries(EXTRACT_TAGS)) {
+        result = result.replace(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, 'gi'), repl);
+      }
+      result = result.replace(/<var\s+[^>]*\/?>/gi, '');
+      return result.trim();
     }
 
     function updateLiveOptions(text) {
@@ -7234,6 +7235,13 @@ ${discipleLines || '无'}
       processNormalBufferImpl(text);
     }
 
+    // 流式解析标签配置（与 STRIP_TAGS / EXTRACT_TAGS 同步维护）
+    const STREAM_TAGS = [
+      { name: 'maintext', startLen: 10, endLen: 11 },
+      { name: 'option', startLen: 8, endLen: 9 },
+      { name: 'sum', startLen: 5, endLen: 6 },
+      { name: 'vars', startLen: 6, endLen: 7 }
+    ];
     function processNormalBufferImpl(text, isFlush = false) {
       let remaining = text;
       while (remaining.length > 0) {
@@ -7247,15 +7255,11 @@ ${discipleLines || '无'}
               continue;
             }
           }
-          const mainStart = remaining.indexOf('<maintext>');
-          const optionStart = remaining.indexOf('<option>');
-          const sumStart = remaining.indexOf('<sum>');
-          const varsStart = remaining.indexOf('<vars>');
           const candidates = [];
-          if (mainStart !== -1) candidates.push({ start: mainStart, len: 10, tag: 'maintext' });
-          if (optionStart !== -1) candidates.push({ start: optionStart, len: 8, tag: 'option' });
-          if (sumStart !== -1) candidates.push({ start: sumStart, len: 5, tag: 'sum' });
-          if (varsStart !== -1) candidates.push({ start: varsStart, len: 6, tag: 'vars' });
+          for (const tag of STREAM_TAGS) {
+            const start = remaining.indexOf(`<${tag.name}>`);
+            if (start !== -1) candidates.push({ start, len: tag.startLen, tag: tag.name, endLen: tag.endLen });
+          }
           if (candidates.length > 0) {
             candidates.sort((a, b) => a.start - b.start);
             const first = candidates[0];
@@ -8163,50 +8167,37 @@ ${discipleLines || '无'}
     });
 
     // ===== 侧边栏拖拽滚动 =====
-    (function initSideNavDrag() {
-      const sideNav = document.getElementById('side-nav');
-      if (!sideNav) return;
-      let isDown = false;
-      let startY;
-      let scrollTop;
-
-      sideNav.addEventListener('mousedown', (e) => {
+    function makeDraggable(el) {
+      if (!el) return;
+      let isDown = false, startY, scrollTop, navOffset;
+      el.addEventListener('mousedown', (e) => {
         isDown = true;
-        sideNav.classList.add('dragging');
-        startY = e.pageY - sideNav.offsetTop;
-        scrollTop = sideNav.scrollTop;
+        el.classList.add('dragging');
+        navOffset = el.getBoundingClientRect().top + window.scrollY;
+        startY = e.pageY - navOffset;
+        scrollTop = el.scrollTop;
       });
-      sideNav.addEventListener('mouseleave', () => {
-        isDown = false;
-        sideNav.classList.remove('dragging');
-      });
-      sideNav.addEventListener('mouseup', () => {
-        isDown = false;
-        sideNav.classList.remove('dragging');
-      });
-      sideNav.addEventListener('mousemove', (e) => {
+      el.addEventListener('mouseleave', () => { isDown = false; el.classList.remove('dragging'); });
+      el.addEventListener('mouseup', () => { isDown = false; el.classList.remove('dragging'); });
+      el.addEventListener('mousemove', (e) => {
         if (!isDown) return;
         e.preventDefault();
-        const y = e.pageY - sideNav.offsetTop;
-        const walk = (y - startY) * 1.2;
-        sideNav.scrollTop = scrollTop - walk;
+        el.scrollTop = scrollTop - (e.pageY - navOffset - startY) * 1.2;
       });
-      // 触摸支持
-      sideNav.addEventListener('touchstart', (e) => {
+      el.addEventListener('touchstart', (e) => {
         isDown = true;
-        startY = e.touches[0].pageY - sideNav.offsetTop;
-        scrollTop = sideNav.scrollTop;
+        navOffset = el.getBoundingClientRect().top + window.scrollY;
+        startY = e.touches[0].pageY - navOffset;
+        scrollTop = el.scrollTop;
       }, { passive: true });
-      sideNav.addEventListener('touchend', () => {
-        isDown = false;
-      });
-      sideNav.addEventListener('touchmove', (e) => {
+      el.addEventListener('touchend', () => { isDown = false; });
+      el.addEventListener('touchcancel', () => { isDown = false; el.classList.remove('dragging'); });
+      el.addEventListener('touchmove', (e) => {
         if (!isDown) return;
-        const y = e.touches[0].pageY - sideNav.offsetTop;
-        const walk = (y - startY) * 1.2;
-        sideNav.scrollTop = scrollTop - walk;
+        el.scrollTop = scrollTop - (e.touches[0].pageY - navOffset - startY) * 1.2;
       }, { passive: true });
-    })();
+    }
+    makeDraggable(document.getElementById('side-nav'));
   </script>
   <script type="module">
     import { initSillyTavernEnhancer, addChatMessage, getActiveChat } from './sillytavern/st-integration.js';
