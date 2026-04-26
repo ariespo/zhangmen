@@ -130,7 +130,16 @@
 ## 当前状态
 - **手机端适配**：全部完成 ✅
 - **多 API 模式**：核心功能完成 ✅，提示词增强完成 ✅，**待实际测试**
-- **代码已推送**：`e5e5c48` 已推送到 GitHub
+- **Bug 修复**：try 块缺失 ✅、preset 回退值 ✅、analysis 标签 ✅、delta 字符串转换 ✅
+- **代码重构**：saveApiConfig ✅、makeDraggable ✅、标签常量 ✅、saveSettings 防抖 ✅
+- **代码已推送**：`1035cbd` 已推送到 GitHub
+
+## 今日待办（2026-04-27）
+- [ ] 多 API 模式端到端测试
+- [ ] 开局变量填充验证
+- [ ] makeDraggable 简化（clientY - rect.top）
+- [ ] 111 处内联 onclick 改为事件委托
+- [ ] LLM 层抽离为独立模块
 
 ## 验证命令
 ```bash
