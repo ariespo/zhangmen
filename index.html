@@ -7216,10 +7216,9 @@ ${discipleLines || '无'}
             // 保留可能的不完整起始标签后缀（最长 <thinking> = 10）
             const keepLen = 10;
             const processLen = Math.max(0, streamBuffer.length - keepLen);
-            if (processLen === 0 && streamBuffer.length > 0) {
-              // 缓冲区长度恰好等于 keepLen 且不包含任何标签开头
-              // 直接清空避免死循环（这些字符不是任何已知标签的开头）
-              streamBuffer = '';
+            // 当 streamBuffer 还不够 keepLen 长时，可能是不完整的标签起始（如 "<mai"）
+            // 直接 break 等待下一个 chunk 拼接，不要清空（否则会丢失 <maintext> 等开头）
+            if (processLen === 0) {
               break;
             }
             const toProcess = streamBuffer.slice(0, processLen);
