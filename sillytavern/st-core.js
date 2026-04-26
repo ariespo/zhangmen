@@ -611,6 +611,8 @@ export function createStore() {
     setTimeout(() => setState({ toast: null }), 2500);
   };
 
+  let _settingsDebounceTimer = null;
+
   return {
     getState: () => state,
     setState,
@@ -669,7 +671,6 @@ export function createStore() {
     },
 
     // ---- Settings ----
-    let _settingsDebounceTimer = null;
     async saveSettings(settings) {
       Object.assign(state.settings, settings);
       if (_settingsDebounceTimer) clearTimeout(_settingsDebounceTimer);
