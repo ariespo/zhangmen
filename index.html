@@ -2760,6 +2760,253 @@
       max-height: calc(80vh - 60px);
     }
 
+    /* === Member Detail (Identity Jade Plate) === */
+    .member-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .member-detail-header {
+      text-align: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .member-detail-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(110,207,207,0.12);
+      border: 2px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      color: var(--jade-glow);
+      transition: all 0.3s;
+    }
+
+    .member-detail-avatar svg {
+      width: 36px;
+      height: 36px;
+    }
+
+    .member-detail-name {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--jade-pale);
+      margin-bottom: 4px;
+      letter-spacing: 2px;
+    }
+
+    .member-detail-dao {
+      font-size: 14px;
+      color: var(--gold-spirit);
+      margin-bottom: 12px;
+    }
+
+    .member-detail-badges {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .member-detail-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      border: 1px solid var(--glass-border);
+      background: rgba(0,0,0,0.2);
+    }
+
+    .member-detail-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .member-detail-section-title {
+      font-size: 11px;
+      color: rgba(168,230,230,0.45);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+    }
+
+    .member-detail-section-title::before,
+    .member-detail-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--glass-border));
+    }
+
+    .member-detail-section-title::after {
+      background: linear-gradient(90deg, var(--glass-border), transparent);
+    }
+
+    .member-detail-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .member-detail-bar-label {
+      font-size: 13px;
+      color: rgba(168,230,230,0.7);
+      width: 56px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .member-detail-bar-track {
+      flex: 1;
+      height: 10px;
+      background: rgba(0,0,0,0.35);
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid rgba(110,207,207,0.08);
+    }
+
+    .member-detail-bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.6s ease;
+    }
+
+    .member-detail-bar-value {
+      font-size: 13px;
+      color: var(--jade-pale);
+      width: 40px;
+      text-align: right;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+
+    .member-detail-stat-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .member-detail-stat-card {
+      text-align: center;
+      padding: 14px 8px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .member-detail-stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--jade-glow), transparent);
+      opacity: 0.4;
+    }
+
+    .member-detail-stat-card-label {
+      font-size: 11px;
+      color: rgba(168,230,230,0.5);
+      margin-bottom: 6px;
+    }
+
+    .member-detail-stat-card-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--jade-pale);
+      line-height: 1;
+    }
+
+    .member-detail-stat-card-diff {
+      font-size: 11px;
+      color: var(--jade-glow);
+      margin-top: 4px;
+    }
+
+    .member-detail-stat-card-diff.negative {
+      color: var(--lotus-pink);
+    }
+
+    .member-detail-skill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .member-detail-skill-item {
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.18);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--jade-pale);
+      border-left: 3px solid var(--jade-glow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .member-detail-skill-item::before {
+      content: '《';
+      color: var(--gold-spirit);
+      font-weight: 500;
+    }
+
+    .member-detail-skill-item::after {
+      content: '》';
+      color: var(--gold-spirit);
+      font-weight: 500;
+    }
+
+    .member-detail-equip-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .member-detail-equip-item {
+      padding: 10px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .member-detail-equip-item:hover {
+      border-color: rgba(110,207,207,0.3);
+      transform: translateY(-1px);
+    }
+
+    .member-detail-equip-name {
+      font-size: 13px;
+      color: var(--jade-pale);
+      margin-bottom: 2px;
+      font-weight: 500;
+    }
+
+    .member-detail-equip-rank {
+      font-size: 11px;
+      color: var(--gold-spirit);
+    }
+
+    .member-detail-empty {
+      color: rgba(168,230,230,0.4);
+      font-size: 13px;
+      text-align: center;
+      padding: 12px;
+    }
+
     /* === SETTINGS PANEL === */
     .settings-section {
       margin-bottom: 20px;
@@ -5010,65 +5257,83 @@
         const base = p.baseStats;
         const equippedItems = getMemberEquippedItems(p.name);
 
-        const statDiff = (key) => {
+        const statDiffHtml = (key) => {
           const diff = stats[key] - base[key];
-          if (diff > 0) return ` <span style="color:var(--jade-glow);font-size:11px">(+${diff})</span>`;
-          if (diff < 0) return ` <span style="color:var(--lotus-pink);font-size:11px">(${diff})</span>`;
+          if (diff > 0) return `<div class="member-detail-stat-card-diff">+${diff}</div>`;
+          if (diff < 0) return `<div class="member-detail-stat-card-diff negative">${diff}</div>`;
           return '';
         };
 
-        const equipmentHtml = equippedItems.length > 0
+        const lifespanPercent = p.lifespan.max === Infinity ? 100 : Math.round((p.lifespan.current / p.lifespan.max) * 100);
+        const lifespanColor = lifespanPercent >= 70 ? 'var(--jade-glow)' : lifespanPercent >= 40 ? 'var(--gold-spirit)' : 'var(--lotus-pink)';
+
+        const skillListHtml = Array.isArray(p.skills) && p.skills.length > 0
+          ? p.skills.map(s => `<div class="member-detail-skill-item">${s}</div>`).join('')
+          : '<div class="member-detail-empty">暂无修习功法</div>';
+
+        const equipListHtml = equippedItems.length > 0
           ? equippedItems.map(item => {
-              const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
-              const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.1)' : item.color === 'purple' ? 'rgba(139,126,200,0.1)' : item.color === 'pink' ? 'rgba(212,114,140,0.1)' : 'rgba(200,168,110,0.1)';
-              return `<span style="padding:4px 12px;background:${bgVar};border:1px solid var(--glass-border);border-radius:8px;font-size:12px;color:${colorVar}">${item.name} · ${item.rank}</span>`;
+              const c = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
+              return `<div class="member-detail-equip-item" style="border-color:${c}33"><div class="member-detail-equip-name" style="color:${c}">${item.name}</div><div class="member-detail-equip-rank">${item.rank}</div></div>`;
             }).join('')
-          : '<span style="color:rgba(168,230,230,0.4);font-size:12px">暂无装备</span>';
+          : '<div class="member-detail-empty" style="grid-column:1/-1">暂无佩戴装备</div>';
 
-        title.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg> 掌门信息';
+        title.textContent = '掌门信息';
         body.innerHTML = `
-          <div class="sect-info-grid">
-            <div class="info-block"><h4>名称</h4><div class="info-value">${p.name}</div></div>
-            <div class="info-block"><h4>道号</h4><div class="info-value">${p.daoName}</div></div>
-            <div class="info-block"><h4>境界</h4><div class="info-value text-gold">${p.realm}</div></div>
-            <div class="info-block"><h4>寿元</h4><div class="info-value">${p.lifespan.max === Infinity ? p.lifespan.current + ' / 长生久视' : p.lifespan.current + ' / ' + p.lifespan.max}</div></div>
-            <div class="info-block"><h4>天赋资质</h4><div class="info-value text-jade">${p.talent}</div></div>
-
-            <div class="info-block">
-              <h4>杀伐</h4>
-              <div class="info-value">
-                ${stats.杀伐}${statDiff('杀伐')}
-                <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.杀伐}</div>
+          <div class="member-detail">
+            <div class="member-detail-header">
+              <div class="member-detail-avatar" style="color:var(--gold-spirit);border-color:rgba(200,168,110,0.25)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="9" r="4"/><path d="M4 22c0-4 4-7 8-7s8 3 8 7"/></svg>
               </div>
-            </div>
-            <div class="info-block">
-              <h4>防御</h4>
-              <div class="info-value">
-                ${stats.防御}${statDiff('防御')}
-                <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.防御}</div>
-              </div>
-            </div>
-            <div class="info-block">
-              <h4>身法</h4>
-              <div class="info-value">
-                ${stats.身法}${statDiff('身法')}
-                <div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:2px">基础 ${base.身法}</div>
+              <div class="member-detail-name">${p.name}</div>
+              <div class="member-detail-dao">${p.daoName || '—'} · ${p.realm || '—'}</div>
+              <div class="member-detail-badges">
+                <span class="member-detail-badge" style="color:var(--gold-spirit)">掌门</span>
+                <span class="member-detail-badge" style="color:var(--jade-pale)">${p.talent || '—'}</span>
               </div>
             </div>
 
-            <div class="info-block full-width">
-              <h4>已修功法</h4>
-              <div class="info-value" style="font-size:13px;line-height:2">${Array.isArray(p.skills) && p.skills.length > 0 ? p.skills.join('、') : '<span style="color:rgba(168,230,230,0.4)">暂无</span>'}</div>
+            <div class="member-detail-section">
+              <div class="member-detail-section-title">命数</div>
+              <div class="member-detail-bar-row">
+                <span class="member-detail-bar-label">寿元</span>
+                <div class="member-detail-bar-track"><div class="member-detail-bar-fill" style="width:${lifespanPercent}%;background:${lifespanColor}"></div></div>
+                <span class="member-detail-bar-value">${p.lifespan.max === Infinity ? p.lifespan.current + '/∞' : p.lifespan.current + '/' + p.lifespan.max}</span>
+              </div>
             </div>
-            <div class="info-block full-width">
-              <h4>佩戴装备</h4>
-              <div class="info-value" style="font-size:13px;line-height:2">
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  ${equipmentHtml}
+
+            <div class="member-detail-section">
+              <div class="member-detail-section-title">修为</div>
+              <div class="member-detail-stat-cards">
+                <div class="member-detail-stat-card">
+                  <div class="member-detail-stat-card-label">杀伐</div>
+                  <div class="member-detail-stat-card-value" style="color:${stats.杀伐 > base.杀伐 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.杀伐}</div>
+                  ${statDiffHtml('杀伐')}
+                </div>
+                <div class="member-detail-stat-card">
+                  <div class="member-detail-stat-card-label">防御</div>
+                  <div class="member-detail-stat-card-value" style="color:${stats.防御 > base.防御 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.防御}</div>
+                  ${statDiffHtml('防御')}
+                </div>
+                <div class="member-detail-stat-card">
+                  <div class="member-detail-stat-card-label">身法</div>
+                  <div class="member-detail-stat-card-value" style="color:${stats.身法 > base.身法 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.身法}</div>
+                  ${statDiffHtml('身法')}
                 </div>
               </div>
             </div>
-            <div class="info-block full-width" style="display:flex;gap:8px;justify-content:flex-end;background:transparent;border:none;padding:8px 0 0 0">
+
+            <div class="member-detail-section">
+              <div class="member-detail-section-title">功法</div>
+              <div class="member-detail-skill-list">${skillListHtml}</div>
+            </div>
+
+            <div class="member-detail-section">
+              <div class="member-detail-section-title">装备</div>
+              <div class="member-detail-equip-grid">${equipListHtml}</div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;padding-top:8px">
               <button class="action-btn-sm" style="background:rgba(110,207,207,0.12);border-color:rgba(110,207,207,0.3);color:var(--jade-glow)" onclick="const ok=addActionLog('修炼','专心修炼','自己的实力提升更为重要，专心修炼',3); if(ok) closeModal();">专心修炼（消耗 3 体力）</button>
             </div>
           </div>
