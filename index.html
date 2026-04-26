@@ -6800,6 +6800,7 @@ ${discipleLines || '无'}
       return text
         .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/<analysis>[\s\S]*?<\/analysis>/gi, '')
         .replace(/<maintext>([\s\S]*?)<\/maintext>/gi, '$1')
         .replace(/<option>[\s\S]*?<\/option>/gi, '')
         .replace(/<sum>[\s\S]*?<\/sum>/gi, '')
@@ -7237,6 +7238,15 @@ ${discipleLines || '无'}
       let remaining = text;
       while (remaining.length > 0) {
         if (currentCaptureTag === null) {
+          // 跳过完整的 <analysis> 标签（避免它干扰后续标签解析）
+          const analysisStart = remaining.indexOf('<analysis>');
+          if (analysisStart !== -1) {
+            const analysisEnd = remaining.indexOf('</analysis>');
+            if (analysisEnd !== -1 && analysisEnd > analysisStart) {
+              remaining = remaining.slice(0, analysisStart) + remaining.slice(analysisEnd + 11);
+              continue;
+            }
+          }
           const mainStart = remaining.indexOf('<maintext>');
           const optionStart = remaining.indexOf('<option>');
           const sumStart = remaining.indexOf('<sum>');
