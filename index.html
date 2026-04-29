@@ -6001,8 +6001,8 @@
         </div>
         <div class="building-actions">
           <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
-          <button class="opportunity-btn primary" onclick="upgradeBuilding(${idx});closeModal();">升级</button>
-          <button class="opportunity-btn secondary" style="color:var(--lotus-pink);border-color:rgba(212,114,140,0.4)" onclick="demolishBuilding(${idx});closeModal();">拆卸</button>
+          <button class="opportunity-btn primary" onclick="upgradeBuilding(${idx})">升级</button>
+          <button class="opportunity-btn secondary" style="color:var(--lotus-pink);border-color:rgba(212,114,140,0.4)" onclick="demolishBuilding(${idx})">拆卸</button>
         </div>
       `;
       overlay.classList.add('active');
@@ -6016,21 +6016,30 @@
         alert('该建筑已达到最高等级');
         return;
       }
+      const content = `升级「${b.name}」（Lv.${b.level} → Lv.${b.level + 1}）`;
+      const success = addActionLog('建筑', b.name, content, 1, { buildingIdx: idx, action: 'upgrade', fromLevel: b.level, toLevel: b.level + 1 });
+      if (!success) return;
       window.gameStateManager.applyPatch([{
         op: 'replace',
         path: '/world/buildings/' + idx + '/level',
         value: b.level + 1
       }]);
+      closeModal();
     }
 
     function demolishBuilding(idx) {
       const buildings = window.gameStateManager?.state?.world?.buildings;
       if (!buildings || !buildings[idx]) return;
-      if (!confirm('确定要拆卸「' + buildings[idx].name + '」吗？此操作不可撤销。')) return;
+      const b = buildings[idx];
+      if (!confirm('确定要拆卸「' + b.name + '」吗？此操作不可撤销。')) return;
+      const content = `拆卸「${b.name}」（Lv.${b.level}）`;
+      const success = addActionLog('建筑', b.name, content, 1, { buildingIdx: idx, action: 'demolish', level: b.level });
+      if (!success) return;
       window.gameStateManager.applyPatch([{
         op: 'remove',
         path: '/world/buildings/' + idx
       }]);
+      closeModal();
     }
 
     function openAddBuildingModal() {
@@ -6344,7 +6353,11 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
     function getAssignedMembersThisRound() {
       const assigned = new Set();
       for (const log of actionLogs) {
-        if (log.memberName) assigned.add(log.memberName);
+        if (log.memberNames && Array.isArray(log.memberNames)) {
+          log.memberNames.forEach(n => assigned.add(n));
+        } else if (log.memberName) {
+          assigned.add(log.memberName);
+        }
       }
       return assigned;
     }
@@ -6412,36 +6425,74 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
         overlay.classList.add('active');
         return;
       }
+      const containerId = 'member-select-' + Date.now();
       document.getElementById('modal-title').innerHTML = `选择执行「${actionLabels[actionType]}」的弟子`;
       document.getElementById('modal-body').innerHTML = `
         <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">
-          选择派遣至 <span style="color:${actionColors[actionType]}">${r.name}</span> 执行${actionLabels[actionType]}的弟子：
+          选择派遣至 <span style="color:${actionColors[actionType]}">${r.name}</span> 执行${actionLabels[actionType]}的弟子（可多选）：
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${available.map(m => `
-            <button class="opportunity-btn secondary" style="text-align:left;justify-content:flex-start"
-              onclick="executeRegionAction(${idx}, '${actionType}', '${m.name}');closeModal();"
+        <div id="${containerId}" style="display:flex;flex-direction:column;gap:8px">
+          ${available.map((m, i) => `
+            <div class="opportunity-btn secondary member-select-row" data-name="${m.name}"
+              style="text-align:left;justify-content:flex-start;cursor:pointer;position:relative;padding-left:36px"
+              onclick="toggleMemberSelect(this)"
             >
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:1.5px solid rgba(110,207,207,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center"
+                class="member-check-box"
+              >​</span>
               <span>${m.name}（${m.realm}）— 忠诚度${m.loyalty} | 杀伐${m.stats?.杀伐 || 0} | 身法${m.stats?.身法 || 0}</span>
-            </button>
+            </div>
           `).join('')}
         </div>
-        <div class="building-actions" style="margin-top:12px">
+        <div class="building-actions" style="margin-top:16px">
           <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+          <button class="opportunity-btn primary" onclick="confirmRegionMembers(${idx}, '${actionType}', '${containerId}')">确认派遣</button>
         </div>
       `;
       overlay.classList.add('active');
     }
 
-    function executeRegionAction(idx, actionType, memberName) {
+    function toggleMemberSelect(row) {
+      row.classList.toggle('selected');
+      const box = row.querySelector('.member-check-box');
+      if (row.classList.contains('selected')) {
+        box.innerHTML = '\u2713';
+        box.style.borderColor = 'var(--jade-glow)';
+        box.style.background = 'rgba(110,207,207,0.2)';
+        box.style.color = 'var(--jade-glow)';
+        row.style.borderColor = 'rgba(110,207,207,0.5)';
+      } else {
+        box.innerHTML = '\u200b';
+        box.style.borderColor = 'rgba(110,207,207,0.4)';
+        box.style.background = 'transparent';
+        box.style.color = 'transparent';
+        row.style.borderColor = 'var(--glass-border)';
+      }
+    }
+
+    function confirmRegionMembers(idx, actionType, containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const selected = Array.from(container.querySelectorAll('.member-select-row.selected')).map(el => el.dataset.name);
+      if (selected.length === 0) {
+        alert('请至少选择一名弟子');
+        return;
+      }
+      executeRegionAction(idx, actionType, selected);
+      closeModal();
+    }
+
+    function executeRegionAction(idx, actionType, memberNames) {
       const regions = window.gameStateManager?.state?.world?.regions;
       if (!regions || !regions[idx]) return;
       const r = regions[idx];
+      const names = Array.isArray(memberNames) ? memberNames : [memberNames];
       const actionLabels = { '打探': '打探情况', '友好': '表示友好', '攻伐': '攻伐占领' };
-      const content = `派遣 ${memberName} 前往 ${r.name}（掌控：${r.controlledBy || '未知'}）执行${actionLabels[actionType]}`;
-      const success = addActionLog(actionType, r.name, content, 1, { memberName, regionIdx: idx, regionController: r.controlledBy });
+      const namesText = names.join('、');
+      const content = `派遣 ${namesText} 前往 ${r.name}（掌控：${r.controlledBy || '未知'}）执行${actionLabels[actionType]}`;
+      const success = addActionLog(actionType, r.name, content, 1, { memberNames: names, regionIdx: idx, regionController: r.controlledBy });
       if (!success) return;
-      alert(`${memberName} 已受命前往 ${r.name} 执行${actionLabels[actionType]}。提交操作后将由天道推演结果。`);
+      alert(`${namesText} 已受命前往 ${r.name} 执行${actionLabels[actionType]}。提交操作后将由天道推演结果。`);
     }
 
     function openRecruitPanel() {
@@ -8048,14 +8099,35 @@ ${discipleLines || '无'}
           const regions = window.gameStateManager?.state?.world?.regions || [];
           const r = regions[rIdx];
           if (!r) continue;
-          const memberName = log.memberName;
-          const member = Object.values(window.gameStateManager?.state?.members || {}).find(m => m.name === memberName);
+          const names = log.memberNames || (log.memberName ? [log.memberName] : []);
+          const members = Object.values(window.gameStateManager?.state?.members || {});
+          const memberDetails = names.map(n => {
+            const m = members.find(x => x.name === n);
+            return m ? `「${n}」（${m.realm}，杀伐${m.stats?.杀伐 || 0}、身法${m.stats?.身法 || 0}）` : `「${n}」（境界未知）`;
+          }).join('、');
+          const singleDetail = names.length === 1 ? members.find(x => x.name === names[0]) : null;
           if (log.type === '打探') {
-            userInput += `\n\n【疆域情报】玩家派遣「${memberName}」（${member?.realm || '未知境界'}）前往「${r.name}」打探情况。该疆域目前由「${r.controlledBy || '未知势力'}」掌控，灵气浓度为「${r.spiritualDensity || '普通'}」，探索程度为「${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]}」。\n请根据该弟子的境界、杀伐与身法能力，推演其打探的结果：可能获取哪些情报（兵力部署、防御阵法、资源储备、内部矛盾、与其他势力的关系等）？打探过程是否顺利，有无被发现或遭遇意外的风险？请在剧情中自然地呈现打探过程与收获。`;
+            userInput += `\n\n【疆域情报】玩家派遣 ${memberDetails} 前往「${r.name}」打探情况。该疆域目前由「${r.controlledBy || '未知势力'}」掌控，灵气浓度为「${r.spiritualDensity || '普通'}」，探索程度为「${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]}」。\n请根据派遣弟子的境界、杀伐与身法能力，推演其打探的结果：可能获取哪些情报（兵力部署、防御阵法、资源储备、内部矛盾、与其他势力的关系等）？打探过程是否顺利，有无被发现或遭遇意外的风险？${names.length > 1 ? '多名弟子可分工协作或分别打探不同方向。' : ''}请在剧情中自然地呈现打探过程与收获。`;
           } else if (log.type === '友好') {
-            userInput += `\n\n【外交行动】玩家派遣「${memberName}」（${member?.realm || '未知境界'}）前往「${r.name}」向「${r.controlledBy || '未知势力'}」表示友好。该疆域灵气浓度为「${r.spiritualDensity || '普通'}」，探索程度为「${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]}」。\n请根据该弟子的性格特点、忠诚度与境界，推演外交过程：对方势力如何回应？友好 gesture 是否成功建立联系？是否可能引发误会或反而被视为软弱？如果成功，可适当提升与该势力的外交关系值（通过 <vars> 补丁更新 diplomacy 数据）。`;
+            userInput += `\n\n【外交行动】玩家派遣 ${memberDetails} 前往「${r.name}」向「${r.controlledBy || '未知势力'}」表示友好。该疆域灵气浓度为「${r.spiritualDensity || '普通'}」，探索程度为「${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]}」。\n请根据派遣弟子的性格特点、忠诚度与境界，推演外交过程：对方势力如何回应？友好姿态是否成功建立联系？是否可能引发误会或反而被视为软弱？${names.length > 1 ? '多名弟子可形成外交使团，互相配合。' : ''}如果成功，可适当提升与该势力的外交关系值（通过 <vars> 补丁更新 diplomacy 数据）。`;
           } else if (log.type === '攻伐') {
-            userInput += `\n\n【疆域攻伐】玩家派遣「${memberName}」（${member?.realm || '未知境界'}，杀伐${member?.stats?.杀伐 || 0}、身法${member?.stats?.身法 || 0}）率精锐前往「${r.name}」攻伐「${r.controlledBy || '未知势力'}」。该疆域灵气浓度为「${r.spiritualDensity || '普通'}」，探索程度为「${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]}」。\n请根据双方实力对比、该弟子的战斗能力，推演攻伐过程：战斗是否顺利？弟子有无受伤或死亡风险？如果成功占领，请通过 <vars> 补丁将该疆域的 controlledBy 改为玩家宗门名称「${window.gameStateManager?.state?.sect?.name || '本宗'}」，并可适当更新 explorationStage 和 guardian 字段；如果失败，请描述失败原因与后果（弟子伤亡、与该势力关系恶化等）。`;
+            userInput += `\n\n【疆域攻伐】玩家派遣 ${memberDetails} 率精锐前往「${r.name}」攻伐「${r.controlledBy || '未知势力'}」。该疆域灵气浓度为「${r.spiritualDensity || '普通'}」，探索程度为「${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]}」。\n请根据双方实力对比、派遣弟子的战斗能力，推演攻伐过程：战斗是否顺利？弟子有无受伤或死亡风险？${names.length > 1 ? '多名弟子可配合作战，有人主攻、有人策应。' : ''}如果成功占领，请通过 <vars> 补丁将该疆域的 controlledBy 改为玩家宗门名称「${window.gameStateManager?.state?.sect?.name || '本宗'}」，并可适当更新 explorationStage 和 guardian 字段；如果失败，请描述失败原因与后果（弟子伤亡、与该势力关系恶化等）。`;
+          }
+        }
+      }
+
+      // 建筑操作特殊提示词
+      const buildingActionLogs = actionLogs.filter(log => log.type === '建筑');
+      if (buildingActionLogs.length > 0) {
+        for (const log of buildingActionLogs) {
+          const bIdx = log.buildingIdx;
+          const buildings = window.gameStateManager?.state?.world?.buildings || [];
+          const b = buildings[bIdx];
+          if (!b) continue;
+          if (log.action === 'upgrade') {
+            userInput += `\n\n【建筑升级】玩家决定对「${b.name}」进行升级（Lv.${log.fromLevel} → Lv.${log.toLevel}）。\n请在剧情中自然地描述升级过程：需要哪些材料或灵石？施工期间是否遇到意外（如灵气波动、材料短缺、弟子偷懒等）？升级完成后建筑功能有何提升？可通过 <vars> 补丁适当调整建筑的 level 和 description。`;
+          } else if (log.action === 'demolish') {
+            userInput += `\n\n【建筑拆卸】玩家决定拆卸「${b.name}」（原Lv.${log.level}）。\n请在剧情中自然地描述拆卸过程：回收了哪些材料？弟子对此有何反应？拆卸后的空地有何用途？可通过 <vars> 补丁移除该建筑，并适当调整相关资源。`;
           }
         }
       }
