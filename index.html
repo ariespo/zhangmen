@@ -5943,8 +5943,9 @@
     }
 
     function renderRegions() {
+      console.log('[renderRegions] 被调用, regions 数量:', window.gameStateManager?.state?.world?.regions?.length || 0);
       const grid = document.getElementById('region-grid');
-      if (!grid) return;
+      if (!grid) { console.warn('[renderRegions] region-grid 元素不存在'); return; }
       grid.innerHTML = '';
       const regions = window.gameStateManager?.state?.world?.regions || [];
       const stageLabels = ['尚未探索', '初步探索', '全面探索', '完全探索'];
