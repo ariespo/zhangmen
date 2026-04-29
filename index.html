@@ -6262,6 +6262,9 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       if (guardian) {
         actions += `<button class="opportunity-btn secondary" style="color:#ff6b6b;border-color:rgba(255,107,107,0.3)" onclick="removeGuardian(${idx});closeModal();">召回坐镇弟子</button>`;
       }
+      if (!isPlayer) {
+        actions += `<button class="opportunity-btn primary" style="background:rgba(110,207,207,0.15)" onclick="showRegionActions(${idx});closeModal();">采取行动</button>`;
+      }
       document.getElementById('modal-body').innerHTML = `
         <div class="sect-info-grid">
           <div class="info-block"><h4>探索阶段</h4><div class="info-value text-gold">${stageText}</div></div>
@@ -6336,6 +6339,115 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
         path: '/world/regions/' + regionIdx + '/guardian',
         value: ''
       }]);
+    }
+
+    function getAssignedMembersThisRound() {
+      const assigned = new Set();
+      for (const log of actionLogs) {
+        if (log.memberName) assigned.add(log.memberName);
+      }
+      return assigned;
+    }
+
+    function showRegionActions(idx) {
+      const regions = window.gameStateManager?.state?.world?.regions;
+      if (!regions || !regions[idx]) return;
+      const r = regions[idx];
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg> ${r.name} — 采取行动
+      `;
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:16px">
+          该疆域由 <span style="color:var(--gold-spirit);font-weight:600">${r.controlledBy || '未知势力'}</span> 掌控。
+          <br>每次行动消耗 <span style="color:var(--jade-glow)">1 点体力</span>，需派遣一名弟子执行。
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="opportunity-btn primary" style="text-align:left;justify-content:flex-start"
+            onclick="selectMemberForRegionAction(${idx}, '打探')">
+            <span>打探情况 — 派遣弟子潜入收集情报（兵力、防御、资源、内部矛盾等）</span>
+          </button>
+          <button class="opportunity-btn primary" style="background:rgba(200,168,110,0.15);border-color:rgba(200,168,110,0.4);color:var(--gold-spirit);text-align:left;justify-content:flex-start"
+            onclick="selectMemberForRegionAction(${idx}, '友好')">
+            <span>表示友好 — 派遣弟子携带礼物，尝试建立外交关系</span>
+          </button>
+          <button class="opportunity-btn primary" style="background:rgba(212,114,140,0.15);border-color:rgba(212,114,140,0.4);color:var(--lotus-pink);text-align:left;justify-content:flex-start"
+            onclick="selectMemberForRegionAction(${idx}, '攻伐')">
+            <span>前往攻伐 — 派遣弟子率精锐夺取该疆域控制权</span>
+          </button>
+        </div>
+        <div class="building-actions" style="margin-top:16px">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function selectMemberForRegionAction(idx, actionType) {
+      const regions = window.gameStateManager?.state?.world?.regions;
+      if (!regions || !regions[idx]) return;
+      const r = regions[idx];
+      const members = window.gameStateManager?.state?.members || {};
+      const assigned = getAssignedMembersThisRound();
+      const available = Object.values(members).filter(m => {
+        if (m.status === '外出' || m.status === '闭关' || m.status === '死亡') return false;
+        if (assigned.has(m.name)) return false;
+        return true;
+      });
+      const overlay = document.getElementById('modal-overlay');
+      const actionLabels = { '打探': '打探情况', '友好': '表示友好', '攻伐': '攻伐占领' };
+      const actionColors = { '打探': 'var(--jade-glow)', '友好': 'var(--gold-spirit)', '攻伐': 'var(--lotus-pink)' };
+      if (available.length === 0) {
+        document.getElementById('modal-body').innerHTML = `
+          <div style="font-size:13px;color:rgba(168,230,230,0.7);text-align:center;padding:20px 0">
+            没有可用的弟子可派遣。
+            <br><span style="font-size:12px;color:rgba(168,230,230,0.4)">（弟子可能已外出、闭关、死亡，或在本轮已被分配其他任务）</span>
+          </div>
+          <div class="building-actions">
+            <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
+          </div>
+        `;
+        overlay.classList.add('active');
+        return;
+      }
+      document.getElementById('modal-title').innerHTML = `选择执行「${actionLabels[actionType]}」的弟子`;
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">
+          选择派遣至 <span style="color:${actionColors[actionType]}">${r.name}</span> 执行${actionLabels[actionType]}的弟子：
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${available.map(m => `
+            <button class="opportunity-btn secondary" style="text-align:left;justify-content:flex-start"
+              onclick="executeRegionAction(${idx}, '${actionType}', '${m.name}');closeModal();"
+            >
+              <span>${m.name}（${m.realm}）— 忠诚度${m.loyalty} | 杀伐${m.stats?.杀伐 || 0} | 身法${m.stats?.身法 || 0}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="building-actions" style="margin-top:12px">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function executeRegionAction(idx, actionType, memberName) {
+      const regions = window.gameStateManager?.state?.world?.regions;
+      if (!regions || !regions[idx]) return;
+      const r = regions[idx];
+      if (stamina.current < 1) {
+        alert('体力不足，该行动需要 1 点体力');
+        return;
+      }
+      stamina.current -= 1;
+      updateStaminaSegments();
+      const actionLabels = { '打探': '打探情况', '友好': '表示友好', '攻伐': '攻伐占领' };
+      const content = `派遣 ${memberName} 前往 ${r.name}（掌控：${r.controlledBy || '未知'}）执行${actionLabels[actionType]}`;
+      const success = addActionLog(actionType, r.name, content, 1, { memberName, regionIdx: idx, regionController: r.controlledBy });
+      if (!success) { stamina.current += 1; updateStaminaSegments(); return; }
+      alert(`${memberName} 已受命前往 ${r.name} 执行${actionLabels[actionType]}。提交操作后将由天道推演结果。`);
     }
 
     function openRecruitPanel() {
@@ -7930,6 +8042,26 @@ ${discipleLines || '无'}
               const nextStage = currentStage + 1;
               userInput += `\n\n【疆域探索】玩家对「${regionName}」进行了深入探索。当前探索程度为「${EXPLORATION_STAGE_LABELS[currentStage]}」，探索后应变为「${EXPLORATION_STAGE_LABELS[nextStage]}」。\n请根据剧情发展，在该区域的描述中新增 1-3 个地点名称，并适当增加该区域的每月资源产出（灵石或修道种子）。`;
             }
+          }
+        }
+      }
+
+      // 非玩家疆域行动特殊提示词
+      const regionActionLogs = actionLogs.filter(log => ['打探', '友好', '攻伐'].includes(log.type));
+      if (regionActionLogs.length > 0) {
+        for (const log of regionActionLogs) {
+          const rIdx = log.regionIdx;
+          const regions = window.gameStateManager?.state?.world?.regions || [];
+          const r = regions[rIdx];
+          if (!r) continue;
+          const memberName = log.memberName;
+          const member = Object.values(window.gameStateManager?.state?.members || {}).find(m => m.name === memberName);
+          if (log.type === '打探') {
+            userInput += `\n\n【疆域情报】玩家派遣「${memberName}」（${member?.realm || '未知境界'}）前往「${r.name}」打探情况。该疆域目前由「${r.controlledBy || '未知势力'}」掌控，灵气浓度为「${r.spiritualDensity || '普通'}」，探索程度为「${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]}」。\n请根据该弟子的境界、杀伐与身法能力，推演其打探的结果：可能获取哪些情报（兵力部署、防御阵法、资源储备、内部矛盾、与其他势力的关系等）？打探过程是否顺利，有无被发现或遭遇意外的风险？请在剧情中自然地呈现打探过程与收获。`;
+          } else if (log.type === '友好') {
+            userInput += `\n\n【外交行动】玩家派遣「${memberName}」（${member?.realm || '未知境界'}）前往「${r.name}」向「${r.controlledBy || '未知势力'}」表示友好。该疆域灵气浓度为「${r.spiritualDensity || '普通'}」，探索程度为「${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]}」。\n请根据该弟子的性格特点、忠诚度与境界，推演外交过程：对方势力如何回应？友好 gesture 是否成功建立联系？是否可能引发误会或反而被视为软弱？如果成功，可适当提升与该势力的外交关系值（通过 <vars> 补丁更新 diplomacy 数据）。`;
+          } else if (log.type === '攻伐') {
+            userInput += `\n\n【疆域攻伐】玩家派遣「${memberName}」（${member?.realm || '未知境界'}，杀伐${member?.stats?.杀伐 || 0}、身法${member?.stats?.身法 || 0}）率精锐前往「${r.name}」攻伐「${r.controlledBy || '未知势力'}」。该疆域灵气浓度为「${r.spiritualDensity || '普通'}」，探索程度为「${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]}」。\n请根据双方实力对比、该弟子的战斗能力，推演攻伐过程：战斗是否顺利？弟子有无受伤或死亡风险？如果成功占领，请通过 <vars> 补丁将该疆域的 controlledBy 改为玩家宗门名称「${window.gameStateManager?.state?.sect?.name || '本宗'}」，并可适当更新 explorationStage 和 guardian 字段；如果失败，请描述失败原因与后果（弟子伤亡、与该势力关系恶化等）。`;
           }
         }
       }
