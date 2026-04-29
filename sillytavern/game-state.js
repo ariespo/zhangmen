@@ -224,8 +224,15 @@ const BuildingSchema = zObject({
 
 const RegionSchema = zObject({
   name: zString(),
-  unlocked: zBoolean(false),
-  controlledBy: zString('未知')
+  controlledBy: zString('未知'),
+  explorationStage: zNumber({ default: 0, min: 0, max: 3 }),
+  monthlyResources: zObject({
+    gold: zNumber({ default: 0 }),
+    potentialDisciples: zNumber({ default: 0 })
+  }),
+  locations: zArray(zString(), []),
+  spiritualDensity: zEnum(['稀薄', '普通', '丰沛', '浓郁', '洞天福地'], '普通'),
+  guardian: zString('')
 });
 
 export const GameStateSchema = zObject({
@@ -235,7 +242,8 @@ export const GameStateSchema = zObject({
     income: zNumber({ default: 0 }),
     expense: zNumber({ default: 0 }),
     prestige: zNumber({ default: 0, min: 0 }),
-    realmTitle: zString('')
+    realmTitle: zString(''),
+    potentialDisciples: zNumber({ default: 0, min: 0 })
   }),
   treasury: zObject({
     items: zArray(TreasuryItemSchema, []),

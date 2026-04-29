@@ -252,6 +252,13 @@ D. 【标题】说明
 /treasury/arrayName          — 护山大阵名称
 /library/-                   — 藏经阁新增功法
 /opportunities/-             — 新增机遇（字段：id, title, desc, category, cost, completed）
+/world/regions/-            — 新增疆域（字段：name, controlledBy, explorationStage, monthlyResources, locations, spiritualDensity, guardian）
+/world/regions/0/explorationStage — 疆域探索阶段（0-3）
+/world/regions/0/controlledBy — 疆域控制权
+/world/regions/0/guardian   — 派遣/召回坐镇弟子
+/world/regions/0/monthlyResources/gold — 疆域月产灵石
+/world/regions/0/monthlyResources/potentialDisciples — 疆域月产修道种子
+/finance/potentialDisciples — 潜藏修道种子总数（delta）
 /diplomacy/势力名/relation   — 外交关系等级
 /diplomacy/势力名/value      — 外交关系值（delta）
 /quests/main/currentStage    — 主线当前阶段
@@ -282,7 +289,38 @@ D. 【标题】说明
 - **category**：`tianshi`（天时：天象、灵气潮汐等）、`dili`（地利：地形、资源、秘境等）、`renhe`（人和：人物、势力、外交等）
 - **cost**：消耗的体力值，通常为 1–3
 
-### 5.6 成员境界修改规则
+### 5.6 疆域字段规范
+
+新增疆域 `/world/regions/-` 时，必须使用以下字段：
+
+```json
+{
+  "name": "疆域名称",
+  "controlledBy": "掌控势力",
+  "explorationStage": 0,
+  "monthlyResources": { "gold": 0, "potentialDisciples": 0 },
+  "locations": ["地点1", "地点2", "地点3", "地点4"],
+  "spiritualDensity": "普通",
+  "guardian": ""
+}
+```
+
+- **explorationStage**：0=尚未探索, 1=初步探索, 2=全面探索, 3=完全探索。阶段越高解锁地点越多，月产资源越多
+- **spiritualDensity**：稀薄 / 普通 / 丰沛 / 浓郁 / 洞天福地。≥丰沛时坐镇弟子心情/忠诚度每回合+3，否则-3
+- **locations**：地点数组，探索阶段1解锁1个，阶段2解锁2个，阶段3解锁全部
+- **monthlyResources**：玩家掌控且探索阶段≥1时，每月自动产出到 `/finance/potentialDisciples` 和 `/finance/gold`
+
+### 5.7 潜藏修道种子规则
+
+- `/finance/potentialDisciples` 记录宗门管辖区域内潜藏修道种子总数
+- 玩家疆域（controlledBy=玩家宗门）每月产出修道种子，累加到总数
+- 当总数≥100时，玩家可举办"入门大比"招纳新弟子
+- 招纳规则：
+  - 最多招纳3人，每100种子可招1人
+  - 种子300人时平均资质约乙中，每多100人平均资质+1档（误差±2档）
+  - 消耗5点体力
+
+### 5.8 成员境界修改规则
 修改 `realm` 时**必须同步更新 `baseStats` 和 `stats`**：
 1. `base = 50 + (4 - talentIndex) × 3`
 2. `stageMultiplier`：前期=1, 中期=1.5, 后期=2.25, 圆满=3.375

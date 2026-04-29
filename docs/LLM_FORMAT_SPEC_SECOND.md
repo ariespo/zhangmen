@@ -78,8 +78,14 @@
 - `/quests/main/currentStage` — 主线当前阶段
 - `/quests/side/-` — 新增支线任务
 - `/world/buildings/0/level` — 建筑等级
+- `/world/regions/0/explorationStage` — 疆域探索阶段（0-3）
+- `/world/regions/0/controlledBy` — 疆域控制权变更
+- `/world/regions/0/guardian` — 派遣/召回坐镇弟子
+- `/world/regions/0/monthlyResources/gold` — 疆域月产灵石
+- `/world/regions/0/monthlyResources/potentialDisciples` — 疆域月产修道种子
 - `/library/-` — 藏经阁新增功法
 - `/opportunities/-` — 新增机遇
+- `/finance/potentialDisciples` — 潜藏修道种子总数（delta）
 
 ### 机缘字段规范
 
@@ -100,6 +106,37 @@
 - `tianshi`：天时类 — 涉及时间、天气、天象、灵气潮汐等
 - `dili`：地利类 — 涉及地点、地形、资源、秘境、建筑等
 - `renhe`：人和类 — 涉及人物、势力、外交、弟子、机缘人物等
+
+### 疆域字段规范
+
+新增疆域 `/world/regions/-` 时，必须使用以下字段：
+
+```json
+{
+  "name": "疆域名称",
+  "controlledBy": "掌控势力名称（玩家宗门名或其他势力）",
+  "explorationStage": 0,
+  "monthlyResources": { "gold": 0, "potentialDisciples": 0 },
+  "locations": ["地点1", "地点2", "地点3", "地点4"],
+  "spiritualDensity": "普通",
+  "guardian": ""
+}
+```
+
+- **explorationStage**：0=尚未探索, 1=初步探索, 2=全面探索, 3=完全探索
+- **spiritualDensity**：稀薄 / 普通 / 丰沛 / 浓郁 / 洞天福地
+- **locations**：地点数组，探索阶段越高解锁越多（探索阶段1解锁1个，阶段2解锁2个，阶段3解锁全部）
+- **monthlyResources**：玩家掌控且探索阶段≥1时，每月自动产出
+
+### 潜藏修道种子规则
+
+- `/finance/potentialDisciples` 记录宗门管辖区域内潜藏修道种子的总数
+- 玩家疆域每月产出 `potentialDisciples`，累加到总数
+- 当总数≥100时，玩家可在总览页面举办"入门大比"招纳弟子
+- 招纳规则：
+  - 最多招纳3人，每100种子可招1人
+  - 种子300人时平均资质约乙中，每多100人平均资质+1档（误差±2档）
+  - 消耗5点体力
 
 **示例**：
 ```json

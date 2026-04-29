@@ -4568,6 +4568,23 @@
                 </div>
               </div>
             </div>
+            <div class="stat-card" id="potential-disciples-card" onclick="openRecruitPanel()" style="cursor:pointer">
+              <div class="stat-card-header">
+                <div class="stat-card-icon bg-purple" style="color:var(--mist-purple)">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="9" cy="7" r="3"/>
+                    <path d="M3 21v-2c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v2"/>
+                    <circle cx="17" cy="9" r="2.5"/>
+                    <path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/>
+                  </svg>
+                </div>
+                <span class="stat-card-title">潜藏修道种子</span>
+              </div>
+              <div class="stat-card-value text-purple" style="font-size:20px" id="potential-disciples-count">0</div>
+              <div class="stat-card-change" style="color:rgba(168,230,230,0.5);font-size:11px;margin-top:4px">
+                点击开放入门大比招纳弟子（消耗5体力）
+              </div>
+            </div>
           </div>
 
           <div class="module-grid">
@@ -5927,16 +5944,33 @@
       if (!grid) return;
       grid.innerHTML = '';
       const regions = window.gameStateManager?.state?.world?.regions || [];
+      const stageLabels = ['尚未探索', '初步探索', '全面探索', '完全探索'];
+      const densityLabels = { '稀薄': '#888', '普通': '#a8e6e6', '丰沛': '#6ecfcf', '浓郁': '#d4a86a', '洞天福地': '#ff6b9d' };
       regions.forEach((r, idx) => {
+        const isPlayer = r.controlledBy === (window.gameStateManager?.state?.sect?.name || '本宗');
+        const canExplore = isPlayer && r.explorationStage < 3;
+        const stageText = stageLabels[r.explorationStage || 0];
+        const densityColor = densityLabels[r.spiritualDensity] || '#a8e6e6';
+        const guardianText = r.guardian ? `坐镇：${r.guardian}` : '无坐镇弟子';
+        const monthlyGold = (r.monthlyResources?.gold || 0);
+        const monthlySeeds = (r.monthlyResources?.potentialDisciples || 0);
+        const locations = (r.locations || []).slice(0, r.explorationStage).join('、') || '—';
         const card = document.createElement('div');
-        card.className = 'region-card' + (r.unlocked ? '' : ' locked');
+        card.className = 'region-card' + (r.explorationStage > 0 ? '' : ' locked');
+        card.onclick = () => openRegionDetail(idx);
         card.innerHTML = `
           <div class="region-header">
-            <div class="region-name">${r.name}${r.unlocked ? '' : '<span class="locked-badge">迷雾</span>'}</div>
+            <div class="region-name">${r.name}${r.explorationStage > 0 ? '' : '<span class="locked-badge">迷雾</span>'}</div>
+            <div class="region-stage" style="font-size:11px;color:rgba(168,230,230,0.5)">${stageText}</div>
           </div>
-          <div class="region-desc">${r.unlocked ? '已探索' : '尚未探索此区域'}</div>
-          <div class="region-controller">掌控势力：${r.controlledBy || '未知'}</div>
-          ${r.unlocked ? '' : `<button class="region-explore-btn" onclick="event.stopPropagation();exploreRegion(${idx})">派遣探索</button>`}
+          <div class="region-desc">
+            <span style="color:${densityColor}">●</span> 灵气：${r.spiritualDensity || '普通'}
+            ${r.explorationStage >= 1 ? `| 地点：${locations}` : ''}
+          </div>
+          <div class="region-controller">掌控：${r.controlledBy || '未知'} | ${guardianText}</div>
+          ${r.explorationStage >= 1 ? `<div class="region-income" style="font-size:11px;color:rgba(168,230,230,0.5);margin-top:4px">月产：${monthlyGold > 0 ? monthlyGold + '灵石 ' : ''}${monthlySeeds > 0 ? monthlySeeds + '修道种子' : ''}</div>` : ''}
+          ${canExplore ? `<button class="region-explore-btn" onclick="event.stopPropagation();exploreRegion(${idx})">派遣深入探索</button>` : ''}
+          ${isPlayer && r.explorationStage >= 1 && !r.guardian ? `<button class="region-explore-btn" style="margin-top:6px;background:rgba(200,168,110,0.1);border-color:rgba(200,168,110,0.3);color:var(--gold-spirit)" onclick="event.stopPropagation();assignGuardian(${idx})">派遣弟子坐镇</button>` : ''}
         `;
         grid.appendChild(card);
       });
@@ -6037,19 +6071,249 @@
       closeModal();
     }
 
+    const EXPLORATION_STAGE_LABELS = ['尚未探索', '初步探索', '全面探索', '完全探索'];
+    const SPIRITUAL_DENSITY_LEVELS = ['稀薄', '普通', '丰沛', '浓郁', '洞天福地'];
+
     function exploreRegion(idx) {
       const regions = window.gameStateManager?.state?.world?.regions;
       if (!regions || !regions[idx]) return;
       const r = regions[idx];
-      if (r.unlocked) {
-        alert('该区域已探索');
+      const nextStage = (r.explorationStage || 0) + 1;
+      if (nextStage > 3) {
+        alert('该区域已完全探索');
         return;
       }
       window.gameStateManager.applyPatch([{
         op: 'replace',
-        path: '/world/regions/' + idx + '/unlocked',
-        value: true
+        path: '/world/regions/' + idx + '/explorationStage',
+        value: nextStage
       }]);
+      const labels = ['初步探索', '全面探索', '完全探索'];
+      alert(`${r.name} ${labels[nextStage - 1]}完成！`);
+    }
+
+    function openRegionDetail(idx) {
+      const regions = window.gameStateManager?.state?.world?.regions || [];
+      const r = regions[idx];
+      if (!r) return;
+      const overlay = document.getElementById('modal-overlay');
+      const stageText = EXPLORATION_STAGE_LABELS[r.explorationStage || 0];
+      const monthlyGold = r.monthlyResources?.gold || 0;
+      const monthlySeeds = r.monthlyResources?.potentialDisciples || 0;
+      const locations = (r.locations || []).slice(0, r.explorationStage).join('、') || '—';
+      const allLocations = (r.locations || []).join('、') || '—';
+      const isPlayer = r.controlledBy === (window.gameStateManager?.state?.sect?.name || '本宗');
+      const guardian = r.guardian;
+      const guardianMember = guardian ? window.gameStateManager?.state?.members?.[guardian] : null;
+      let guardianStatus = '';
+      if (guardianMember) {
+        const densityIdx = SPIRITUAL_DENSITY_LEVELS.indexOf(r.spiritualDensity || '普通');
+        const buff = densityIdx >= 2 ? '+3' : '-3';
+        const effect = densityIdx >= 2 ? '心情愉悦' : '心情压抑';
+        guardianStatus = `<div style="font-size:12px;color:${densityIdx >= 2 ? '#6ecfcf' : '#ff6b6b'};margin-top:8px">
+          灵气${r.spiritualDensity}：坐镇弟子每回合心情/忠诚度${buff}（${effect}）
+        </div>`;
+      }
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg> ${r.name}
+      `;
+      let actions = '';
+      if (isPlayer && r.explorationStage < 3) {
+        actions += `<button class="opportunity-btn primary" onclick="exploreRegion(${idx});closeModal();">派遣深入探索</button>`;
+      }
+      if (isPlayer && r.explorationStage >= 1 && !guardian) {
+        actions += `<button class="opportunity-btn primary" style="background:rgba(200,168,110,0.15);border-color:rgba(200,168,110,0.4);color:var(--gold-spirit)" onclick="assignGuardian(${idx});closeModal();">派遣弟子坐镇</button>`;
+      }
+      if (guardian) {
+        actions += `<button class="opportunity-btn secondary" style="color:#ff6b6b;border-color:rgba(255,107,107,0.3)" onclick="removeGuardian(${idx});closeModal();">召回坐镇弟子</button>`;
+      }
+      document.getElementById('modal-body').innerHTML = `
+        <div class="sect-info-grid">
+          <div class="info-block"><h4>探索阶段</h4><div class="info-value text-gold">${stageText}</div></div>
+          <div class="info-block"><h4>灵气浓度</h4><div class="info-value">${r.spiritualDensity || '普通'}</div></div>
+          <div class="info-block"><h4>掌控势力</h4><div class="info-value">${r.controlledBy || '未知'}</div></div>
+          <div class="info-block"><h4>坐镇弟子</h4><div class="info-value">${guardian || '无'}</div></div>
+        </div>
+        <div class="info-block full-width" style="margin-top:12px">
+          <h4>已发现地点（${r.explorationStage}/${(r.locations || []).length}）</h4>
+          <div class="info-value" style="font-size:13px;line-height:1.8">${locations}</div>
+          ${r.explorationStage < 3 ? `<div style="font-size:11px;color:rgba(168,230,230,0.4);margin-top:4px">深入探索可解锁：${allLocations}</div>` : ''}
+        </div>
+        <div class="info-block full-width" style="margin-top:12px">
+          <h4>每月产出</h4>
+          <div class="info-value" style="font-size:13px;line-height:1.8">${monthlyGold > 0 ? `灵石 +${monthlyGold}<br>` : ''}${monthlySeeds > 0 ? `潜藏修道种子 +${monthlySeeds}<br>` : ''}${!monthlyGold && !monthlySeeds ? '暂无产出' : ''}</div>
+        </div>
+        ${guardianStatus}
+        <div class="building-actions" style="margin-top:16px">
+          ${actions}
+          <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function assignGuardian(idx) {
+      const regions = window.gameStateManager?.state?.world?.regions;
+      if (!regions || !regions[idx]) return;
+      const r = regions[idx];
+      const members = window.gameStateManager?.state?.members || {};
+      const available = Object.values(members).filter(m => m.status !== '外出' && m.status !== '闭关' && m.status !== '死亡');
+      if (available.length === 0) {
+        alert('没有可用的弟子可派遣');
+        return;
+      }
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = '派遣弟子坐镇';
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">
+          选择坐镇 ${r.name} 的弟子。灵气浓度会影响弟子心情：
+          <br><span style="color:#6ecfcf">≥丰沛：心情/忠诚度每回合+3</span>
+          <br><span style="color:#ff6b6b"><丰沛：心情/忠诚度每回合-3</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${available.map(m => `
+            <button class="opportunity-btn secondary" style="text-align:left;justify-content:flex-start"
+              onclick="setGuardian(${idx}, '${m.name}');closeModal();"
+            >
+              <span>${m.name}（${m.realm}）— 忠诚度${m.loyalty} | 心情${m.mood}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="building-actions" style="margin-top:12px">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function setGuardian(regionIdx, memberName) {
+      window.gameStateManager.applyPatch([{
+        op: 'replace',
+        path: '/world/regions/' + regionIdx + '/guardian',
+        value: memberName
+      }]);
+      alert(`${memberName} 已坐镇该疆域`);
+    }
+
+    function removeGuardian(regionIdx) {
+      window.gameStateManager.applyPatch([{
+        op: 'replace',
+        path: '/world/regions/' + regionIdx + '/guardian',
+        value: ''
+      }]);
+    }
+
+    function openRecruitPanel() {
+      const seeds = window.gameStateManager?.state?.finance?.potentialDisciples || 0;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <circle cx="9" cy="7" r="3"/><path d="M3 21v-2c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v2"/>
+          <circle cx="17" cy="9" r="2.5"/><path d="M21 21v-1.5c0-1.7-1-3-2.5-3.5"/>
+        </svg> 宗门入门大比
+      `;
+      if (seeds < 100) {
+        document.getElementById('modal-body').innerHTML = `
+          <div style="font-size:13px;color:rgba(168,230,230,0.7);line-height:1.8;text-align:center;padding:20px 0">
+            当前管辖区域内潜藏修道种子不足（${seeds} 人）。
+            <br>至少需要 100 人方可举办入门大比。
+          </div>
+          <div class="building-actions">
+            <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
+          </div>
+        `;
+      } else {
+        const maxRecruit = Math.min(3, Math.floor(seeds / 100));
+        const avgTalentIdx = 4 + Math.floor((seeds - 300) / 100);
+        const talentNames = ['甲上','甲中','甲下','乙上','乙中','乙下','丙上','丙中','丙下','丁上','丁中','丁下'];
+        const avgTalent = talentNames[Math.max(0, Math.min(11, avgTalentIdx))] || '乙中';
+        document.getElementById('modal-body').innerHTML = `
+          <div style="font-size:13px;color:rgba(168,230,230,0.7);line-height:1.8;margin-bottom:16px">
+            当前管辖区域内共有 <span style="color:var(--mist-purple);font-weight:600">${seeds}</span> 名潜藏修道种子。
+            <br>举办入门大比可招纳 <span style="color:var(--jade-glow);font-weight:600">${maxRecruit}</span> 名新弟子。
+            <br>平均资质预估：<span style="color:var(--gold-spirit);font-weight:600">${avgTalent}</span>（误差±2档）
+            <br><span style="font-size:11px;color:rgba(168,230,230,0.4)">消耗 5 点体力</span>
+          </div>
+          <div class="building-actions">
+            <button class="opportunity-btn primary" onclick="recruitDisciples();closeModal();">举办入门大比</button>
+            <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+          </div>
+        `;
+      }
+      overlay.classList.add('active');
+    }
+
+    function recruitDisciples() {
+      const seeds = window.gameStateManager?.state?.finance?.potentialDisciples || 0;
+      if (seeds < 100) { alert('修道种子不足，无法举办大比'); return; }
+      if (stamina.current < 5) { alert('体力不足，需要 5 点体力'); return; }
+
+      stamina.current -= 5;
+      updateStaminaSegments();
+      const maxCount = Math.min(3, Math.floor(seeds / 100));
+      const baseTalentIdx = 4 + Math.floor(Math.max(0, seeds - 300) / 100);
+      const talentNames = ['甲上','甲中','甲下','乙上','乙中','乙下','丙上','丙中','丙下','丁上','丁中','丁下'];
+
+      const surnames = ['林','周','陈','沈','苏','叶','萧','楚','陆','秦','魏','韩','杨','赵','钱','孙','李'];
+      const names = ['青云','墨羽','长风','晚晴','明远','青羽','若雪','寒山','星河','秋水','凌云','飞鸿','玉衡','天璇'];
+      const genders = ['男','女'];
+      const realms = ['练气期前期','练气期前期','练气期前期','练气期中期'];
+      const personalities = [['沉稳','谨慎'],['勤勉','务实'],['孤傲','清冷'],['豪爽','急躁'],['聪慧','机敏']];
+      const appearances = [['清秀','儒雅'],['英武','挺拔'],['温婉','柔美'],['冷峻','深邃'],['俊朗','阳光']];
+      const roles = ['外门弟子','外门弟子','杂役'];
+
+      const patches = [];
+      const recruited = [];
+      for (let i = 0; i < maxCount; i++) {
+        const variance = Math.floor(Math.random() * 5) - 2;
+        const talentIdx = Math.max(0, Math.min(11, baseTalentIdx + variance));
+        const talent = talentNames[talentIdx];
+        const surname = surnames[Math.floor(Math.random() * surnames.length)];
+        const given = names[Math.floor(Math.random() * names.length)];
+        const fullName = surname + given;
+        const gender = genders[Math.floor(Math.random() * genders.length)];
+        const realm = realms[Math.floor(Math.random() * realms.length)];
+        const personality = personalities[Math.floor(Math.random() * personalities.length)];
+        const appearance = appearances[Math.floor(Math.random() * appearances.length)];
+        const role = roles[Math.floor(Math.random() * roles.length)];
+        const daoName = given + (gender === '男' ? '子' : '娘');
+        const base = 50 + (4 - talentIdx) * 3;
+        const statsVal = Math.round(base * 1 * 1);
+        const lifespanMax = 120;
+
+        patches.push({
+          op: 'insert',
+          path: '/members/' + fullName,
+          value: {
+            id: 'm_' + Date.now() + '_' + i,
+            name: fullName,
+            daoName: daoName,
+            realm: realm,
+            role: role,
+            status: '坐镇',
+            talent: talent,
+            color: ['jade','purple','pink','gold'][Math.floor(Math.random()*4)],
+            stats: { '杀伐': statsVal, '防御': statsVal, '身法': statsVal },
+            baseStats: { '杀伐': statsVal, '防御': statsVal, '身法': statsVal },
+            lifespan: { current: lifespanMax, max: lifespanMax },
+            loyalty: 50 + Math.floor(Math.random() * 20),
+            mood: 60 + Math.floor(Math.random() * 20),
+            personality: personality,
+            appearance: appearance,
+            skills: [],
+            equipment: []
+          }
+        });
+        recruited.push(`${fullName}（${talent}）`);
+      }
+
+      const consumeSeeds = maxCount * 100;
+      patches.push({ op: 'delta', path: '/finance/potentialDisciples', value: String(-consumeSeeds) });
+      window.gameStateManager.applyPatch(patches);
+      renderMembers();
+      alert(`入门大比结束！\n共招收 ${recruited.length} 名弟子：\n${recruited.join('\n')}\n\n消耗体力：5\n消耗修道种子：${consumeSeeds}`);
     }
 
     // ====== ACTION LOG SYSTEM ======
@@ -7073,6 +7337,7 @@ ${discipleLines || '无'}
       if (path === '/finance/income') return `月收入 ${formatDelta(value)}`;
       if (path === '/finance/expense') return `月支出 ${formatDelta(value)}`;
       if (path === '/finance/realmTitle') return `位阶称号 → ${value}`;
+      if (path === '/finance/potentialDisciples') return `潜藏修道种子 ${formatDelta(value)}`;
 
       // members
       const memberMatch = path.match(/^\/members\/([^/]+)(?:\/(.+))?$/);
@@ -7160,6 +7425,11 @@ ${discipleLines || '无'}
         const subField = regMatch[2] || '';
         if (subField === 'unlocked') return `区域${idx+1} ${value ? '解锁' : '锁定'}`;
         if (subField === 'controlledBy') return `区域${idx+1} 控制权 → ${value}`;
+        if (subField === 'explorationStage') return `区域${idx+1} 探索阶段 → ${['尚未探索','初步探索','全面探索','完全探索'][value] || value}`;
+        if (subField === 'spiritualDensity') return `区域${idx+1} 灵气 → ${value}`;
+        if (subField === 'guardian') return `区域${idx+1} 坐镇弟子 → ${value || '无'}`;
+        if (subField === 'monthlyResources/gold') return `区域${idx+1} 月产灵石 ${formatDelta(value)}`;
+        if (subField === 'monthlyResources/potentialDisciples') return `区域${idx+1} 月产修道种子 ${formatDelta(value)}`;
       }
 
       // player
@@ -8407,10 +8677,16 @@ ${discipleLines || '无'}
       const incEl = document.getElementById('finance-income');
       const expEl = document.getElementById('finance-expense');
       const netEl = document.getElementById('finance-net');
+      const seedsEl = document.getElementById('potential-disciples-count');
       if (incEl) incEl.textContent = '+' + (finance?.income || 0).toLocaleString('zh-CN');
       if (expEl) expEl.textContent = '-' + (finance?.expense || 0).toLocaleString('zh-CN');
       const net = (finance?.income || 0) - (finance?.expense || 0);
       if (netEl) netEl.textContent = (net >= 0 ? '+' : '') + net.toLocaleString('zh-CN');
+      if (seedsEl) seedsEl.textContent = finance?.potentialDisciples || 0;
+    });
+    gameStateManager.subscribe('/finance/potentialDisciples', v => {
+      const el = document.getElementById('potential-disciples-count');
+      if (el) el.textContent = v || 0;
     });
     gameStateManager.subscribe('/members', members => {
       const el = document.getElementById('res-members');
@@ -8932,7 +9208,9 @@ ${discipleLines || '无'}
       // Set world
       window.gameStateManager.state.world.buildings = sm.buildings;
       window.gameStateManager.state.world.regions = [
-        { name: '山门', unlocked: true, controlledBy: data.sectName }
+        { name: '山门', controlledBy: data.sectName, explorationStage: 3, monthlyResources: { gold: 50, potentialDisciples: 5 }, locations: ['宗门大殿','修炼广场','藏经阁外','灵田'], spiritualDensity: '普通', guardian: '' },
+        { name: '后山', controlledBy: data.sectName, explorationStage: 0, monthlyResources: { gold: 0, potentialDisciples: 0 }, locations: ['断崖','密林','古洞','灵泉'], spiritualDensity: '丰沛', guardian: '' },
+        { name: '清河镇', controlledBy: '凡人朝廷', explorationStage: 0, monthlyResources: { gold: 30, potentialDisciples: 10 }, locations: ['镇中心','市集','客栈','码头'], spiritualDensity: '稀薄', guardian: '' }
       ];
 
       // Create player
