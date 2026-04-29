@@ -267,8 +267,6 @@ D. 【标题】说明
 /quests/side/0/progress      — 支线进度
 /quests/side/0/status        — 支线状态
 /world/buildings/0/level     — 建筑等级（索引从 0 开始）
-/world/regions/0/unlocked    — 区域解锁状态
-/world/regions/0/controlledBy — 区域控制权
 ```
 
 ### 5.5 机缘字段规范
