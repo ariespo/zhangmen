@@ -308,6 +308,10 @@ D. 【标题】说明
 - **locations**：地点数组，探索阶段1解锁1个，阶段2解锁2个，阶段3解锁全部
 - **monthlyResources**：玩家掌控且探索阶段≥1时，每月自动产出到 `/finance/potentialDisciples` 和 `/finance/gold`
 
+### 疆域探索规则
+
+当剧情中玩家对某疆域进行探索时，必须同步更新该疆域的 `explorationStage`（+1）、`locations`（新增1-3个地点）、`monthlyResources`（适当增加月产）。新地点应与疆域特性相符（如灵泉、古洞、废弃祭坛、灵药圃等），月产增幅应合理。
+
 ### 5.7 潜藏修道种子规则
 
 - `/finance/potentialDisciples` 记录宗门管辖区域内潜藏修道种子总数

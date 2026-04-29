@@ -128,6 +128,23 @@
 - **locations**：地点数组，探索阶段越高解锁越多（探索阶段1解锁1个，阶段2解锁2个，阶段3解锁全部）
 - **monthlyResources**：玩家掌控且探索阶段≥1时，每月自动产出
 
+### 疆域探索规则
+
+当剧情中玩家对某疆域进行探索（或派遣弟子深入探索）时，你必须同步更新该疆域的以下字段：
+
+1. **explorationStage**：提升 1 级（最高到 3）
+2. **locations**：新增 1-3 个地点名称到数组末尾。新地点应与疆域特性相符且有趣（如：灵泉、古洞、废弃祭坛、灵药圃等）
+3. **monthlyResources**：根据新发现地点适当增加月产（gold 或 potentialDisciples），增幅应合理（如：发现灵泉 → gold +10~30；发现村落 → potentialDisciples +5~15）
+
+**示例**：剧情中玩家深入探索「后山」，发现一处隐蔽古洞和灵泉
+```json
+[
+  {"op":"replace","path":"/world/regions/1/explorationStage","value":2},
+  {"op":"replace","path":"/world/regions/1/locations","value":["断崖","密林","古洞","灵泉"]},
+  {"op":"replace","path":"/world/regions/1/monthlyResources/gold","value":30}
+]
+```
+
 ### 潜藏修道种子规则
 
 - `/finance/potentialDisciples` 记录宗门管辖区域内潜藏修道种子的总数
