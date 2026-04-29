@@ -6437,16 +6437,10 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       const regions = window.gameStateManager?.state?.world?.regions;
       if (!regions || !regions[idx]) return;
       const r = regions[idx];
-      if (stamina.current < 1) {
-        alert('体力不足，该行动需要 1 点体力');
-        return;
-      }
-      stamina.current -= 1;
-      updateStaminaSegments();
       const actionLabels = { '打探': '打探情况', '友好': '表示友好', '攻伐': '攻伐占领' };
       const content = `派遣 ${memberName} 前往 ${r.name}（掌控：${r.controlledBy || '未知'}）执行${actionLabels[actionType]}`;
       const success = addActionLog(actionType, r.name, content, 1, { memberName, regionIdx: idx, regionController: r.controlledBy });
-      if (!success) { stamina.current += 1; updateStaminaSegments(); return; }
+      if (!success) return;
       alert(`${memberName} 已受命前往 ${r.name} 执行${actionLabels[actionType]}。提交操作后将由天道推演结果。`);
     }
 
