@@ -4817,6 +4817,9 @@
             <div class="building-grid" id="building-grid"></div>
           </div>
           <div class="world-panel" id="regions-panel">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+              <button class="action-btn-sm" onclick="inspectRegions()">仔细检查疆域内容</button>
+            </div>
             <div class="region-grid" id="region-grid"></div>
           </div>
         </div>
@@ -6083,13 +6086,112 @@
         alert('该区域已完全探索');
         return;
       }
+      if (stamina.current < 2) {
+        alert('体力不足，派遣探索需要 2 点体力');
+        return;
+      }
+      stamina.current -= 2;
+      updateStaminaSegments();
+      const success = addActionLog('探索', r.name, `对${r.name}进行深入探索（当前阶段：${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]} → ${EXPLORATION_STAGE_LABELS[nextStage]}）`, 2);
+      if (!success) { stamina.current += 2; updateStaminaSegments(); return; }
       window.gameStateManager.applyPatch([{
         op: 'replace',
         path: '/world/regions/' + idx + '/explorationStage',
         value: nextStage
       }]);
-      const labels = ['初步探索', '全面探索', '完全探索'];
-      alert(`${r.name} ${labels[nextStage - 1]}完成！`);
+      alert(`${r.name} 探索操作已记录。提交后将由天道推演确定探索结果。`);
+    }
+
+    function inspectRegions() {
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <circle cx="12" cy="12" r="10"/><path d="M12 2l3 5h5l-4 3.5L17 15l-5-3.5L7 15l1.5-4.5L4 7h5z"/>
+        </svg> 仔细检查疆域内容
+      `;
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);line-height:1.8;margin-bottom:16px">
+          执行该任务，会根据当前的疆域信息，增加一些可以探索、交互的新疆域。
+          <br><br>
+          <span style="font-size:12px;color:rgba(168,230,230,0.5)">
+            天道将审视宗门当前的发展程度、外交势力、现有疆域，构思 4-5 个合理有趣的新疆域，
+            并检查当前疆域内容的不合理之处。
+          </span>
+        </div>
+        <div class="building-actions">
+          <button class="opportunity-btn primary" onclick="submitRegionInspection();closeModal();">确认</button>
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    async function submitRegionInspection() {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const sectName = state.sect?.name || '宗门';
+      const regions = state.world?.regions || [];
+      const diplomacy = state.diplomacy || {};
+      const members = state.members || {};
+      const buildings = state.world?.buildings || [];
+
+      const prompt = `【疆域检查与扩充任务】
+
+请根据以下宗门当前状态，执行两项任务：
+
+任务一：检查现有疆域
+当前疆域列表：
+${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索：${EXPLORATION_STAGE_LABELS[r.explorationStage||0]} | 灵气：${r.spiritualDensity||'普通'} | 地点：${(r.locations||[]).join('、')} | 月产：${r.monthlyResources?.gold||0}灵石 ${r.monthlyResources?.potentialDisciples||0}种子 | 坐镇：${r.guardian||'无'}`).join('\n')}
+
+请检查现有疆域是否有不合理之处（如：凡人朝廷掌控的疆域灵气为洞天福地、地点与疆域名称不符等），如有请修正。
+
+任务二：构思 4-5 个新疆域
+根据宗门当前发展程度（建筑：${buildings.map(b=>b.name).join('、')}；成员：${Object.keys(members).length}人；外交势力：${Object.keys(diplomacy).join('、')}），构思 4-5 个合理、有趣的新疆域。
+
+新疆域要求：
+- 掌控势力应合理（可以是玩家宗门、已知外交势力、或新势力）
+- 灵气浓度应与疆域特性相符（普通疆域不应是洞天福地）
+- 初始探索阶段必须为 0（尚未探索）
+- 地点数组至少包含 3-4 个有趣地点
+- 月产资源应合理
+
+请输出 <vars> 补丁来完成上述变更。`;
+
+      setLLMProcessing(true);
+      try {
+        const config = await getLLMConfig();
+        const requestBody = JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: '你是天道推演官，负责根据宗门状态输出疆域更新 <vars>。' },
+            { role: 'user', content: prompt }
+          ],
+          stream: false,
+          temperature: 0.8,
+          max_tokens: 2048
+        });
+        const response = await fetch(`${config.baseUrl.replace(/\/$/, '')}/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
+          body: requestBody
+        });
+        if (!response.ok) throw new Error('API 错误 ' + response.status);
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content || '';
+        const varsMatch = content.match(/<vars>([\s\S]*?)<\/vars>/i);
+        if (varsMatch) {
+          parseVarsAndApplyPatch(varsMatch[1].trim());
+          alert('天道推演完成！疆域已更新。');
+        } else {
+          console.warn('响应中未找到 <vars> 标签:', content);
+          alert('天道推演未返回有效补丁，请查看控制台日志。');
+        }
+      } catch (err) {
+        console.error('疆域检查失败:', err);
+        alert('天道推演受阻：' + err.message);
+      } finally {
+        setLLMProcessing(false);
+      }
     }
 
     function openRegionDetail(idx) {
@@ -7776,6 +7878,24 @@ ${discipleLines || '无'}
         }).join('\n');
 
         userInput = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}\n\n请根据这些操作，给出接下来的剧情发展和可选择的应对策略。`;
+      }
+
+      // 探索操作特殊提示词
+      const exploreLogs = actionLogs.filter(log => log.type === '探索');
+      if (exploreLogs.length > 0) {
+        for (const log of exploreLogs) {
+          const regionMatch = log.content?.match(/对(.+?)进行深入探索/);
+          if (regionMatch) {
+            const regionName = regionMatch[1];
+            const regions = window.gameStateManager?.state?.world?.regions || [];
+            const r = regions.find(reg => reg.name === regionName);
+            if (r) {
+              const currentStage = r.explorationStage || 0;
+              const nextStage = currentStage + 1;
+              userInput += `\n\n【疆域探索】玩家对「${regionName}」进行了深入探索。当前探索程度为「${EXPLORATION_STAGE_LABELS[currentStage]}」，探索后应变为「${EXPLORATION_STAGE_LABELS[nextStage]}」。\n请根据剧情发展，在该区域的描述中新增 1-3 个地点名称，并适当增加该区域的每月资源产出（灵石或修道种子）。`;
+            }
+          }
+        }
       }
 
       // ===== 天机推演预处理 =====
