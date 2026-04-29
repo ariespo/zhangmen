@@ -43,6 +43,9 @@ export async function initSillyTavernEnhancer(options = {}) {
     });
   };
 
+  // Expose API mode lorebook switcher globally
+  window.switchApiLorebookMode = switchApiLorebookMode;
+
   await store.loadData();
   await ensureDefaultLorebook(store);
 
