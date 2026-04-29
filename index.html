@@ -7574,6 +7574,12 @@ ${discipleLines || '无'}
         console.log('[DualAPI] [步骤1/8] 多API模式+开局 → 主API不注入开局提示词, 由第二API负责变量填充');
       }
 
+      // 多 API 模式下，强制要求主 API 输出 <maintext> 标签（不依赖 lorebook 格式规范）
+      if (window._currentApiMode === 'dual') {
+        userInput += '\n\n【格式要求】你的回复必须严格按以下顺序输出标签（缺一不可）：\n<maintext>剧情正文</maintext>\n<option>\nA. 【标题】说明\nB. 【标题】说明\n...</option>\n<sum>时间：... | 地点：... | 人物：... | 事件：...</sum>\n\n<maintext> 内写剧情正文，500-1000字。\n<option> 提供2-4个抉择选项。\n<sum> 用一句话概括本次事件（四要素缺一不可）。';
+        console.log('[DualAPI] [步骤1/8] 多API模式 → 强制注入 <maintext> 格式要求到提示词');
+      }
+
       switchPage('story');
       setLLMProcessing(true);
       console.log('[DualAPI] [步骤2/8] UI 状态切换: 页面→story, LLM处理中=true');
@@ -7646,6 +7652,10 @@ ${discipleLines || '无'}
         console.log('[DualAPI] [步骤4/8] SillyTavern 提示词组装完成');
         console.log('[DualAPI] [步骤4/8] 主 API model:', preset?.modelOverride || config.model, '| messages 数量:', messages.length);
         console.log('[DualAPI] [步骤4/8] 请求参数:', { stream: true, ...apiParams });
+        console.log('[DualAPI] [步骤4/8] lorebook 匹配条目数:', assembled.matchedEntries?.length || 0, '| 活跃世界书数:', (activeBooks || []).length);
+        if (assembled.matchedEntries?.length > 0) {
+          console.log('[DualAPI] [步骤4/8] lorebook 条目:', assembled.matchedEntries.map(e => e.entry.comment || e.entry.id).join(', '));
+        }
         console.log('=== [Prompt] 发送的完整提示词 ===', {
           model: preset?.modelOverride || config.model,
           messages,
@@ -7819,6 +7829,23 @@ ${discipleLines || '无'}
             }
           } catch (e) {
             console.warn('[DualAPI] [步骤7/8] 等待第二 API 时发生异常:', e);
+          }
+        } else if (window._currentApiMode === 'dual' && !secondaryApiPromise && fullRawResponse.trim()) {
+          // Fallback: 主 API 未输出 <maintext> 标签，直接将全文作为正文发送给第二 API
+          console.log('[DualAPI] [步骤7/8] [FALLBACK] 主 API 未输出 <maintext> 标签, 直接发送全文给第二 API');
+          console.log('[DualAPI] [步骤7/8] [FALLBACK] 正文长度:', fullRawResponse.length);
+          try {
+            secondaryApiPromise = callSecondaryApi(fullRawResponse, window._currentRoundIsFirst || false);
+            showSecondaryApiStatus(true);
+            await secondaryApiPromise;
+            if (secondaryApiError) {
+              console.warn('[DualAPI] [步骤7/8] [FALLBACK] 第二 API 完成但出错:', secondaryApiError.message);
+              alert('天道推演受阻：' + secondaryApiError.message + '\n\n剧情正文已保留，可在设置中切换回单 API 模式重试。');
+            } else {
+              console.log('[DualAPI] [步骤7/8] [FALLBACK] 第二 API 成功完成');
+            }
+          } catch (e) {
+            console.warn('[DualAPI] [步骤7/8] [FALLBACK] 等待第二 API 时发生异常:', e);
           }
         } else {
           console.log('[DualAPI] [步骤7/8] 单API模式 → 无需等待第二 API');
