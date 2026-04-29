@@ -6263,7 +6263,7 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
         actions += `<button class="opportunity-btn secondary" style="color:#ff6b6b;border-color:rgba(255,107,107,0.3)" onclick="removeGuardian(${idx});closeModal();">召回坐镇弟子</button>`;
       }
       if (!isPlayer) {
-        actions += `<button class="opportunity-btn primary" style="background:rgba(110,207,207,0.15)" onclick="showRegionActions(${idx});closeModal();">采取行动</button>`;
+        actions += `<button class="opportunity-btn primary" style="background:rgba(110,207,207,0.15)" onclick="showRegionActions(${idx})">采取行动</button>`;
       }
       document.getElementById('modal-body').innerHTML = `
         <div class="sect-info-grid">
