@@ -7412,8 +7412,12 @@ ${discipleLines || '无'}
       }
       try {
         const patch = JSON.parse(raw);
+        if (!Array.isArray(patch)) {
+          console.warn('[DualAPI] [Vars] 解析结果不是数组:', typeof patch, patch);
+          return;
+        }
         console.log('[DualAPI] [Vars] 补丁解析成功, 操作数:', patch.length);
-        if (window.gameStateManager && Array.isArray(patch)) {
+        if (window.gameStateManager) {
           window.gameStateManager.applyPatch(patch);
           // 保存解析后的效果用于显示
           capturedVarsEffects = patch.map(formatVarOp).filter(Boolean);
