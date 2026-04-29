@@ -215,108 +215,56 @@ async function ensureDefaultLorebook(store) {
     created = true;
   }
 
-  const hasFormatEntry = book.entries.some(e => e.comment === '格式规范');
-  const hasVarEntry = book.entries.some(e => e.comment === '变量规范');
-  const hasMainFormatEntry = book.entries.some(e => e.comment === '多API主格式');
-  const hasSecondFormatEntry = book.entries.some(e => e.comment === '多API第二格式');
+  // Always fetch latest content and update existing entries
+  try {
+    const [formatRes, varRes, mainRes, secondRes] = await Promise.all([
+      fetch('./LLM_FORMAT_SPEC.md'),
+      fetch('./LLM_REFERENCE.md'),
+      fetch('./docs/LLM_FORMAT_SPEC_MAIN.md'),
+      fetch('./docs/LLM_FORMAT_SPEC_SECOND.md')
+    ]);
 
-  const needsEntries = !hasFormatEntry || !hasVarEntry || !hasMainFormatEntry || !hasSecondFormatEntry;
+    const formatContent = formatRes.ok ? await formatRes.text() : '';
+    const varContent = varRes.ok ? await varRes.text() : '';
+    const mainContent = mainRes.ok ? await mainRes.text() : '';
+    const secondContent = secondRes.ok ? await secondRes.text() : '';
 
-  if (needsEntries) {
-    try {
-      const [formatRes, varRes, mainRes, secondRes] = await Promise.all([
-        fetch('./LLM_FORMAT_SPEC.md'),
-        fetch('./LLM_REFERENCE.md'),
-        fetch('./docs/LLM_FORMAT_SPEC_MAIN.md'),
-        fetch('./docs/LLM_FORMAT_SPEC_SECOND.md')
-      ]);
+    const entryDefs = [
+      { comment: '格式规范', content: formatContent, order: 100, enabled: true },
+      { comment: '变量规范', content: varContent, order: 101, enabled: true },
+      { comment: '多API主格式', content: mainContent, order: 200, enabled: false },
+      { comment: '多API第二格式', content: secondContent, order: 201, enabled: false }
+    ];
 
-      const formatContent = formatRes.ok ? await formatRes.text() : '';
-      const varContent = varRes.ok ? await varRes.text() : '';
-      const mainContent = mainRes.ok ? await mainRes.text() : '';
-      const secondContent = secondRes.ok ? await secondRes.text() : '';
-
-      // 单 API 模式条目
-      if (!hasFormatEntry && formatContent) {
+    for (const def of entryDefs) {
+      if (!def.content) continue;
+      const existing = book.entries.find(e => e.comment === def.comment);
+      if (existing) {
+        if (existing.content !== def.content) {
+          existing.content = def.content;
+          created = true; // reuse flag to trigger save
+        }
+      } else {
         book.entries.push({
           id: crypto.randomUUID(),
           keys: [],
           secondaryKeys: [],
-          content: formatContent,
-          order: 100,
+          content: def.content,
+          order: def.order,
           position: 'at_depth',
           depth: 0,
           selective: false,
           selectiveLogic: 'not_all',
           constant: true,
           probability: 100,
-          enabled: true,
+          enabled: def.enabled,
           role: 'system',
           addMemo: false,
-          comment: '格式规范'
+          comment: def.comment
         });
+        created = true;
       }
-
-      if (!hasVarEntry && varContent) {
-        book.entries.push({
-          id: crypto.randomUUID(),
-          keys: [],
-          secondaryKeys: [],
-          content: varContent,
-          order: 101,
-          position: 'at_depth',
-          depth: 0,
-          selective: false,
-          selectiveLogic: 'not_all',
-          constant: true,
-          probability: 100,
-          enabled: true,
-          role: 'system',
-          addMemo: false,
-          comment: '变量规范'
-        });
-      }
-
-      // 多 API 模式条目
-      if (!hasMainFormatEntry && mainContent) {
-        book.entries.push({
-          id: crypto.randomUUID(),
-          keys: [],
-          secondaryKeys: [],
-          content: mainContent,
-          order: 200,
-          position: 'at_depth',
-          depth: 0,
-          selective: false,
-          selectiveLogic: 'not_all',
-          constant: true,
-          probability: 100,
-          enabled: false,
-          role: 'system',
-          addMemo: false,
-          comment: '多API主格式'
-        });
-      }
-
-      if (!hasSecondFormatEntry && secondContent) {
-        book.entries.push({
-          id: crypto.randomUUID(),
-          keys: [],
-          secondaryKeys: [],
-          content: secondContent,
-          order: 201,
-          position: 'at_depth',
-          depth: 0,
-          selective: false,
-          selectiveLogic: 'not_all',
-          constant: true,
-          probability: 100,
-          enabled: false,
-          role: 'system',
-          addMemo: false,
-          comment: '多API第二格式'
-        });
-      }
+    }
 
       await store.saveLorebook(book);
     } catch (e) {
