@@ -6696,14 +6696,23 @@ ${discipleLines || '无'}
     let secondaryApiError = null;
 
     function finalizeMainParagraph() {
+      console.log('[DualAPI] finalizeMainParagraph: 检测到 <maintext> 闭合标签');
       currentMainParagraph = null;
       if (capturedMainText) {
         currentRoundMaintext = capturedMainText;
         const mode = window._currentApiMode;
+        console.log('[DualAPI] finalizeMainParagraph: 当前模式=', mode, '| 是否已启动第二API:', !!secondaryApiPromise, '| 正文长度:', capturedMainText.length);
         if (mode === 'dual' && !secondaryApiPromise) {
+          console.log('[DualAPI] [决策] 多API模式 + 第二API未启动 → 异步启动第二API任务');
           secondaryApiPromise = callSecondaryApi(currentRoundMaintext, window._currentRoundIsFirst || false);
           showSecondaryApiStatus(true);
+        } else if (mode !== 'dual') {
+          console.log('[DualAPI] [决策] 单API模式 → 不启动第二API, 变量由主API直接输出');
+        } else if (secondaryApiPromise) {
+          console.log('[DualAPI] [决策] 第二API已启动 → 跳过重复启动');
         }
+      } else {
+        console.log('[DualAPI] finalizeMainParagraph: 无捕获到的正文, 跳过');
       }
       capturedMainText = '';
     }
@@ -6714,84 +6723,126 @@ ${discipleLines || '无'}
     }
 
     async function callSecondaryApi(maintext, isFirst = false) {
+      console.log('[DualAPI] ╔═══════════════════════════════════════════════════╗');
+      console.log('[DualAPI] ║  第二 API 任务启动                                ║');
+      console.log('[DualAPI] ║  是否开局:', isFirst, '| 正文长度:', maintext?.length || 0);
+      console.log('[DualAPI] ╚═══════════════════════════════════════════════════╝');
+
       secondaryApiCompleted = false;
       secondaryApiError = null;
 
+      console.log('[DualAPI] [第二API] 步骤1/8: 读取第二 API 配置...');
       const config = await getSecondaryApiConfig();
+      console.log('[DualAPI] [第二API] 步骤1/8: baseUrl=', config?.baseUrl, '| model=', config?.model, '| key存在=', !!(config?.apiKey));
       if (!config || !config.apiKey) {
-        console.warn('[SecondaryAPI] 未配置第二 API');
+        console.warn('[DualAPI] [第二API] 步骤1/8 [失败]: 未配置第二 API');
         secondaryApiError = new Error('未配置第二 API');
         secondaryApiCompleted = true;
         showSecondaryApiStatus(false);
         return;
       }
+      console.log('[DualAPI] [第二API] 步骤1/8 [成功]: 配置有效');
 
+      console.log('[DualAPI] [第二API] 步骤2/8: 读取规范文档...');
       let systemPrompt = '';
       try {
         const res = await fetch('./docs/LLM_FORMAT_SPEC_SECOND.md');
         if (res.ok) {
           systemPrompt = await res.text();
+          console.log('[DualAPI] [第二API] 步骤2/8 [成功]: 规范文档读取完成, 长度:', systemPrompt.length);
+        } else {
+          console.warn('[DualAPI] [第二API] 步骤2/8 [警告]: 规范文档 HTTP', res.status, ', 使用默认提示词');
         }
       } catch (e) {
-        console.warn('[SecondaryAPI] 读取规范文档失败:', e);
+        console.warn('[DualAPI] [第二API] 步骤2/8 [警告]: 读取规范文档失败:', e.message, ', 使用默认提示词');
       }
 
+      console.log('[DualAPI] [第二API] 步骤3/8: 组装 gameState...');
       let gameState = {};
       if (window.gameStateManager) {
         const raw = window.gameStateManager.toRaw();
         const { _creationMeta, events, foreshadowing, randomEvents, ...rest } = raw;
         gameState = rest;
+        console.log('[DualAPI] [第二API] 步骤3/8 [成功]: gameState 组装完成, 大小:', JSON.stringify(gameState).length, 'bytes');
+      } else {
+        console.warn('[DualAPI] [第二API] 步骤3/8 [警告]: gameStateManager 未找到, 使用空对象');
       }
 
+      console.log('[DualAPI] [第二API] 步骤4/8: 组装 prompt...');
       let prompt = `【本次剧情正文】\n${maintext}\n\n【当前完整变量表】\n${JSON.stringify(gameState, null, 2)}\n\n请根据剧情正文和当前完整的变量表，逐一对照分析，找出剧情中提到的所有变化，输出 <analysis> 和 <vars>。务必确保变量表中的每一条变更都能在剧情正文中找到依据，且剧情中提到的所有数值变化、状态变更都必须在 <vars> 中体现。\n\n额外规则：\n- 尽可能确保机缘列表中总是有4条机缘同时存在。\n- 如果剧情中玩家已经安排了某个机缘的分配，则该机缘应该从机缘变量里删除（remove），并立即分配一条新的机缘（insert）。\n- 如果某条机缘已经过期或不再适用，也应删除并补充新的机缘。`;
 
       if (isFirst) {
         prompt += `\n\n【重要：本次为游戏开局】\n这是游戏的第一次交互，剧情正文为宗门开局的背景设定。请根据开局剧情，补充完善变量表中的以下信息：\n1. 【功法】根据玩家境界和宗门地位，为藏经阁补充开局应有的基础功法（至少3-5部）\n2. 【外交】根据剧情设定，补充开局存在的外交势力及其关系值（至少2-3个）\n3. 【法宝/物品】根据剧情，为宝库补充开局宗门拥有的法宝、丹药、材料等\n4. 【护山大阵】设定开局宗门的护山大阵名称和品阶\n5. 【机缘】补充开局即存在的4条机缘，涵盖天时、地利、人和三类\n6. 【成员】如有剧情提到的新成员加入，完整添加到成员列表\n7. 【建筑】确保开局建筑列表完整且等级合理\n\n请一次性将上述开局信息全部补充到变量表中，不要遗漏。`;
       }
+      console.log('[DualAPI] [第二API] 步骤4/8 [成功]: prompt 组装完成, 总长度:', prompt.length, 'chars');
 
       try {
+        console.log('[DualAPI] [第二API] 步骤5/8: 发送 fetch 请求 →', config.baseUrl + '/chat/completions');
+        console.log('[DualAPI] [第二API] 步骤5/8: model=', config.model, '| temperature=', config.temperature, '| max_tokens=', config.maxTokens);
+        const requestBody = JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: systemPrompt || '你是天道推演官，负责根据剧情正文分析并输出 <vars>。' },
+            { role: 'user', content: prompt }
+          ],
+          stream: false,
+          temperature: config.temperature,
+          max_tokens: config.maxTokens
+        });
+        console.log('[DualAPI] [第二API] 步骤5/8: 请求体大小:', requestBody.length, 'bytes');
+
         const response = await fetch(`${config.baseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${config.apiKey}`
           },
-          body: JSON.stringify({
-            model: config.model,
-            messages: [
-              { role: 'system', content: systemPrompt || '你是天道推演官，负责根据剧情正文分析并输出变量更新 <vars>。' },
-              { role: 'user', content: prompt }
-            ],
-            stream: false,
-            temperature: config.temperature,
-            max_tokens: config.maxTokens
-          })
+          body: requestBody
         });
 
+        console.log('[DualAPI] [第二API] 步骤6/8: 收到响应, status:', response.status, response.ok ? '(OK)' : '(错误)');
         if (!response.ok) {
           const errText = await response.text();
+          console.error('[DualAPI] [第二API] 步骤6/8 [失败]: HTTP', response.status, errText);
           throw new Error(`API 错误 ${response.status}: ${errText}`);
         }
 
+        console.log('[DualAPI] [第二API] 步骤6/8 [成功]: 响应正常, 开始解析 JSON...');
         const data = await response.json();
         const content = data.choices?.[0]?.message?.content || '';
+        console.log('[DualAPI] [第二API] 步骤6/8 [成功]: 响应内容长度:', content.length, 'chars');
+        if (content.length > 0) {
+          console.log('[DualAPI] [第二API] 原始响应内容前500字符:', content.substring(0, 500) + (content.length > 500 ? '...' : ''));
+        }
 
+        console.log('[DualAPI] [第二API] 步骤7/8: 解析 <vars> 标签...');
         const varsMatch = content.match(/<vars>([\s\S]*?)<\/vars>/i);
         if (varsMatch) {
           const varsText = varsMatch[1].trim();
+          console.log('[DualAPI] [第二API] 步骤7/8 [成功]: 找到 <vars> 标签, 内容长度:', varsText.length, 'chars');
+          console.log('[DualAPI] [第二API] <vars> 原始内容:', varsText);
           parseVarsAndApplyPatch(varsText);
-          console.log('[SecondaryAPI] 变量更新成功');
+          console.log('[DualAPI] [第二API] 步骤7/8 [成功]: 变量补丁应用完成');
         } else {
-          console.warn('[SecondaryAPI] 响应中未找到 <vars> 标签');
+          console.warn('[DualAPI] [第二API] 步骤7/8 [警告]: 响应中未找到 <vars> 标签, 无变量更新');
+          console.log('[DualAPI] [第二API] 完整响应内容:', content);
         }
 
         secondaryApiCompleted = true;
         showSecondaryApiStatus(false);
+        console.log('[DualAPI] ╔═══════════════════════════════════════════════════╗');
+        console.log('[DualAPI] ║  第二 API 任务结束 [成功]                         ║');
+        console.log('[DualAPI] ╚═══════════════════════════════════════════════════╝');
       } catch (err) {
-        console.error('[SecondaryAPI] 请求失败:', err);
+        console.error('[DualAPI] [第二API] 请求失败:', err.name, err.message);
+        console.error('[DualAPI] [第二API] 错误堆栈:', err.stack);
         secondaryApiError = err;
         secondaryApiCompleted = true;
         showSecondaryApiStatus(false);
+        console.log('[DualAPI] ╔═══════════════════════════════════════════════════╗');
+        console.log('[DualAPI] ║  第二 API 任务结束 [失败]                         ║');
+        console.log('[DualAPI] ║  错误:', err.message);
+        console.log('[DualAPI] ╚═══════════════════════════════════════════════════╝');
       }
     }
 
@@ -6988,16 +7039,21 @@ ${discipleLines || '无'}
 
     function parseVarsAndApplyPatch(text) {
       const raw = text.trim();
-      if (!raw) return;
+      if (!raw) {
+        console.log('[DualAPI] [Vars] 补丁内容为空, 跳过');
+        return;
+      }
       try {
         const patch = JSON.parse(raw);
+        console.log('[DualAPI] [Vars] 补丁解析成功, 操作数:', patch.length);
         if (window.gameStateManager && Array.isArray(patch)) {
           window.gameStateManager.applyPatch(patch);
           // 保存解析后的效果用于显示
           capturedVarsEffects = patch.map(formatVarOp).filter(Boolean);
+          console.log('[DualAPI] [Vars] 补丁应用完成, 效果:', capturedVarsEffects);
         }
       } catch (e) {
-        console.warn('[Vars] Failed to parse patch:', raw, e);
+        console.warn('[DualAPI] [Vars] 补丁解析失败:', raw, e);
       }
     }
 
@@ -7264,10 +7320,17 @@ ${discipleLines || '无'}
             const first = candidates[0];
             remaining = remaining.slice(first.start + first.len);
             currentCaptureTag = first.tag;
-            if (first.tag === 'maintext') capturedMainText = '';
+            if (first.tag === 'maintext') {
+              capturedMainText = '';
+              console.log('[DualAPI] [主API流式] 捕获到 <maintext> 开始标签 → 开始接收正文');
+            }
             if (first.tag === 'option') capturedOptionText = '';
             if (first.tag === 'sum') capturedSumText = '';
-            if (first.tag === 'vars') capturedVarsText = '';
+            if (first.tag === 'vars') {
+              capturedVarsText = '';
+              const mode = window._currentApiMode || 'single';
+              console.log('[DualAPI] [主API流式] 捕获到 <vars> 开始标签 → 当前模式:', mode, mode === 'dual' ? '(双API:主API不应输出vars,将被忽略)' : '(单API:将解析变量)');
+            }
           } else {
             if (isFlush) return '';
             // 保留可能的不完整起始标签后缀（最长 <maintext> = 10）
@@ -7284,6 +7347,7 @@ ${discipleLines || '无'}
             updateLiveMain(capturedMainText);
             remaining = remaining.slice(mainEnd + 11);
             currentCaptureTag = null;
+            console.log('[DualAPI] [主API流式] <maintext> 闭合标签捕获, 正文总长度:', capturedMainText.length);
             finalizeMainParagraph();
           } else {
             if (isFlush) {
@@ -7324,7 +7388,13 @@ ${discipleLines || '无'}
           const varsEnd = remaining.indexOf('</vars>');
           if (varsEnd !== -1) {
             capturedVarsText += remaining.slice(0, varsEnd);
-            parseVarsAndApplyPatch(capturedVarsText);
+            const mode = window._currentApiMode || 'single';
+            if (mode === 'single') {
+              console.log('[DualAPI] [主API流式] <vars> 闭合标签捕获 → 解析变量补丁, 长度:', capturedVarsText.length);
+              parseVarsAndApplyPatch(capturedVarsText);
+            } else {
+              console.log('[DualAPI] [主API流式] <vars> 闭合标签捕获 → 多API模式, 忽略主API的vars (由第二API负责)');
+            }
             remaining = remaining.slice(varsEnd + 7);
             currentCaptureTag = null;
             capturedVarsText = '';
@@ -7416,6 +7486,11 @@ ${discipleLines || '无'}
       const playerName = window.gameStateManager?.state?.player?.name || '掌门';
       const sectName = window.gameStateManager?.state?.sect?.name || '宗门';
 
+      console.log('[DualAPI] ═══════════════════════════════════════════════');
+      console.log('[DualAPI] ║  新一轮 LLM 交互开始');
+      console.log('[DualAPI] ║  玩家:', playerName, '| 宗门:', sectName, '| 是否开局:', isFirst);
+      console.log('[DualAPI] ╚═══════════════════════════════════════════════');
+
       let userInput;
       if (isFirst) {
         userInput = buildOpeningPrompt(window.gameStateManager.state);
@@ -7447,6 +7522,7 @@ ${discipleLines || '无'}
       console.log('[天机推演] 伏笔爆发:', triggeredForeshadowings.length, '| 随机事件:', randomEventResult.event?.name || '无');
 
       // ===== 发送前快照 =====
+      console.log('[DualAPI] [步骤0/8] 创建发送前快照...');
       const panel = document.getElementById('action-log-panel');
       const snapshot = {
         actionLogs: [...actionLogs],
@@ -7465,6 +7541,8 @@ ${discipleLines || '无'}
         }
       }
 
+      console.log('[DualAPI] [步骤0/8] 快照创建完成: actionLogs=', snapshot.actionLogs.length, '| stamina=', snapshot.staminaCurrent);
+
       // 清空本轮操作和体力
       actionLogs = [];
       stamina.current = stamina.max;
@@ -7476,19 +7554,29 @@ ${discipleLines || '无'}
       // 进入 LLM 交互阶段
       window._currentApiMode = await getApiMode();
       window._currentRoundIsFirst = isFirst;
+      console.log('[DualAPI] [步骤1/8] API 模式检测完成 →', window._currentApiMode.toUpperCase(), '(single=单API输出vars, dual=主API+第二API分离)');
+      console.log('[DualAPI] [步骤1/8] 是否为开局轮次:', isFirst);
 
       // 单 API 模式下注入额外变量更新规则
       if (window._currentApiMode === 'single') {
         userInput += '\n\n【变量更新规则提醒】\n- 务必根据当前变量表的实际情况来思考本次应该更新哪些变量。\n- 尽可能确保机缘列表中总是有4条机缘同时存在。\n- 如果玩家已经在上一轮安排了某个机缘的分配，则该机缘应该从机缘变量里删除（remove），并立即分配一条新的机缘（insert）。\n- 如果某条机缘已经过期或不再适用，也应删除并补充新的机缘。';
+        console.log('[DualAPI] [步骤1/8] 单API模式 → 注入变量更新规则提醒到提示词');
       }
 
       // 开局时额外注入提示词（单 API 模式）
       if (isFirst && window._currentApiMode === 'single') {
         userInput += '\n\n【重要：本次为游戏开局】\n这是游戏的第一次交互。请在剧情正文中充分描写宗门的开局背景设定，并通过 <vars> 补充完善以下信息：\n1. 【功法】根据玩家境界和宗门地位，为藏经阁补充开局应有的基础功法（至少3-5部）\n2. 【外交】根据剧情设定，补充开局存在的外交势力及其关系值（至少2-3个）\n3. 【法宝/物品】根据剧情，为宝库补充开局宗门拥有的法宝、丹药、材料等\n4. 【护山大阵】设定开局宗门的护山大阵名称和品阶\n5. 【机缘】补充开局即存在的4条机缘，涵盖天时、地利、人和三类\n6. 【成员】如有剧情提到的新成员加入，完整添加到成员列表\n7. 【建筑】确保开局建筑列表完整且等级合理\n\n请确保剧情正文和变量表都充分体现上述开局设定，不要遗漏。';
+        console.log('[DualAPI] [步骤1/8] 单API模式+开局 → 注入开局变量填充提示词');
+      }
+
+      // 开局时额外注入提示词（多 API 模式 — 由第二 API 负责）
+      if (isFirst && window._currentApiMode === 'dual') {
+        console.log('[DualAPI] [步骤1/8] 多API模式+开局 → 主API不注入开局提示词, 由第二API负责变量填充');
       }
 
       switchPage('story');
       setLLMProcessing(true);
+      console.log('[DualAPI] [步骤2/8] UI 状态切换: 页面→story, LLM处理中=true');
       setTimeout(() => {
         const overlay = document.getElementById('llm-overlay');
         if (overlay) overlay.classList.remove('active');
@@ -7500,6 +7588,7 @@ ${discipleLines || '无'}
       if (choicesContainer) choicesContainer.innerHTML = '';
 
       const config = await getLLMConfig();
+      console.log('[DualAPI] [步骤3/8] 主 API 配置读取: baseUrl=', config.baseUrl, '| model=', config.model, '| key存在=', !!config.apiKey);
       if (!config.apiKey) {
         alert('未配置 API Key，请先在系统设置中配置。');
         setLLMProcessing(false);
@@ -7554,6 +7643,9 @@ ${discipleLines || '无'}
         });
         messages = assembled.messages;
 
+        console.log('[DualAPI] [步骤4/8] SillyTavern 提示词组装完成');
+        console.log('[DualAPI] [步骤4/8] 主 API model:', preset?.modelOverride || config.model, '| messages 数量:', messages.length);
+        console.log('[DualAPI] [步骤4/8] 请求参数:', { stream: true, ...apiParams });
         console.log('=== [Prompt] 发送的完整提示词 ===', {
           model: preset?.modelOverride || config.model,
           messages,
@@ -7580,7 +7672,8 @@ ${discipleLines || '无'}
         stream: true,
         ...apiParams
       });
-      console.log(`[API] 请求体大小: ${(requestBody.length / 1024).toFixed(1)} KB, messages: ${messages.length}, max_tokens: ${apiParams.max_tokens}`);
+      console.log('[DualAPI] [步骤5/8] 主 API 请求体组装完成');
+      console.log(`[DualAPI] [步骤5/8] 请求体大小: ${(requestBody.length / 1024).toFixed(1)} KB, messages: ${messages.length}, max_tokens: ${apiParams.max_tokens}`);
 
       let fetchAttempt = 0;
       const MAX_FETCH_RETRIES = 1;
@@ -7588,6 +7681,7 @@ ${discipleLines || '无'}
 
       while (fetchAttempt <= MAX_FETCH_RETRIES) {
         try {
+          console.log('[DualAPI] [步骤5/8] 主 API fetch 发送 →', config.baseUrl.replace(/\/$/, '') + '/chat/completions');
           response = await fetch(`${config.baseUrl.replace(/\/$/, '')}/chat/completions`, {
             method: 'POST',
             headers: {
@@ -7599,7 +7693,10 @@ ${discipleLines || '无'}
             signal: llmAbortController.signal
           });
 
-          if (response.ok) break;
+          if (response.ok) {
+            console.log('[DualAPI] [步骤5/8] 主 API fetch 成功, status:', response.status);
+            break;
+          }
 
           // 504 时重试一次
           if (response.status === 504 && fetchAttempt < MAX_FETCH_RETRIES) {
@@ -7629,6 +7726,7 @@ ${discipleLines || '无'}
       if (!response.body) {
         throw new Error('API 响应体为空');
       }
+      console.log('[DualAPI] [步骤6/8] 主 API 流式响应开始读取...');
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
 
@@ -7636,16 +7734,24 @@ ${discipleLines || '无'}
         let lastChunkTime = Date.now();
         const STREAM_TIMEOUT = 60000;
 
+        let chunkCount = 0;
         while (true) {
           if (Date.now() - lastChunkTime > STREAM_TIMEOUT) {
             throw new Error('天道运转超时，未在60秒内收到回应');
           }
 
           const { done, value } = await reader.read();
-          if (done) break;
+          if (chunkCount === 0 && value) {
+            console.log('[DualAPI] [步骤6/8] 主 API 收到第一个 chunk');
+          }
+          if (done) {
+            console.log('[DualAPI] [步骤6/8] 主 API 流式读取 done=true, 结束');
+            break;
+          }
 
           lastChunkTime = Date.now();
           const chunk = decoder.decode(value, { stream: true });
+          chunkCount++;
           const lines = chunk.split('\n');
           for (const line of lines) {
             const trimmed = line.trim();
@@ -7666,6 +7772,8 @@ ${discipleLines || '无'}
         }
 
         flushStreamProcessing();
+        console.log('[DualAPI] [步骤6/8] 主 API 流式响应读取完成');
+        console.log('[DualAPI] [步骤6/8] 共接收', chunkCount, '个 chunk, 原始响应总长度:', fullRawResponse.length, 'chars');
         console.log('=== [LLM Raw] 返回的完整原始信息 ===', fullRawResponse);
 
         // 解析新伏笔并存储
@@ -7684,8 +7792,9 @@ ${discipleLines || '无'}
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
-          console.error('[LLM] 请求失败详情:', err.name, err.message, err.stack);
-          console.error('[LLM] 请求配置:', { baseUrl: config?.baseUrl, model: config?.model });
+          console.error('[DualAPI] [主API] 请求失败:', err.name, err.message);
+          console.error('[DualAPI] [主API] 错误堆栈:', err.stack);
+          console.error('[DualAPI] [主API] 请求配置:', { baseUrl: config?.baseUrl, model: config?.model });
           let msg = '天道运转受阻：' + err.message;
           if (err.message?.includes('Failed to fetch')) {
             msg += '\n\n可能原因:\n1. CORS 被浏览器阻止（检查 Network 标签）\n2. 代理/VPN 拦截了 POST 请求\n3. 浏览器扩展（广告拦截器）阻止了请求\n4. 请求体过大导致连接被重置\n5. API 服务暂时不可用';
@@ -7694,18 +7803,28 @@ ${discipleLines || '无'}
         }
         await rollbackSnapshot(snapshot);
       } finally {
+        console.log('[DualAPI] [步骤7/8] 主 API 流程结束, 进入收尾阶段');
+
         // 多 API 模式下等待第二 API 完成
         if (window._currentApiMode === 'dual' && secondaryApiPromise) {
+          console.log('[DualAPI] [步骤7/8] 多API模式 → 等待第二 API 完成...');
+          console.log('[DualAPI] [步骤7/8] 第二 API 当前状态: completed=', secondaryApiCompleted, '| error=', secondaryApiError ? secondaryApiError.message : '无');
           try {
             await secondaryApiPromise;
             if (secondaryApiError) {
+              console.warn('[DualAPI] [步骤7/8] 第二 API 完成但出错:', secondaryApiError.message);
               alert('天道推演受阻：' + secondaryApiError.message + '\n\n剧情正文已保留，可在设置中切换回单 API 模式重试。');
+            } else {
+              console.log('[DualAPI] [步骤7/8] 第二 API 成功完成');
             }
           } catch (e) {
-            console.warn('[submitActions] 等待第二 API 失败:', e);
+            console.warn('[DualAPI] [步骤7/8] 等待第二 API 时发生异常:', e);
           }
+        } else {
+          console.log('[DualAPI] [步骤7/8] 单API模式 → 无需等待第二 API');
         }
 
+        console.log('[DualAPI] [步骤8/8] 重置 UI 状态: LLM处理中=false');
         setLLMProcessing(false);
         llmAbortController = null;
 
@@ -7750,6 +7869,11 @@ ${discipleLines || '无'}
             sessionStorage.removeItem('zhangmen_actionLogs');
           } catch (e) {}
         }
+
+        console.log('[DualAPI] ═══════════════════════════════════════════════');
+        console.log('[DualAPI] ║  本轮 LLM 交互完全结束');
+        console.log('[DualAPI] ║  模式:', window._currentApiMode, '| 正文长度:', fullRawResponse.length);
+        console.log('[DualAPI] ╚═══════════════════════════════════════════════');
       }
     }
 
