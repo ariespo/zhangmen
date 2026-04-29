@@ -271,7 +271,6 @@ async function ensureDefaultLorebook(store) {
       console.warn('[DefaultLorebook] 创建默认世界书条目失败:', e);
       return;
     }
-  }
 
   // 根据 apiMode 设置条目启用状态
   const apiMode = store.getState().settings?.apiMode || 'single';
