@@ -251,7 +251,7 @@ D. 【标题】说明
 /treasury/items/-            — 宝库新增物品
 /treasury/arrayName          — 护山大阵名称
 /library/-                   — 藏经阁新增功法
-/opportunities/-             — 新增机遇
+/opportunities/-             — 新增机遇（字段：id, title, desc, category, cost, completed）
 /diplomacy/势力名/relation   — 外交关系等级
 /diplomacy/势力名/value      — 外交关系值（delta）
 /quests/main/currentStage    — 主线当前阶段
@@ -264,7 +264,25 @@ D. 【标题】说明
 /world/regions/0/controlledBy — 区域控制权
 ```
 
-### 5.5 成员境界修改规则
+### 5.5 机缘字段规范
+
+新增机缘 `/opportunities/-` 时，必须使用以下字段：
+
+```json
+{
+  "id": "唯一标识（英文小写+下划线，如 opp_tianshi_001）",
+  "title": "机缘标题（简短）",
+  "desc": "机缘描述（详细说明）",
+  "category": "tianshi/dili/renhe 之一",
+  "cost": 1,
+  "completed": false
+}
+```
+
+- **category**：`tianshi`（天时：天象、灵气潮汐等）、`dili`（地利：地形、资源、秘境等）、`renhe`（人和：人物、势力、外交等）
+- **cost**：消耗的体力值，通常为 1–3
+
+### 5.6 成员境界修改规则
 修改 `realm` 时**必须同步更新 `baseStats` 和 `stats`**：
 1. `base = 50 + (4 - talentIndex) × 3`
 2. `stageMultiplier`：前期=1, 中期=1.5, 后期=2.25, 圆满=3.375

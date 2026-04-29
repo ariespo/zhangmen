@@ -81,6 +81,35 @@
 - `/library/-` — 藏经阁新增功法
 - `/opportunities/-` — 新增机遇
 
+### 机缘字段规范
+
+新增机缘时，必须包含以下字段：
+
+```json
+{
+  "id": "唯一标识（英文小写+下划线，如 opp_tianshi_001）",
+  "title": "机缘标题（简短，如：灵气潮汐，天赐良机）",
+  "desc": "机缘描述（详细说明内容和效果）",
+  "category": "分类，必须是以下三者之一：tianshi（天时）、dili（地利）、renhe（人和）",
+  "cost": 消耗的体力数值（数字，如 1、2、3）,
+  "completed": false
+}
+```
+
+**category 分类规则**：
+- `tianshi`：天时类 — 涉及时间、天气、天象、灵气潮汐等
+- `dili`：地利类 — 涉及地点、地形、资源、秘境、建筑等
+- `renhe`：人和类 — 涉及人物、势力、外交、弟子、机缘人物等
+
+**示例**：
+```json
+{"op":"insert","path":"/opportunities/-","value":{
+  "id":"opp_tianshi_001","title":"灵气潮汐，天赐良机",
+  "desc":"宗门迎来持续三个月的灵气潮汐，修炼效率提升五成。",
+  "category":"tianshi","cost":2,"completed":false
+}}
+```
+
 ---
 
 ## 三、核心规则
