@@ -6161,7 +6161,7 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       setLLMProcessing(true);
       try {
         const config = await getLLMConfig();
-        const systemPrompt = `你是天道推演官，负责根据宗门状态输出变量更新。\n\n输出格式要求（严格遵守）：\n\n1. 先输出分析内容（可选）\n2. 然后必须输出 \u003cvars\u003e 标签包裹的 JSON 数组补丁：\n\n\u003cvars\u003e\n[\n  {\"op\":\"replace\",\"path\":\"/world/regions/0/explorationStage\",\"value\":1},\n  ...\n]\n\u003c/vars\u003e\n\n规则：\n- \u003cvars\u003e 内必须是合法的 JSON 数组，每个元素包含 op、path、value 字段\n- 数组用方括号 [] 包裹\n- 不要输出分析文本在 \u003cvars\u003e 标签内部\n- 确保有 \u003c/vars\u003e 闭合标签`;
+        const systemPrompt = `你是天道推演官，负责根据宗门状态输出变量更新。\n\n输出格式要求（严格遵守）：\n\n1. 先输出分析内容（可选）\n2. 然后必须输出 \u003cvars\u003e 标签包裹的 JSON 数组补丁：\n\n\u003cvars\u003e\n[\n  {\"op\":\"insert\",\"path\":\"/world/regions/-\",\"value\":{\"name\":\"...\",\"controlledBy\":\"...\",\"explorationStage\":0,\"spiritualDensity\":\"普通\",\"locations\":[\"...\"],\"monthlyResources\":{\"gold\":0,\"potentialDisciples\":0},\"guardian\":\"\"}},\n  ...\n]\n\u003c/vars\u003e\n\n重要规则：\n- \u003cvars\u003e 内必须是合法的 JSON 数组，每个元素包含 op、path、value 字段\n- 数组用方括号 [] 包裹\n- 不要输出分析文本在 \u003cvars\u003e 标签内部\n- 确保有 \u003c/vars\u003e 闭合标签\n- 字段名必须严格匹配变量表：controlledBy（不是 controllingFaction）、spiritualDensity（不是 qiConcentration）、monthlyResources（不是 monthlyProduction）、gold（不是 spiritStones）、potentialDisciples（不是 seeds）\n- 新增疆域使用 op:\"insert\"，path:\"/world/regions/-\"`;
 
         const requestBody = JSON.stringify({
           model: config.model,

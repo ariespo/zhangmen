@@ -331,6 +331,18 @@ function applySingleOp(root, op) {
       if (!isNaN(idx) && idx >= 0 && idx < target.length) target.splice(idx, 1);
       else console.warn('[GameState] remove index out of bounds:', op.path);
     } else if (typeof target === 'object') delete target[key];
+  } else if (op.op === 'add') {
+    // JSON Patch "add" — treat as insert for arrays, replace for objects
+    if (Array.isArray(target)) {
+      if (key === '-') target.push(op.value);
+      else {
+        const idx = parseInt(key, 10);
+        if (!isNaN(idx)) { idx >= 0 && idx <= target.length ? target.splice(idx, 0, op.value) : target.push(op.value); }
+        else target[key] = op.value;
+      }
+    } else if (typeof target === 'object') {
+      target[key] = op.value;
+    }
   }
 }
 
