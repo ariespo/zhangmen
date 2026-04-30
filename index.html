@@ -9972,9 +9972,22 @@ ${discipleLines || '无'}
     initStoryLongPressMenu();
     const settingsData = await db.settings.get('settings');
     if (settingsData?.activeChatId) {
+      // 重置 session 级全局状态，防止跨存档污染
+      actionLogs = [];
+      stamina.current = stamina.max;
+      foreshadowingStore = [];
+      _fsEditingId = null;
+      _reEditingId = null;
+      window.storyHistory = [];
+      sessionStorage.removeItem('zhangmen_actionLogs');
+      sessionStorage.removeItem('zhangmen_stamina');
+
       await gameStateManager.load(settingsData.activeChatId);
       // 读档后刷新所有 UI
       refreshAllUI();
+      renderActionLogs();
+      updateStaminaSegments();
+      updateTianjiBadge();
     }
 
     // 资源条自动订阅
@@ -10915,9 +10928,22 @@ ${discipleLines || '无'}
 
     window.loadSave = async function(chatId) {
       try {
+        // 重置 session 级全局状态，防止跨存档污染
+        actionLogs = [];
+        stamina.current = stamina.max;
+        foreshadowingStore = [];
+        _fsEditingId = null;
+        _reEditingId = null;
+        window.storyHistory = [];
+        sessionStorage.removeItem('zhangmen_actionLogs');
+        sessionStorage.removeItem('zhangmen_stamina');
+
         await window.gameStateManager.load(chatId);
         await window.sillyTavernStore.loadChat(chatId);
         refreshAllUI();
+        renderActionLogs();
+        updateStaminaSegments();
+        updateTianjiBadge();
         await renderStoryFromMessages(chatId);
         hideLoadGameScreen();
         document.getElementById('title-screen').classList.add('hidden');
