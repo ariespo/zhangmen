@@ -10157,7 +10157,9 @@ ${discipleLines || '无'}
         const saveName = `${playerName} - 存档${saves.length + 1}`;
         const chat = await window.sillyTavernStore.createChat(saveName, { playerName });
         await window.gameStateManager.load(chat.id);
-        const { getAllSaves } = await import('./sillytavern/game-state.js');
+        // 保存初始默认状态到 IndexedDB，确保存档列表能正确显示基本信息
+        const { saveGameState, getAllSaves } = await import('./sillytavern/game-state.js');
+        await saveGameState(chat.id, window.gameStateManager.state);
         _loadGameData = await getAllSaves();
         renderLoadGameScreen();
       } catch (e) {
