@@ -182,6 +182,60 @@ Record，key 为势力名。
 
 `relation` 可取值：盟友 / 友好 / 中立 / 警惕 / 敌对
 
+**关系值与等级映射**：
+
+| 关系值范围 | 关系等级 |
+|-----------|---------|
+| 80–100 | 盟友 |
+| 60–79 | 友好 |
+| 40–59 | 中立 |
+| 20–39 | 警惕 |
+| 0–19 | 敌对 |
+
+**外交操作效果参考**（剧情推演时，根据弟子能力和对方反应适当调整）：
+
+| 操作 | 典型效果 | 说明 |
+|------|---------|------|
+| 拜访 | 关系值 +3~+8 | 派遣弟子前往建立联系，效果受弟子境界、性格、忠诚度影响 |
+| 送礼 | 关系值 +5~+15 | 携带宗门礼物，礼物的珍贵程度影响效果上限 |
+| 威逼 | 关系值 -10~-5 | 展示实力施压，对方若实力更强可能反噬（关系进一步恶化） |
+| 宣战 | 关系值 -30~-15 | 正式宣战，直接降至敌对，可能引发宗门大战 |
+
+**新增势力字段规范**：
+
+```json
+{
+  "highestMember": {
+    "name": "最高境界成员姓名",
+    "role": "职位，如掌门/长老/宗主",
+    "realm": "境界，如金丹期后期"
+  },
+  "discipleCount": 128,
+  "controlledRegions": ["疆域名1", "疆域名2"]
+}
+```
+
+- `highestMember`：该势力最高修为的1名代表人物，用于外交情报展示
+- `discipleCount`：弟子总人数，反映势力规模
+- `controlledRegions`：掌控的疆域名称列表，应与 `world.regions` 中的 `controlledBy` 保持一致
+
+**外交势力操作路径**：
+
+```
+/diplomacy/{势力名}
+/diplomacy/{势力名}/name
+/diplomacy/{势力名}/relation
+/diplomacy/{势力名}/value
+/diplomacy/{势力名}/desc
+/diplomacy/{势力名}/leader
+/diplomacy/{势力名}/highestMember/name
+/diplomacy/{势力名}/highestMember/role
+/diplomacy/{势力名}/highestMember/realm
+/diplomacy/{势力名}/discipleCount
+/diplomacy/{势力名}/controlledRegions
+/diplomacy/{势力名}/controlledRegions/-   // 追加疆域
+```
+
 ---
 
 ## 八、任务（quests）

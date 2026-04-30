@@ -323,9 +323,13 @@ export async function switchApiLorebookMode(mode, store) {
 
   let needsUpdate = false;
   for (const entry of book.entries) {
-    if (entry.comment === '格式规范' || entry.comment === '变量规范') {
+    if (entry.comment === '格式规范') {
       const shouldEnable = mode === 'single';
       if (entry.enabled !== shouldEnable) { entry.enabled = shouldEnable; needsUpdate = true; }
+    }
+    if (entry.comment === '变量规范') {
+      // 变量规范总是开启，供主API和第二API参考
+      if (!entry.enabled) { entry.enabled = true; needsUpdate = true; }
     }
     if (entry.comment === '多API主格式' || entry.comment === '多API第二格式') {
       const shouldEnable = mode === 'dual';

@@ -7428,13 +7428,26 @@ ${discipleLines || '无'}
       console.log('[DualAPI] [第二API] 步骤2/8: 读取规范文档...');
       let systemPrompt = '';
       try {
-        const res = await fetch('./docs/LLM_FORMAT_SPEC_SECOND.md');
-        if (res.ok) {
-          systemPrompt = await res.text();
-          console.log('[DualAPI] [第二API] 步骤2/8 [成功]: 规范文档读取完成, 长度:', systemPrompt.length);
+        const [specRes, varRes] = await Promise.all([
+          fetch('./docs/LLM_FORMAT_SPEC_SECOND.md'),
+          fetch('./LLM_REFERENCE.md')
+        ]);
+        let specContent = '';
+        let varContent = '';
+        if (specRes.ok) {
+          specContent = await specRes.text();
+          console.log('[DualAPI] [第二API] 步骤2/8 [成功]: 第二API规范读取完成, 长度:', specContent.length);
         } else {
-          console.warn('[DualAPI] [第二API] 步骤2/8 [警告]: 规范文档 HTTP', res.status, ', 使用默认提示词');
+          console.warn('[DualAPI] [第二API] 步骤2/8 [警告]: 第二API规范 HTTP', specRes.status);
         }
+        if (varRes.ok) {
+          varContent = await varRes.text();
+          console.log('[DualAPI] [第二API] 步骤2/8 [成功]: 变量规范读取完成, 长度:', varContent.length);
+        } else {
+          console.warn('[DualAPI] [第二API] 步骤2/8 [警告]: 变量规范 HTTP', varRes.status);
+        }
+        systemPrompt = specContent + (specContent && varContent ? '\n\n---\n\n' : '') + varContent;
+        console.log('[DualAPI] [第二API] 步骤2/8 [成功]: 合并system prompt, 总长度:', systemPrompt.length);
       } catch (e) {
         console.warn('[DualAPI] [第二API] 步骤2/8 [警告]: 读取规范文档失败:', e.message, ', 使用默认提示词');
       }
