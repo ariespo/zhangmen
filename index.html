@@ -10155,11 +10155,35 @@ ${discipleLines || '无'}
         const playerName = _currentLoadPlayer;
         const saves = _loadGameData[playerName] || [];
         const saveName = `${playerName} - 存档${saves.length + 1}`;
+
+        // 保存当前活跃会话的 chatId（如果有）
+        const currentChatId = window.gameStateManager?._chatId;
+        let currentChat = null;
+        if (currentChatId) {
+          currentChat = await db.chats.get(currentChatId);
+        }
+
+        // 创建新存档 chat
         const chat = await window.sillyTavernStore.createChat(saveName, { playerName });
-        await window.gameStateManager.load(chat.id);
-        // 保存初始默认状态到 IndexedDB，确保存档列表能正确显示基本信息
-        const { saveGameState, getAllSaves } = await import('./sillytavern/game-state.js');
-        await saveGameState(chat.id, window.gameStateManager.state);
+
+        if (currentChat) {
+          // 有当前活跃会话：复制当前会话的所有信息到新存档
+          const newChat = await db.chats.get(chat.id);
+          newChat.messages = JSON.parse(JSON.stringify(currentChat.messages || []));
+          newChat.variables = JSON.parse(JSON.stringify(currentChat.variables || {}));
+          await db.chats.put(newChat);
+          // 恢复 gameStateManager 指向原来的会话，不切换当前游戏状态
+          console.log('[CreateSave] 已复制当前会话到新存档:', chat.id, '| 消息数:', newChat.messages.length);
+        } else {
+          // 没有当前活跃会话：加载默认状态并保存
+          await window.gameStateManager.load(chat.id);
+          const { saveGameState } = await import('./sillytavern/game-state.js');
+          await saveGameState(chat.id, window.gameStateManager.state);
+          // 重置 gameStateManager，避免新建存档后意外污染当前会话
+          window.gameStateManager.reset();
+        }
+
+        const { getAllSaves } = await import('./sillytavern/game-state.js');
         _loadGameData = await getAllSaves();
         renderLoadGameScreen();
       } catch (e) {
