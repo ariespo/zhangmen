@@ -5326,6 +5326,13 @@
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
+    // 组织架构树重绘
+    window.addEventListener('resize', () => {
+      if (document.getElementById('org-tree')) {
+        drawOrgTreeLines();
+      }
+    });
+
     class CloudLayer {
       constructor(y, speed, opacity, scale) {
         this.x = Math.random() * canvas.width;
@@ -6129,6 +6136,8 @@
           <div class="org-structure" id="org-structure">${renderOrgStructureHTML(sect.organization)}</div>
         </div>
       `;
+      // 延迟绘制 SVG 连线，等待 DOM 渲染
+      setTimeout(drawOrgTreeLines, 100);
     }
 
     function renderOrgStructureHTML(org) {
@@ -6216,6 +6225,127 @@
 
       html += '</div>'; // end org-tree
       return html;
+    }
+
+    function drawOrgTreeLines() {
+      const tree = document.getElementById('org-tree');
+      const svg = document.getElementById('org-tree-svg');
+      if (!tree || !svg) return;
+
+      const treeRect = tree.getBoundingClientRect();
+      svg.setAttribute('width', tree.scrollWidth);
+      svg.setAttribute('height', tree.scrollHeight);
+      svg.style.width = tree.scrollWidth + 'px';
+      svg.style.height = tree.scrollHeight + 'px';
+
+      const levels = tree.querySelectorAll('.org-tree-level');
+      if (levels.length < 2) return;
+
+      // 定义渐变和滤镜
+      let defs = svg.querySelector('defs');
+      if (!defs) {
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        svg.appendChild(defs);
+      }
+
+      // 金色渐变（掌门 → 下一层）
+      if (!document.getElementById('org-gold-gradient')) {
+        const goldGrad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+        goldGrad.id = 'org-gold-gradient';
+        goldGrad.setAttribute('x1', '0%');
+        goldGrad.setAttribute('y1', '0%');
+        goldGrad.setAttribute('x2', '0%');
+        goldGrad.setAttribute('y2', '100%');
+        goldGrad.innerHTML = `
+          <stop offset="0%" stop-color="rgba(200,168,110,0.6)"/>
+          <stop offset="100%" stop-color="rgba(110,207,207,0.3)"/>
+        `;
+        defs.appendChild(goldGrad);
+      }
+
+      // 青色渐变（普通层级）
+      if (!document.getElementById('org-jade-gradient')) {
+        const jadeGrad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+        jadeGrad.id = 'org-jade-gradient';
+        jadeGrad.setAttribute('x1', '0%');
+        jadeGrad.setAttribute('y1', '0%');
+        jadeGrad.setAttribute('x2', '0%');
+        jadeGrad.setAttribute('y2', '100%');
+        jadeGrad.innerHTML = `
+          <stop offset="0%" stop-color="rgba(110,207,207,0.5)"/>
+          <stop offset="100%" stop-color="rgba(110,207,207,0.2)"/>
+        `;
+        defs.appendChild(jadeGrad);
+      }
+
+      // 发光滤镜
+      if (!document.getElementById('org-glow')) {
+        const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+        filter.id = 'org-glow';
+        filter.innerHTML = `
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        `;
+        defs.appendChild(filter);
+      }
+
+      // 清除旧连线
+      const oldLines = svg.querySelectorAll('.org-tree-line');
+      oldLines.forEach(l => l.remove());
+
+      // 绘制连线：从上层每个节点中心 → 下层每个节点中心
+      for (let i = 0; i < levels.length - 1; i++) {
+        const parentLevel = levels[i];
+        const childLevel = levels[i + 1];
+        const parentNodes = parentLevel.querySelectorAll('.org-tree-node');
+        const childNodes = childLevel.querySelectorAll('.org-tree-node');
+
+        childNodes.forEach(childNode => {
+          const childNodeRect = childNode.getBoundingClientRect();
+          const childCx = childNodeRect.left + childNodeRect.width / 2 - treeRect.left;
+          const childCy = childNodeRect.top - treeRect.top;
+
+          // 找到最近的父节点
+          let closestParent = null;
+          let minDist = Infinity;
+          parentNodes.forEach(pn => {
+            const pnRect = pn.getBoundingClientRect();
+            const pnCx = pnRect.left + pnRect.width / 2 - treeRect.left;
+            const dist = Math.abs(pnCx - childCx);
+            if (dist < minDist) {
+              minDist = dist;
+              closestParent = pn;
+            }
+          });
+
+          if (closestParent) {
+            const pRect = closestParent.getBoundingClientRect();
+            const pCx = pRect.left + pRect.width / 2 - treeRect.left;
+            const pCy = pRect.bottom - treeRect.top;
+
+            // 二次贝塞尔曲线
+            const midY = (pCy + childCy) / 2;
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const d = `M ${pCx} ${pCy} Q ${pCx} ${midY} ${childCx} ${childCy}`;
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke-width', '1.5');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('filter', 'url(#org-glow)');
+            path.setAttribute('class', 'org-tree-line');
+
+            // 掌门连线用金色，其他用青色
+            const isFromLeader = closestParent.classList.contains('org-tree-node--leader');
+            path.setAttribute('stroke', isFromLeader ? 'url(#org-gold-gradient)' : 'url(#org-jade-gradient)');
+
+            // 流光动画
+            path.style.strokeDasharray = '8 4';
+            path.style.animation = 'flowLight 3s linear infinite';
+
+            svg.appendChild(path);
+          }
+        });
+      }
     }
 
     // ====== ORGANIZATION FUNCTIONS ======
