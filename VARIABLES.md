@@ -246,6 +246,11 @@
 | `desc` | string | `""` | — | 关系描述 |
 | `color` | enum | `"gold"` | jade/purple/pink/gold | UI 配色 |
 | `leader` | string | `""` | — | 掌权者 |
+| `highestMember.name` | string | `""` | — | 最高境界成员姓名 |
+| `highestMember.role` | string | `""` | — | 最高境界成员职位 |
+| `highestMember.realm` | string | `""` | — | 最高境界成员境界 |
+| `discipleCount` | number | `0` | ≥0 | 弟子总人数 |
+| `controlledRegions` | string[] | `[]` | — | 掌控的疆域名称列表 |
 
 **操作示例：**
 
@@ -257,7 +262,7 @@
 <vars>[{"op":"replace","path":"/diplomacy/天剑宗/relation","value":"警惕"}]</vars>
 
 <!-- 新增势力 -->
-<vars>[{"op":"insert","path":"/diplomacy/青云宗","value":{"name":"青云宗","relation":"中立","value":50,"desc":"新兴宗门，态度暧昧","color":"gold","leader":"宗主·青云子"}}]</vars>
+<vars>[{"op":"insert","path":"/diplomacy/青云宗","value":{"name":"青云宗","relation":"中立","value":50,"desc":"新兴宗门，态度暧昧","color":"gold","leader":"宗主·青云子","highestMember":{"name":"青云子","role":"宗主","realm":"元婴期圆满"},"discipleCount":128,"controlledRegions":["青云峰","翠竹林"]}}]</vars>
 ```
 
 ---
