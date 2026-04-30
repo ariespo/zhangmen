@@ -6964,7 +6964,8 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       if (!stStore) return false;
       const chat = stStore.getActiveChat();
       if (!chat || !chat.messages) return true;
-      return chat.messages.filter(m => m.role !== 'system').length === 0;
+      // 开局序章会作为 assistant 消息保存到 chat.messages，所以判断阈值设为 1
+      return chat.messages.filter(m => m.role !== 'system').length <= 1;
     }
 
     // 构建开局提示词
