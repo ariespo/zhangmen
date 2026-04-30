@@ -203,7 +203,20 @@ const SectSchema = zObject({
   motto: zString(),
   arrayName: zString(),
   arrayRank: zString(),
-  arrayDesc: zString()
+  arrayDesc: zString(),
+  organization: zArray(zObject({
+    rank: zNumber({ default: 0, min: 0 }),
+    name: zString(''),
+    members: zArray(zString(), [])
+  }), [
+    { rank: 0, name: '掌门', members: [] },
+    { rank: 1, name: '副掌门', members: [] },
+    { rank: 2, name: '长老', members: [] },
+    { rank: 3, name: '真传弟子', members: [] },
+    { rank: 4, name: '内门弟子', members: [] },
+    { rank: 5, name: '外门弟子', members: [] },
+    { rank: 6, name: '杂役', members: [] }
+  ])
 });
 
 const EventSchema = zObject({
