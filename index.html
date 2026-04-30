@@ -8244,6 +8244,29 @@ ${discipleLines || '无'}
         }
       }
 
+      // 外交行动特殊提示词
+      const factionActionLogs = actionLogs.filter(log => ['拜访', '送礼', '威逼', '宣战'].includes(log.type));
+      if (factionActionLogs.length > 0) {
+        for (const log of factionActionLogs) {
+          const factionName = log.factionName;
+          const f = window.gameStateManager?.state?.diplomacy?.[factionName];
+          if (!f) continue;
+          const names = log.memberNames || [];
+          const allMembers = window.gameStateManager?.state?.members || {};
+          const memberDetails = names.map(n => {
+            const m = allMembers[n];
+            if (!m) return `「${n}」（信息未知）`;
+            const personality = (m.personality || []).join('、') || '未知';
+            const appearance = (m.appearance || []).join('、') || '未知';
+            return `「${n}」（${m.realm}，${m.gender || '未知'}）\n  性格：${personality}\n  外貌：${appearance}\n  忠诚度：${m.loyalty || '未知'} | 心情：${m.mood || '未知'}`;
+          }).join('\n');
+          const hm = f.highestMember || {};
+          const highestText = hm.name ? `${hm.name}|${hm.role || '—'}|${hm.realm || '—'}` : '未知';
+          const regionsText = (f.controlledRegions || []).length > 0 ? f.controlledRegions.join('、') : '暂无';
+          userInput += `\n\n【外交行动】${playerName}决定派遣弟子前往「${f.name}」进行${log.type}。\n\n派遣弟子：\n${memberDetails}\n\n对方宗门信息：\n- 势力名称：${f.name}\n- 掌权者：${f.leader || '未知'}\n- 最高境界成员：${highestText}\n- 弟子数：${f.discipleCount > 0 ? f.discipleCount + '人' : '未知'}\n- 掌握疆域：${regionsText}\n- 与玩家关系：${f.relation}\n- 关系值：${f.value}/100\n\n请设计一段剧情来交代这个行动，需要交代：\n1. 行动本身的过程（弟子如何抵达、如何展开行动）\n2. 对方宗门的反应和表现\n3. 行动对双方关系的影响\n4. 弟子的表现和可能的成长`;
+        }
+      }
+
       // 建筑操作特殊提示词
       const buildingActionLogs = actionLogs.filter(log => log.type === '建筑');
       if (buildingActionLogs.length > 0) {
