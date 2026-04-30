@@ -9082,6 +9082,38 @@ ${discipleLines || '无'}
         }
       }
 
+      // 组织架构调整特殊提示词
+      const orgActionLogs = actionLogs.filter(log => log.type === '组织架构');
+      if (orgActionLogs.length > 0) {
+        const playerName = window.gameStateManager?.state?.player?.name || '掌门';
+        const org = window.gameStateManager?.state?.sect?.organization || [];
+        for (const log of orgActionLogs) {
+          const extra = log.extra || {};
+          if (extra.type === 'addRole') {
+            const sameRankRoles = org.filter(r => r.rank === extra.rank && r.name !== extra.name).map(r => '「' + r.name + '」');
+            const peerText = sameRankRoles.length > 0 ? sameRankRoles.join('、') : '无其他同级职务';
+            userInput += `\n\n【组织架构调整】${playerName} 决定增设职务「${extra.name}」，该职务和 ${peerText} 平级。请在剧情中自然地描述这一决策：为什么要增设这个职务？是否召开了宗门会议？弟子们对此有何反应？`;
+          } else if (extra.type === 'removeRole') {
+            userInput += `\n\n【组织架构调整】${playerName} 决定废除职务「${extra.roleName}」。担任该职务的弟子将恢复为普通成员身份。请在剧情中自然地描述这一决策：废除的原因是什么？被废除职务的弟子有何反应？`;
+          } else if (extra.type === 'assignMember') {
+            const newRank = extra.roleRank;
+            const oldRank = extra.oldRank !== undefined ? extra.oldRank : 999;
+            const rankDiff = oldRank - newRank;
+            if (oldRank === 999) {
+              userInput += `\n\n【组织架构调整】${playerName} 任命 ${extra.memberName} 为「${extra.roleName}」。请在剧情中自然地描述任命过程：为什么选择此人？任命仪式上发生了什么？该弟子有何反应？`;
+            } else if (rankDiff > 0) {
+              userInput += `\n\n【组织架构调整】${playerName} 将 ${extra.memberName} 从「${extra.oldRole}」升为「${extra.roleName}」，提升了 ${rankDiff} 级。请在剧情中自然地描述升迁过程：升迁的原因是什么？该弟子有何反应？其他弟子是否羡慕或嫉妒？`;
+            } else if (rankDiff < 0) {
+              userInput += `\n\n【组织架构调整】${playerName} 将 ${extra.memberName} 从「${extra.oldRole}」降为「${extra.roleName}」，降低了 ${Math.abs(rankDiff)} 级。请在剧情中自然地描述降职过程：降职的原因是什么？该弟子有何反应？是否心有不甘？`;
+            } else {
+              userInput += `\n\n【组织架构调整】${playerName} 将 ${extra.memberName} 的职务平级调为「${extra.roleName}」。请在剧情中自然地描述调动过程：调动的原因是什么？该弟子有何反应？`;
+            }
+          } else if (extra.type === 'removeMember') {
+            userInput += `\n\n【组织架构调整】${playerName} 决定免去 ${extra.memberName} 的「${extra.roleName}」职务，该成员恢复为普通成员身份。请在剧情中自然地描述这一决策：免职的原因是什么？该弟子有何反应？`;
+          }
+        }
+      }
+
       // 成员互动特殊提示词
       const memberActionLogs = actionLogs.filter(log => ['夸奖勉励', '批评责备', '邀请双修', '其他'].includes(log.type));
       if (memberActionLogs.length > 0) {
