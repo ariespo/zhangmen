@@ -7070,16 +7070,59 @@ ${discipleLines || '无'}
 4. <sum>：时间·地点·人物·事件摘要
 5. <vars>：补充以下开局变量（严格使用给定枚举值，不可自创）
 
+【开局初始信息设计指导】
+请根据以下宗门开局情况，设计合理的初始功法、法宝、宗门信息和外交势力：
+
+- 宗门法门：${meta.path || '未设定'}，专长：${meta.specialty || '未设定'}
+- 宗门地位：${fin.realmTitle || '未设定'}，开局困境：${meta.crisis || '未设定'}
+
+设计原则（必须遵守）：
+1. 【功法 /library】必须与宗门法门和专长相符
+   - 道修剑派 → 应有剑诀类功法（如《太虚剑诀》《青莲剑典》）
+   - 魔修丹派 → 应有魔道炼丹术（如《血髓丹经》《九幽炼鼎录》）
+   - 神修符箓 → 应有符箓神术（如《香火符书》《万灵箓》）
+   - 体修法阵 → 应有炼体阵法（如《金刚阵图》《不灭身经》）
+   - 旁门左道 → 应有奇门异术（如《百鬼御尸术》《阴阳逆乱经》）
+   - 地位越低，功法品阶应越低（末流小派以黄阶/凡阶为主，三流门派可有玄阶）
+   - 数量：末流小派1-2部，四流小宗2-3部，三流门派3-4部
+
+2. 【法宝 /treasury/items】数量与品阶应与宗门地位匹配
+   - 末流小派：1-2件残破或低品阶法器（黄阶下品~凡阶），可能有一枚疗伤丹药
+   - 四流小宗：2-3件完整法器（黄阶中下品），少量丹药和材料
+   - 三流门派：3-5件法器（黄阶中上品），可能有一件玄阶镇派之宝，丹药材料较充足
+   - 困境影响：仇敌环伺应有护身/逃命法宝；临危受命可能有前任掌门遗留之物
+
+3. 【宗门信息 /sect】应与困境和地位相呼应
+   - motto（宗门格言）：2-4句，体现宗门精神和当前处境
+   - foundedYear（创立年份）：根据地位推算，末流小派可能是近几十年创立，三流门派可能有百年以上历史
+   - location（山门位置）：应与疆域和宗门特性相符
+   - founder（祖师）：有名有号，可与法门相关
+   - history（简史）：2-4句话，交代宗门来历、鼎盛时期（如有）、衰落原因、当前困境的由来
+   - description（宗门描述）：一段100字左右的概括性描述
+
+4. 【外交势力 /diplomacy】应与困境相关
+   - 仇敌环伺 → 至少1-2个敌对势力，1个中立势力
+   - 临危受命 → 可能有盟友（前任掌门的故交），也有觊觎者
+   - 白手起家 → 周围势力多为中立或警惕
+   - 天降机缘 → 有盟友也有因嫉妒而警惕的势力
+   - 宗门内乱 → 外部势力可能趁火打劫
+   - 每个势力必须有：highestMember（最高成员）、discipleCount（弟子数）、controlledRegions（掌控疆域）
+
+5. 【机缘 /opportunities】必须补充4条，覆盖天时、地利、人和三类
+   - 天时：天象、灵气潮汐、古遗迹现世等
+   - 地利：秘境、灵脉、特殊地形等
+   - 人和：人物、势力、弟子机缘等
+
 【<vars> 变量规范】
 /sect：{motto:"格言", foundedYear:"年份", location:"地点", founder:"祖师", history:"简史", description:"描述"}
-/library：[{id:"", name:"", type:"道修|神修|魔修|体修|修行百艺", rank:"品阶", desc:"", color:"jade|purple|pink|gold"}, ...] 2-4部
-/diplomacy：{"势力名":{name:"", relation:"盟友|友好|中立|警惕|敌对", value:0-100, desc:"", color:"", leader:""}, ...} 2-4个
-/treasury/items：[{id:"", name:"", type:"武器|防具|遁具|饰品|丹药|材料|功法|法宝|杂物", rank:"", quantity:1, color:"", description:"", owner:"", effects:{杀伐:0,防御:0,身法:0}}, ...] 3-6件
-/opportunities：[{id:"", title:"", desc:"", category:"tianshi|dili|renhe", cost:1-3, completed:false}, ...] 1-3个
+/library：[{id:"", name:"", type:"道修|神修|魔修|体修|修行百艺", rank:"品阶", desc:"", color:"jade|purple|pink|gold"}, ...]
+/diplomacy：{"势力名":{name:"", relation:"盟友|友好|中立|警惕|敌对", value:0-100, desc:"", color:"", leader:"", highestMember:{name:"",role:"",realm:""}, discipleCount:0, controlledRegions:[]}, ...}
+/treasury/items：[{id:"", name:"", type:"武器|防具|遁具|饰品|丹药|材料|功法|法宝|杂物", rank:"", quantity:1, color:"", description:"", owner:"", effects:{杀伐:0,防御:0,身法:0}}, ...]
+/opportunities：[{id:"", title:"", desc:"", category:"tianshi|dili|renhe", cost:1-3, completed:false}, ...] 必须4条
 /events：[{id:"", text:"", time:"今日", location:"", people:"", type:"normal|success|warning|urgent"}] 1条
 /quests/main/currentStage："${meta.crisis || '开局'}"
 
-注意：所有 type、relation、category 字段必须从枚举值中选取。effects 中无加成则全部填0。`;
+注意：所有 type、relation、category 字段必须从枚举值中选取。effects 中无加成则全部填0。/library、/treasury/items、/diplomacy、/opportunities 不可为空数组，必须按上述规则填充。`;
     }
 
     // 解析 foreshadowing 标签
@@ -7454,10 +7497,12 @@ ${discipleLines || '无'}
 
       console.log('[DualAPI] [第二API] 步骤3/8: 组装 gameState...');
       let gameState = {};
+      let creationMeta = null;
       if (window.gameStateManager) {
         const raw = window.gameStateManager.toRaw();
         const { _creationMeta, events, foreshadowing, randomEvents, ...rest } = raw;
         gameState = rest;
+        creationMeta = _creationMeta || null;
         console.log('[DualAPI] [第二API] 步骤3/8 [成功]: gameState 组装完成, 大小:', JSON.stringify(gameState).length, 'bytes');
       } else {
         console.warn('[DualAPI] [第二API] 步骤3/8 [警告]: gameStateManager 未找到, 使用空对象');
@@ -7469,7 +7514,7 @@ ${discipleLines || '无'}
 - 当剧情中玩家对某疆域进行探索时，必须同步更新该疆域的 explorationStage（+1）、locations（新增1-3个与疆域特性相符的地点，如灵泉/古洞/废弃祭坛/灵药圃等）、monthlyResources（适当增加月产，如灵泉→gold+10~30，村落→potentialDisciples+5~15）。`;
 
       if (isFirst) {
-        prompt += `\n\n【重要：本次为游戏开局】\n这是游戏的第一次交互，剧情正文为宗门开局的背景设定。请根据开局剧情，补充完善变量表中的以下信息：\n1. 【功法】根据玩家境界和宗门地位，为藏经阁补充开局应有的基础功法（至少3-5部）\n2. 【外交】根据剧情设定，补充开局存在的外交势力及其关系值（至少2-3个）\n3. 【法宝/物品】根据剧情，为宝库补充开局宗门拥有的法宝、丹药、材料等\n4. 【护山大阵】设定开局宗门的护山大阵名称和品阶\n5. 【机缘】补充开局即存在的4条机缘，涵盖天时、地利、人和三类\n6. 【成员】如有剧情提到的新成员加入，完整添加到成员列表\n7. 【建筑】确保开局建筑列表完整且等级合理\n\n请一次性将上述开局信息全部补充到变量表中，不要遗漏。`;
+        const meta = creationMeta || {};\n        const pathFlavor = {\n          '道修': '顺应天道，功法以正统道家术法为主，如剑诀、符箓、丹经',\n          '神修': '香火成神，功法涉及信仰之力、神道符诏、愿力凝聚',\n          '魔修': '弱肉强食，功法凌厉狠辣，如血祭、噬魂、魔道炼丹',\n          '体修': '淬炼肉身，功法以炼体、金刚不坏、以力破法为主',\n          '旁门左道': '另辟蹊径，功法诡谲多变，如御尸、毒蛊、阴阳逆乱'\n        };\n        const specialtyFlavor = {\n          '剑': '剑道功法，剑气纵横，杀伐无双',\n          '丹': '炼丹功法，丹香四溢，救死扶伤',\n          '炼器': '锻造功法，炉火通明，攻守兼备',\n          '法阵': '阵法功法，阵纹密布，困敌护山',\n          '符箓': '符箓功法，符光流转，变化万千'\n        };\n        const statusFlavor = {\n          '末流小派': '名不见经传，资源匮乏，功法以黄阶/凡阶为主，法宝1-2件残破法器',\n          '四流小宗': '方圆百里略有薄名，功法2-3部（黄阶为主），法宝2-3件完整法器',\n          '三流门派': '当地有一席之地，功法3-4部（可能有玄阶），法宝3-5件（可能有玄阶镇派之宝）'\n        };\n        const crisisFlavor = {\n          '临危受命': '前任掌门突然陨落，你仓促接任。外交：可能有盟友（故交），也有觊觎者；法宝：可能有前任遗留之物',\n          '白手起家': '从零开始建立宗门，资源匮乏。外交：周围势力多为中立或警惕；法宝：几乎无',\n          '仇敌环伺': '被多个敌对势力包围。外交：至少1-2个敌对势力；法宝：应有护身/逃命法宝',\n          '天降机缘': '天地异象带来机遇，但也引来觊觎者。外交：有盟友也有因嫉妒而警惕的势力；法宝：可能有机缘相关之物',\n          '宗门内乱': '内部分裂，部分长老弟子阳奉阴违。外交：外部势力可能趁火打劫'\n        };\n        prompt += `\n\n【重要：本次为游戏开局】\n这是游戏的第一次交互，剧情正文为宗门开局的背景设定。请根据开局剧情和以下宗门设定，补充完善变量表中的以下信息：\n\n【宗门开局设定】\n- 修行法门：${meta.path || '未设定'}（${pathFlavor[meta.path] || ''}）\n- 宗门专长：${meta.specialty || '未设定'}（${specialtyFlavor[meta.specialty] || ''}）\n- 宗门地位：${meta.realmTitle || '未设定'}（${statusFlavor[meta.realmTitle] || ''}）\n- 开局困境：${meta.crisis || '未设定'}（${crisisFlavor[meta.crisis] || ''}）\n\n【开局信息设计原则（必须遵守）】\n1. 【功法 /library】必须与宗门法门和专长相符\n   - 地位越低，功法品阶应越低（末流小派以黄阶/凡阶为主，三流门派可有玄阶）\n   - 数量：末流小派1-2部，四流小宗2-3部，三流门派3-4部\n   - 功法名称和描述必须与法门+专长匹配\n\n2. 【法宝 /treasury/items】数量与品阶应与宗门地位匹配\n   - 末流小派：1-2件残破或低品阶法器，可能有一枚疗伤丹药\n   - 四流小宗：2-3件完整法器，少量丹药和材料\n   - 三流门派：3-5件法器，可能有一件玄阶镇派之宝\n   - 困境影响：仇敌环伺应有护身/逃命法宝；临危受命可能有前任遗留之物\n\n3. 【宗门信息 /sect】\n   - motto（格言）：2-4句，体现宗门精神和当前处境\n   - foundedYear（创立年份）：根据地位推算\n   - location（山门位置）：应与疆域和宗门特性相符\n   - founder（祖师）：有名有号，可与法门相关\n   - history（简史）：2-4句话，交代宗门来历、鼎盛时期、衰落原因、困境由来\n   - description（描述）：一段100字左右的概括性描述\n\n4. 【外交势力 /diplomacy】应与困境相关，至少2-3个\n   - 每个势力必须有：highestMember（最高成员，含name/role/realm）、discipleCount（弟子数）、controlledRegions（掌控疆域列表）\n   - 关系值与等级：80-100盟友，60-79友好，40-59中立，20-39警惕，0-19敌对\n\n5. 【机缘 /opportunities】必须补充4条，覆盖天时、地利、人和三类\n   - 天时：天象、灵气潮汐、古遗迹现世等\n   - 地利：秘境、灵脉、特殊地形等\n   - 人和：人物、势力、弟子机缘等\n\n【必须补充的变量】\n1. /library：功法数组，按上述规则填充（不可为空）\n2. /treasury/items：法宝物品数组，按上述规则填充（不可为空）\n3. /diplomacy：外交势力对象，按上述规则填充（不可为空）\n4. /opportunities：机缘数组，必须4条（不可为空）\n5. /sect：补充 motto、foundedYear、location、founder、history、description\n6. /events：1条开局事件\n7. /quests/main/currentStage：设为当前困境名称\n\n请一次性将上述开局信息全部补充到变量表中，不要遗漏。`;
       }
       console.log('[DualAPI] [第二API] 步骤4/8 [成功]: prompt 组装完成, 总长度:', prompt.length, 'chars');
 
