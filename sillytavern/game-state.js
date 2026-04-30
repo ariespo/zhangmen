@@ -155,7 +155,14 @@ const FactionSchema = zObject({
   value: zNumber({ default: 50, min: 0, max: 100 }),
   desc: zString(),
   color: zEnum(['jade', 'purple', 'pink', 'gold'], 'gold'),
-  leader: zString()
+  leader: zString(),
+  highestMember: zObject({
+    name: zString(''),
+    role: zString(''),
+    realm: zString('')
+  }, { default: { name: '', role: '', realm: '' } }),
+  discipleCount: zNumber({ default: 0, min: 0 }),
+  controlledRegions: zArray(zString(), [])
 });
 
 const PlayerSchema = zObject({
