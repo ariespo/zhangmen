@@ -6143,29 +6143,79 @@
       ];
       const allMembers = window.gameStateManager?.state?.members || {};
       const playerName = window.gameStateManager?.state?.player?.name || '';
-      const isLeader = (roleName) => roleName === '掌门';
-      return organization.map((role, idx) => {
-        const memberTags = role.members.map(mn => {
-          const member = allMembers[mn];
-          return member ? `<span class="org-member-tag" onclick="showOrgMemberDetail('${mn}', '${role.name}')">${mn}（${member.realm}）</span>` : `<span class="org-member-tag">${mn}</span>`;
-        }).join('');
-        const isFirstRole = idx === 0;
-        return `
-          <div class="org-role-row" data-rank="${role.rank}">
-            <div class="org-role-header">
-              <span class="org-role-rank">${role.rank}</span>
-              <span class="org-role-name" onclick="showOrgRoleAssign(${role.rank}, '${role.name}')">${role.name}</span>
-              <span class="org-role-count">${role.members.length}人</span>
-              ${!isLeader(role.name) ? `<button class="org-role-delete" onclick="removeOrgRole(${role.rank}, '${role.name}')">×</button>` : ''}
-            </div>
-            <div class="org-role-members">${memberTags || '<span style="color:rgba(168,230,230,0.4);font-size:12px">暂无</span>'}</div>
-          </div>
-        `;
-      }).join('') + `
-        <div style="margin-top:12px;display:flex;gap:8px">
-          <button class="action-btn-sm" onclick="openAddOrgRoleModal()">+ 新增职位</button>
+
+      // 按 rank 分组
+      const rankGroups = {};
+      organization.forEach(role => {
+        if (!rankGroups[role.rank]) rankGroups[role.rank] = [];
+        rankGroups[role.rank].push(role);
+      });
+      const sortedRanks = Object.keys(rankGroups).map(Number).sort((a, b) => a - b);
+
+      // 确保 rank 0 存在
+      if (!rankGroups[0]) {
+        rankGroups[0] = [{ rank: 0, name: '掌门', members: [] }];
+        sortedRanks.unshift(0);
+      }
+
+      let html = '<div class="org-tree" id="org-tree">';
+      html += '<svg class="org-tree-svg" id="org-tree-svg"></svg>';
+      html += '<div class="org-tree-levels">';
+
+      sortedRanks.forEach(rank => {
+        const roles = rankGroups[rank];
+        html += `<div class="org-tree-level" data-rank="${rank}">`;
+
+        roles.forEach(role => {
+          const isLeader = role.rank === 0 && role.name === '掌门';
+          const memberTags = (role.members || []).map(mn => {
+            const member = allMembers[mn];
+            const realm = member ? member.realm : '';
+            return `<span class="org-node-member-tag" onclick="event.stopPropagation();showOrgMemberDetail('${mn}', '${role.name}')">${mn}${realm ? '（' + realm + '）' : ''}</span>`;
+          }).join('');
+
+          if (isLeader) {
+            html += `
+              <div class="org-tree-node org-tree-node--leader">
+                <div class="org-node-badge">&#x1F451; 掌门</div>
+                <div class="org-node-title">${playerName || '未设定'}</div>
+                <div class="org-node-members">
+                  ${playerName ? '' : '<span class="org-node-empty">请在开局创建中设定掌门</span>'}
+                </div>
+              </div>
+            `;
+          } else {
+            html += `
+              <div class="org-tree-node" onclick="showOrgRoleAssign(${role.rank}, '${role.name}')">
+                <div class="org-node-title">${role.name}</div>
+                <div class="org-node-members">
+                  ${memberTags || '<span class="org-node-empty">暂无</span>'}
+                </div>
+                <div class="org-node-actions">
+                  <button class="org-node-btn" onclick="event.stopPropagation();removeOrgRole(${role.rank}, '${role.name}')">删除</button>
+                </div>
+              </div>
+            `;
+          }
+        });
+
+        // 当前 rank 添加同级职务按钮
+        html += `<button class="org-node-btn" style="align-self:center;padding:8px 12px;border-radius:8px;" onclick="openAddOrgRoleModal(${rank})">+ 同级职务</button>`;
+        html += '</div>';
+      });
+
+      html += '</div>'; // end org-tree-levels
+
+      // 底部：新增层级按钮
+      const maxRank = sortedRanks.length > 0 ? Math.max(...sortedRanks) : -1;
+      html += `
+        <div class="org-tree-add-btn">
+          <button class="action-btn-sm" onclick="openAddOrgRoleModal(${maxRank + 1})">+ 新增层级（rank ${maxRank + 1}）</button>
         </div>
       `;
+
+      html += '</div>'; // end org-tree
+      return html;
     }
 
     // ====== ORGANIZATION FUNCTIONS ======
