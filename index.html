@@ -7628,8 +7628,9 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       if (!stStore) return false;
       const chat = stStore.getActiveChat();
       if (!chat || !chat.messages) return true;
-      // 开局序章会作为 assistant 消息保存到 chat.messages，所以判断阈值设为 1
-      return chat.messages.filter(m => m.role !== 'system').length <= 1;
+      // 开局序章会作为 assistant 消息保存到 chat.messages，
+      // 加上用户第一次提交的消息，阈值设为 2
+      return chat.messages.filter(m => m.role !== 'system').length <= 2;
     }
 
     // 构建开局提示词
@@ -8973,6 +8974,7 @@ ${discipleLines || '无'}
     }
 
     async function submitActions() {
+      if (isLLMProcessing) return;
       const isFirst = isFirstInteraction();
       if (!isFirst && actionLogs.length === 0) return;
 
@@ -9173,14 +9175,6 @@ ${discipleLines || '无'}
       }
 
       console.log('[DualAPI] [步骤0/8] 快照创建完成: actionLogs=', snapshot.actionLogs.length, '| stamina=', snapshot.staminaCurrent);
-
-      // 清空本轮操作和体力
-      actionLogs = [];
-      stamina.current = stamina.max;
-      updateStaminaSegments();
-      renderActionLogs();
-      renderOpportunities();
-      toggleActionLog();
 
       // 进入 LLM 交互阶段
       window._currentApiMode = await getApiMode();
@@ -9527,6 +9521,15 @@ ${discipleLines || '无'}
         // 保存成功请求的 snapshot 用于重 roll
         if (fullRawResponse.trim()) {
           window._lastSnapshot = snapshot;
+        }
+        // LLM 返回成功，视为经过一个回合：清空操作记录、恢复体力
+        if (fullRawResponse.trim()) {
+          actionLogs = [];
+          stamina.current = stamina.max;
+          updateStaminaSegments();
+          renderActionLogs();
+          renderOpportunities();
+          toggleActionLog();
         }
         // 本轮提交成功，清除 session 中的临时状态
         if (fullRawResponse.trim()) {
