@@ -312,7 +312,27 @@ D. 【标题】说明
 
 当剧情中玩家对某疆域进行探索时，必须同步更新该疆域的 `explorationStage`（+1）、`locations`（新增1-3个地点）、`monthlyResources`（适当增加月产）。新地点应与疆域特性相符（如灵泉、古洞、废弃祭坛、灵药圃等），月产增幅应合理。
 
-### 5.7 潜藏修道种子规则
+### 5.7 外交势力字段规范
+
+新增或更新外交势力 `/diplomacy/{势力名}` 时，除原有字段外，还应尽量填充以下字段以增强沉浸感：
+
+```json
+{
+  "highestMember": {
+    "name": "最高境界成员姓名",
+    "role": "职位，如掌门/长老/宗主",
+    "realm": "境界，如金丹期后期"
+  },
+  "discipleCount": 128,
+  "controlledRegions": ["疆域名1", "疆域名2"]
+}
+```
+
+- `highestMember`：该势力最高境界的1名代表人物，用于外交情报展示
+- `discipleCount`：弟子总人数，反映势力规模
+- `controlledRegions`：掌控的疆域名称列表，应与 `world.regions` 中的 `controlledBy` 保持一致
+
+### 5.8 潜藏修道种子规则
 
 - `/finance/potentialDisciples` 记录宗门管辖区域内潜藏修道种子总数
 - 玩家疆域（controlledBy=玩家宗门）每月产出修道种子，累加到总数
@@ -322,7 +342,7 @@ D. 【标题】说明
   - 种子300人时平均资质约乙中，每多100人平均资质+1档（误差±2档）
   - 消耗5点体力
 
-### 5.8 成员境界修改规则
+### 5.9 成员境界修改规则
 修改 `realm` 时**必须同步更新 `baseStats` 和 `stats`**：
 1. `base = 50 + (4 - talentIndex) × 3`
 2. `stageMultiplier`：前期=1, 中期=1.5, 后期=2.25, 圆满=3.375
