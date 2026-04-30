@@ -5894,6 +5894,10 @@
       Object.values(window.gameStateManager.state.diplomacy).forEach(f => {
         const relColor = f.value >= 60 ? 'var(--jade-glow)' : f.value >= 40 ? 'var(--gold-spirit)' : 'var(--lotus-pink)';
         const relBg = f.value >= 60 ? 'rgba(110,207,207,0.12)' : f.value >= 40 ? 'rgba(200,168,110,0.12)' : 'rgba(212,114,140,0.12)';
+        const hm = f.highestMember || {};
+        const highestText = hm.name ? `${hm.name}|${hm.role || '—'}|${hm.realm || '—'}` : '—';
+        const discipleText = f.discipleCount > 0 ? `${f.discipleCount}人` : '未知';
+        const regionsText = (f.controlledRegions || []).length > 0 ? f.controlledRegions.join('、') : '暂无';
         const card = document.createElement('div');
         card.className = 'faction-card';
         card.innerHTML = `
@@ -5905,10 +5909,13 @@
             <span class="relation-badge" style="background:${relBg};color:${relColor}">${f.relation}</span>
           </div>
           <div style="font-size:12px;color:rgba(168,230,230,0.5);margin-bottom:4px">掌权者：${f.leader}</div>
-          <div style="font-size:12px;color:rgba(168,230,230,0.6)">${f.desc}</div>
+          <div style="font-size:12px;color:rgba(168,230,230,0.5);margin-bottom:4px">最高境界：${highestText} | 弟子数：${discipleText}</div>
+          <div style="font-size:12px;color:rgba(168,230,230,0.5);margin-bottom:8px">疆域：${regionsText}</div>
+          <div style="font-size:12px;color:rgba(168,230,230,0.6);margin-bottom:10px">${f.desc}</div>
           <div class="relation-bar">
             <div class="relation-fill" style="width:${f.value}%;background:${relColor}"></div>
           </div>
+          <button class="region-explore-btn" style="margin-top:10px" onclick="event.stopPropagation();showFactionActions('${f.name}')">采取行动</button>
         `;
         list.appendChild(card);
       });
