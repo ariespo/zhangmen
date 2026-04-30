@@ -6481,33 +6481,46 @@
       renderSectInfo();
     }
 
-    function openAddOrgRoleModal() {
+    function openAddOrgRoleModal(targetRank) {
       const overlay = document.getElementById('modal-overlay');
+      const rankOptions = [0, 1, 2, 3, 4, 5, 6, 7].map(r =>
+        `<option value="${r}" ${r === targetRank ? 'selected' : ''}>rank ${r}${r === 0 ? '（掌门级）' : r === 1 ? '（次高层）' : ''}</option>`
+      ).join('');
       document.getElementById('modal-title').innerHTML = '新增职位';
       document.getElementById('modal-body').innerHTML = `
         <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">输入新职位名称：</div>
-        <input type="text" id="new-org-role-name" class="search-box" style="width:100%;margin-bottom:16px" placeholder="例如：护法、执事..." />
+        <input type="text" id="new-org-role-name" class="search-box" style="width:100%;margin-bottom:12px" placeholder="例如：护法、执事..." />
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:8px">选择层级：</div>
+        <select id="new-org-role-rank" class="search-box" style="width:100%;margin-bottom:16px;background:rgba(12,20,30,0.8);color:var(--jade-pale);border:1px solid var(--glass-border);border-radius:8px;padding:10px 14px;">
+          ${rankOptions}
+        </select>
         <div class="building-actions">
           <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
-          <button class="opportunity-btn primary" onclick="const name=document.getElementById('new-org-role-name').value.trim();if(!name){alert('请输入职位名称');return;}addOrgRole(name);closeModal();">确认</button>
+          <button class="opportunity-btn primary" onclick="
+            const name = document.getElementById('new-org-role-name').value.trim();
+            const rank = parseInt(document.getElementById('new-org-role-rank').value);
+            if (!name) { alert('请输入职位名称'); return; }
+            addOrgRole(name, rank);
+            closeModal();
+          ">确认</button>
         </div>
       `;
       overlay.classList.add('active');
     }
 
-    function addOrgRole(name) {
+    function addOrgRole(name, targetRank) {
       const state = window.gameStateManager?.state;
       if (!state) return;
       const org = state.sect?.organization || [];
-      const newRank = org.length;
-      const newRole = { rank: newRank, name: name, members: [] };
+      const rank = typeof targetRank === 'number' ? targetRank : org.length;
+      const newRole = { rank: rank, name: name, members: [] };
       window.gameStateManager.applyPatch([{
         op: 'insert',
         path: '/sect/organization/-',
         value: newRole
       }]);
-      const content = `新增职位「${name}」`;
-      addActionLog('组织架构', name, content, 0, { type: 'addRole', rank: newRank, name });
+      const content = `新增职位「${name}」（rank ${rank}）`;
+      addActionLog('组织架构', name, content, 0, { type: 'addRole', rank: rank, name });
       renderSectInfo();
     }
 
