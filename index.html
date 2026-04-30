@@ -9510,6 +9510,14 @@ ${discipleLines || '无'}
                     }]);
                   }
                 }
+                // 自动保存 gameState 到当前存档
+                try {
+                  const { saveGameState } = await import('./sillytavern/game-state.js');
+                  await saveGameState(chat.id, window.gameStateManager.state);
+                  console.log('[AutoSave] 自动存档完成:', chat.id);
+                } catch (saveErr) {
+                  console.warn('[AutoSave] 自动存档失败:', saveErr);
+                }
               }
             }
           } catch (e) {
@@ -10945,6 +10953,8 @@ ${discipleLines || '无'}
         let lastMaintext = '';
 
         for (const msg of chat.messages) {
+          // 只从 assistant 消息中提取剧情内容，避免 user 提示词中的示例占位符污染显示
+          if (msg.role !== 'assistant') continue;
           const content = msg.content || '';
 
           // 提取 maintext（只保留最后一个）
