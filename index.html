@@ -6868,6 +6868,8 @@
         alert('请输入建筑名称');
         return;
       }
+      const success = addActionLog('建筑', name, `新增建筑「${name}」`, 2, { type: 'addBuilding', name, desc });
+      if (!success) return;
       window.gameStateManager.applyPatch([{
         op: 'insert',
         path: '/world/buildings/-',
@@ -6888,14 +6890,8 @@
         alert('该区域已完全探索');
         return;
       }
-      if (stamina.current < 2) {
-        alert('体力不足，派遣探索需要 2 点体力');
-        return;
-      }
-      stamina.current -= 2;
-      updateStaminaSegments();
       const success = addActionLog('探索', r.name, `对${r.name}进行深入探索（当前阶段：${EXPLORATION_STAGE_LABELS[r.explorationStage || 0]} → ${EXPLORATION_STAGE_LABELS[nextStage]}）`, 2);
-      if (!success) { stamina.current += 2; updateStaminaSegments(); return; }
+      if (!success) return;
       window.gameStateManager.applyPatch([{
         op: 'replace',
         path: '/world/regions/' + idx + '/explorationStage',
@@ -6958,6 +6954,10 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
 - 月产资源应合理
 
 请输出 <vars> 补丁来完成上述变更。`;
+
+      if (stamina.current < 2) { alert('体力不足，仔细检查疆域需要 2 点体力'); setLLMProcessing(false); return; }
+      const success = addActionLog('疆域', '全域检查', '仔细检查疆域内容，构思新疆域', 2, { type: 'inspectRegions' });
+      if (!success) return;
 
       setLLMProcessing(true);
       try {
@@ -7126,15 +7126,25 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
     }
 
     function setGuardian(regionIdx, memberName) {
+      const regions = window.gameStateManager?.state?.world?.regions;
+      const r = regions?.[regionIdx];
+      if (!r) return;
+      const success = addActionLog('疆域', r.name, `派遣 ${memberName} 坐镇 ${r.name}`, 1, { type: 'setGuardian', regionIdx, memberName });
+      if (!success) return;
       window.gameStateManager.applyPatch([{
         op: 'replace',
         path: '/world/regions/' + regionIdx + '/guardian',
         value: memberName
       }]);
-      alert(`${memberName} 已坐镇该疆域`);
+      alert(`${memberName} 已坐镇 ${r.name}`);
     }
 
     function removeGuardian(regionIdx) {
+      const regions = window.gameStateManager?.state?.world?.regions;
+      const r = regions?.[regionIdx];
+      if (!r) return;
+      const success = addActionLog('疆域', r.name, `召回坐镇 ${r.name} 的 ${r.guardian}`, 1, { type: 'removeGuardian', regionIdx, memberName: r.guardian });
+      if (!success) return;
       window.gameStateManager.applyPatch([{
         op: 'replace',
         path: '/world/regions/' + regionIdx + '/guardian',
