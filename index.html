@@ -6429,6 +6429,12 @@
       if (!role) return;
       const currentMembers = role.members || [];
       if (currentMembers.includes(memberName)) return;
+
+      // 记录旧职务用于提示词
+      const oldRole = state.members?.[memberName]?.role || '成员';
+      const oldRoleEntry = org.find(r => r.name === oldRole);
+      const oldRank = oldRoleEntry ? oldRoleEntry.rank : 999;
+
       const newMembers = [...currentMembers, memberName];
       window.gameStateManager.applyPatch([{
         op: 'replace',
@@ -6441,7 +6447,7 @@
         value: roleName
       }]);
       const content = `安排 ${memberName} 担任「${roleName}」`;
-      addActionLog('组织架构', roleName, content, 0, { type: 'assignMember', roleRank, roleName, memberName });
+      addActionLog('组织架构', roleName, content, 0, { type: 'assignMember', roleRank, roleName, memberName, oldRole, oldRank });
       renderSectInfo();
       closeModal();
       showOrgRoleAssign(roleRank, roleName);
@@ -10630,6 +10636,26 @@ ${discipleLines || '无'}
         arrayRank: '凡阶',
         arrayDesc: '最基础的护山大阵，仅能感知外来者'
       };
+
+      // 初始化组织架构，将玩家和弟子按职务归入对应层级
+      const defaultOrg = [
+        { rank: 0, name: '掌门', members: [data.name] },
+        { rank: 1, name: '副掌门', members: [] },
+        { rank: 2, name: '长老', members: [] },
+        { rank: 3, name: '真传弟子', members: [] },
+        { rank: 4, name: '内门弟子', members: [] },
+        { rank: 5, name: '外门弟子', members: [] },
+        { rank: 6, name: '杂役', members: [] }
+      ];
+      if (data.disciples && data.disciples.length > 0) {
+        data.disciples.forEach(disc => {
+          const roleEntry = defaultOrg.find(r => r.name === disc.role);
+          if (roleEntry && !roleEntry.members.includes(disc.name)) {
+            roleEntry.members.push(disc.name);
+          }
+        });
+      }
+      window.gameStateManager.state.sect.organization = defaultOrg;
 
       // Store creation metadata for LLM
       window.gameStateManager.state._creationMeta = {
