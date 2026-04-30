@@ -5921,6 +5921,127 @@
       });
     }
 
+    function showFactionActions(factionName) {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const f = state.diplomacy?.[factionName];
+      if (!f) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg> ${f.name} — 采取行动
+      `;
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:16px">
+          与 <span style="color:var(--gold-spirit);font-weight:600">${f.name}</span> 的关系为 <span style="color:var(--gold-spirit);font-weight:600">${f.relation}</span>（${f.value}/100）。
+          <br>每次行动消耗 <span style="color:var(--jade-glow)">1 点体力</span>，需派遣弟子执行。
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="opportunity-btn primary" style="text-align:left;justify-content:flex-start"
+            onclick="selectMembersForFactionAction('${factionName}', '拜访')">
+            <span>拜访 — 派遣弟子前往建立友好联系，了解对方动态</span>
+          </button>
+          <button class="opportunity-btn primary" style="background:rgba(200,168,110,0.15);border-color:rgba(200,168,110,0.4);color:var(--gold-spirit);text-align:left;justify-content:flex-start"
+            onclick="selectMembersForFactionAction('${factionName}', '送礼')">
+            <span>送礼 — 携带宗门礼物，尝试提升外交关系</span>
+          </button>
+          <button class="opportunity-btn primary" style="background:rgba(212,114,140,0.15);border-color:rgba(212,114,140,0.4);color:var(--lotus-pink);text-align:left;justify-content:flex-start"
+            onclick="selectMembersForFactionAction('${factionName}', '威逼')">
+            <span>威逼 — 展示实力，向对方施压</span>
+          </button>
+          <button class="opportunity-btn primary" style="background:rgba(255,107,107,0.15);border-color:rgba(255,107,107,0.4);color:#ff6b6b;text-align:left;justify-content:flex-start"
+            onclick="selectMembersForFactionAction('${factionName}', '宣战')">
+            <span>宣战 — 正式宣战，大幅降低关系值</span>
+          </button>
+        </div>
+        <div class="building-actions" style="margin-top:16px">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function selectMembersForFactionAction(factionName, actionType) {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const f = state.diplomacy?.[factionName];
+      if (!f) return;
+      const members = state.members || {};
+      const assigned = getAssignedMembersThisRound();
+      const available = Object.values(members).filter(m => {
+        if (m.status === '外出' || m.status === '闭关' || m.status === '死亡') return false;
+        if (assigned.has(m.name)) return false;
+        return true;
+      });
+      const overlay = document.getElementById('modal-overlay');
+      const actionLabels = { '拜访': '拜访', '送礼': '送礼', '威逼': '威逼', '宣战': '宣战' };
+      const actionColors = { '拜访': 'var(--jade-glow)', '送礼': 'var(--gold-spirit)', '威逼': 'var(--lotus-pink)', '宣战': '#ff6b6b' };
+      if (available.length === 0) {
+        document.getElementById('modal-body').innerHTML = `
+          <div style="font-size:13px;color:rgba(168,230,230,0.7);text-align:center;padding:20px 0">
+            没有可用的弟子可派遣。
+            <br><span style="font-size:12px;color:rgba(168,230,230,0.4)">（弟子可能已外出、闭关、死亡，或在本轮已被分配其他任务）</span>
+          </div>
+          <div class="building-actions">
+            <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
+          </div>
+        `;
+        overlay.classList.add('active');
+        return;
+      }
+      const containerId = 'faction-member-select-' + Date.now();
+      document.getElementById('modal-title').innerHTML = `选择执行「${actionLabels[actionType]}」的弟子`;
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">
+          选择派遣至 <span style="color:${actionColors[actionType]}">${f.name}</span> 执行${actionLabels[actionType]}的弟子（可多选）：
+        </div>
+        <div id="${containerId}" style="display:flex;flex-direction:column;gap:8px">
+          ${available.map((m) => `
+            <div class="opportunity-btn secondary member-select-row" data-name="${m.name}"
+              style="text-align:left;justify-content:flex-start;cursor:pointer;position:relative;padding-left:36px"
+              onclick="toggleMemberSelect(this)"
+            >
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:1.5px solid rgba(110,207,207,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center"
+                class="member-check-box"
+              >&#x200b;</span>
+              <span>${m.name}（${m.realm}）— 忠诚度${m.loyalty} | 杀伐${m.stats?.杀伐 || 0} | 身法${m.stats?.身法 || 0}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="building-actions" style="margin-top:16px">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+          <button class="opportunity-btn primary" onclick="confirmFactionMembers('${factionName}', '${actionType}', '${containerId}')">确认派遣</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function confirmFactionMembers(factionName, actionType, containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const selected = Array.from(container.querySelectorAll('.member-select-row.selected')).map(el => el.dataset.name);
+      if (selected.length === 0) {
+        alert('请至少选择一名弟子');
+        return;
+      }
+      executeFactionAction(factionName, actionType, selected);
+      closeModal();
+    }
+
+    function executeFactionAction(factionName, actionType, memberNames) {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const f = state.diplomacy?.[factionName];
+      if (!f) return;
+      const names = Array.isArray(memberNames) ? memberNames : [memberNames];
+      const namesText = names.join('、');
+      const content = `派遣 ${namesText} 前往 ${f.name}（掌权者：${f.leader || '未知'}）执行${actionType}`;
+      const success = addActionLog(actionType, f.name, content, 1, { memberNames: names, factionName: factionName });
+      if (!success) return;
+      alert(`${namesText} 已受命前往 ${f.name} 执行${actionType}。提交操作后将由天道推演结果。`);
+    }
+
     // ====== WORLD DATA ======
     function switchWorldTab(type, btn) {
       document.querySelectorAll('.world-tab').forEach(t => t.classList.remove('active'));
