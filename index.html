@@ -2347,6 +2347,89 @@
       color: var(--jade-pale);
     }
 
+    /* === ORGANIZATION === */
+    .org-structure {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .org-role-row {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .org-role-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .org-role-rank {
+      font-size: 12px;
+      color: rgba(168,230,230,0.4);
+      min-width: 20px;
+    }
+    .org-role-name {
+      font-size: 14px;
+      color: var(--jade-pale);
+      cursor: pointer;
+      flex: 1;
+    }
+    .org-role-name:hover {
+      color: var(--jade-glow);
+    }
+    .org-role-count {
+      font-size: 12px;
+      color: rgba(168,230,230,0.5);
+    }
+    .org-role-delete {
+      background: none;
+      border: none;
+      color: rgba(168,230,230,0.3);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .org-role-delete:hover {
+      color: var(--lotus-pink);
+    }
+    .org-role-members {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-left: 30px;
+    }
+    .org-member-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      background: rgba(110,207,207,0.1);
+      border: 1px solid rgba(110,207,207,0.2);
+      color: var(--jade-pale);
+      cursor: pointer;
+    }
+    .org-member-tag:hover {
+      border-color: var(--jade-glow);
+      color: var(--jade-glow);
+    }
+    .org-member-tag button {
+      background: none;
+      border: none;
+      color: rgba(168,230,230,0.3);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .org-member-tag button:hover {
+      color: var(--lotus-pink);
+    }
+
     /* === DIPLOMACY PAGE === */
     .faction-list {
       display: grid;
@@ -5865,9 +5948,87 @@
             <div class="member-detail-section-title">装备</div>
             <div class="member-detail-equip-grid">${equipListHtml}</div>
           </div>
+
+          ${m.name !== (window.gameStateManager?.state?.player?.name || '') ? `<div style="display:flex;gap:8px;margin-top:16px"><button class="region-explore-btn" onclick="showMemberActions('${m.name}')">互动</button><button class="opportunity-btn secondary" onclick="closeModal()">关闭</button></div>` : `<div style="display:flex;gap:8px;margin-top:16px"><button class="opportunity-btn secondary" onclick="closeModal()">关闭</button></div>`}
         </div>
       `;
       overlay.classList.add('active');
+    }
+
+    function showMemberActions(memberName) {
+      const m = window.gameStateManager?.state?.members?.[memberName];
+      if (!m) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg> ${m.name} — 互动
+      `;
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:16px">
+          与 <span style="color:var(--gold-spirit);font-weight:600">${m.name}</span> 互动。
+          <br>每次互动消耗 <span style="color:var(--jade-glow)">1 点体力</span>。
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="opportunity-btn primary" style="text-align:left;justify-content:flex-start"
+            onclick="executeMemberAction('${memberName}', '夸奖勉励')"
+          >
+            <span>夸奖勉励 — 提升忠诚度与心情</span>
+          </button>
+          <button class="opportunity-btn primary" style="background:rgba(212,114,140,0.15);border-color:rgba(212,114,140,0.4);color:var(--lotus-pink);text-align:left;justify-content:flex-start"
+            onclick="executeMemberAction('${memberName}', '批评责备')"
+          >
+            <span>批评责备 — 可能降低心情</span>
+          </button>
+          <button class="opportunity-btn primary" style="background:rgba(200,168,110,0.15);border-color:rgba(200,168,110,0.4);color:var(--gold-spirit);text-align:left;justify-content:flex-start"
+            onclick="executeMemberAction('${memberName}', '邀请双修')"
+          >
+            <span>邀请双修 — 修为相关互动</span>
+          </button>
+          <button class="opportunity-btn primary" style="background:rgba(110,207,207,0.15);border-color:rgba(110,207,207,0.4);color:var(--jade-glow);text-align:left;justify-content:flex-start"
+            onclick="showMemberCustomAction('${memberName}')"
+          >
+            <span>其他 — 自定义互动内容</span>
+          </button>
+        </div>
+        <div class="building-actions" style="margin-top:16px">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function showMemberCustomAction(memberName) {
+      const m = window.gameStateManager?.state?.members?.[memberName];
+      if (!m) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = '自定义互动';
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">
+          输入你对 <span style="color:var(--gold-spirit);font-weight:600">${m.name}</span> 的互动内容：
+        </div>
+        <input type="text" id="member-custom-action" class="search-box" style="width:100%;margin-bottom:16px" placeholder="例如：赠送灵石、传授功法..." />
+        <div class="building-actions">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+          <button class="opportunity-btn primary" onclick="const c=document.getElementById('member-custom-action').value.trim();if(!c){alert('请输入互动内容');return;}executeMemberAction('${memberName}', '其他', c);closeModal();">确认</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function executeMemberAction(memberName, actionType, customContent) {
+      const m = window.gameStateManager?.state?.members?.[memberName];
+      if (!m) return;
+      let content;
+      if (actionType === '其他' && customContent) {
+        content = `对 ${m.name} 进行${customContent}`;
+      } else {
+        content = `对 ${m.name} 进行${actionType}`;
+      }
+      const success = addActionLog(actionType, m.name, content, 1, { memberName: memberName, actionType: actionType, customContent: customContent || '' });
+      if (!success) return;
+      closeModal();
+      alert(`已记录对 ${m.name} 的${actionType}。提交操作后将由天道推演结果。`);
     }
 
     function renderSectInfo() {
@@ -5882,7 +6043,230 @@
         <div class="info-block"><h4>现任掌门</h4><div class="info-value text-gold">${player.name || '—'}</div></div>
         <div class="info-block full-width"><h4>宗门简介</h4><div class="info-value" style="font-size:13px;line-height:1.8">${sect.description ? sect.description.replace(/\n/g, '<br>') : '<span style="color:rgba(168,230,230,0.4)">暂无简介</span>'}</div></div>
         <div class="info-block full-width"><h4>历代掌门</h4><div class="info-value" style="font-size:13px;line-height:2">${Array.isArray(sect.lineage) && sect.lineage.length > 0 ? sect.lineage.join(' → ') : '<span style="color:rgba(168,230,230,0.4)">暂无记录</span>'}</div></div>
+        <div class="info-block full-width">
+          <h4>组织架构</h4>
+          <div class="org-structure" id="org-structure">${renderOrgStructureHTML(sect.organization)}</div>
+        </div>
       `;
+    }
+
+    function renderOrgStructureHTML(org) {
+      const organization = org || [
+        { rank: 0, name: '掌门', members: [] },
+        { rank: 1, name: '副掌门', members: [] },
+        { rank: 2, name: '长老', members: [] },
+        { rank: 3, name: '真传弟子', members: [] },
+        { rank: 4, name: '内门弟子', members: [] },
+        { rank: 5, name: '外门弟子', members: [] },
+        { rank: 6, name: '杂役', members: [] }
+      ];
+      const allMembers = window.gameStateManager?.state?.members || {};
+      const playerName = window.gameStateManager?.state?.player?.name || '';
+      const isLeader = (roleName) => roleName === '掌门';
+      return organization.map((role, idx) => {
+        const memberTags = role.members.map(mn => {
+          const member = allMembers[mn];
+          return member ? `<span class="org-member-tag" onclick="showOrgMemberDetail('${mn}', '${role.name}')">${mn}（${member.realm}）</span>` : `<span class="org-member-tag">${mn}</span>`;
+        }).join('');
+        const isFirstRole = idx === 0;
+        return `
+          <div class="org-role-row" data-rank="${role.rank}">
+            <div class="org-role-header">
+              <span class="org-role-rank">${role.rank}</span>
+              <span class="org-role-name" onclick="showOrgRoleAssign(${role.rank}, '${role.name}')">${role.name}</span>
+              <span class="org-role-count">${role.members.length}人</span>
+              ${!isLeader(role.name) ? `<button class="org-role-delete" onclick="removeOrgRole(${role.rank}, '${role.name}')">×</button>` : ''}
+            </div>
+            <div class="org-role-members">${memberTags || '<span style="color:rgba(168,230,230,0.4);font-size:12px">暂无</span>'}</div>
+          </div>
+        `;
+      }).join('') + `
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="action-btn-sm" onclick="openAddOrgRoleModal()">+ 新增职位</button>
+        </div>
+      `;
+    }
+
+    // ====== ORGANIZATION FUNCTIONS ======
+    function showOrgRoleAssign(roleRank, roleName) {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const org = state.sect?.organization || [];
+      const role = org.find(r => r.rank === roleRank);
+      if (!role) return;
+      const allMembers = Object.values(state.members || {});
+      const playerName = state.player?.name || '';
+      const currentMembers = role.members || [];
+      const available = allMembers.filter(m => m.name !== playerName);
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px">
+          <circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg> ${roleName} — 人员安排
+      `;
+      const currentHtml = currentMembers.length > 0
+        ? currentMembers.map(mn => {
+            const m = state.members?.[mn];
+            return `<div class="org-member-tag">
+              ${mn}${m ? '（' + m.realm + '）' : ''}
+              <button onclick="removeOrgMember(${roleRank}, '${roleName}', '${mn}')">×</button>
+            </div>`;
+          }).join('')
+        : '<span style="color:rgba(168,230,230,0.4);font-size:12px">暂无</span>';
+      const availableHtml = available.map(m => {
+        const isAssigned = currentMembers.includes(m.name);
+        return `<button class="opportunity-btn secondary" style="text-align:left;justify-content:flex-start;margin-bottom:6px"
+          onclick="assignOrgMember(${roleRank}, '${roleName}', '${m.name}')"
+        >
+          <span>${isAssigned ? '✓ ' : ''}${m.name}（${m.realm}）— ${m.role}</span>
+        </button>`;
+      }).join('');
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">当前「${roleName}」成员：</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">${currentHtml}</div>
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">可安排成员（已勾选为当前担任）：</div>
+        <div style="display:flex;flex-direction:column">${availableHtml || '<span style="color:rgba(168,230,230,0.4)">无可用成员</span>'}</div>
+        <div class="building-actions" style="margin-top:16px">
+          <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function removeOrgMember(roleRank, roleName, memberName) {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const org = state.sect?.organization;
+      if (!org) return;
+      const role = org.find(r => r.rank === roleRank);
+      if (!role) return;
+      const newMembers = (role.members || []).filter(m => m !== memberName);
+      window.gameStateManager.applyPatch([{
+        op: 'replace',
+        path: '/sect/organization/' + org.indexOf(role) + '/members',
+        value: newMembers
+      }]);
+      const m = state.members?.[memberName];
+      if (m && m.role === roleName) {
+        window.gameStateManager.applyPatch([{
+          op: 'replace',
+          path: '/members/' + memberName + '/role',
+          value: '成员'
+        }]);
+      }
+      const content = `将 ${memberName} 从「${roleName}」移除`;
+      addActionLog('组织架构', roleName, content, 0, { type: 'removeMember', roleRank, roleName, memberName });
+      renderSectInfo();
+    }
+
+    function assignOrgMember(roleRank, roleName, memberName) {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const org = state.sect?.organization;
+      if (!org) return;
+      const role = org.find(r => r.rank === roleRank);
+      if (!role) return;
+      const currentMembers = role.members || [];
+      if (currentMembers.includes(memberName)) return;
+      const newMembers = [...currentMembers, memberName];
+      window.gameStateManager.applyPatch([{
+        op: 'replace',
+        path: '/sect/organization/' + org.indexOf(role) + '/members',
+        value: newMembers
+      }]);
+      window.gameStateManager.applyPatch([{
+        op: 'replace',
+        path: '/members/' + memberName + '/role',
+        value: roleName
+      }]);
+      const content = `安排 ${memberName} 担任「${roleName}」`;
+      addActionLog('组织架构', roleName, content, 0, { type: 'assignMember', roleRank, roleName, memberName });
+      renderSectInfo();
+      closeModal();
+      showOrgRoleAssign(roleRank, roleName);
+    }
+
+    function removeOrgRole(roleRank, roleName) {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const org = state.sect?.organization;
+      if (!org) return;
+      const role = org.find(r => r.rank === roleRank);
+      if (!role) return;
+      if (role.name === '掌门') {
+        alert('掌门不可删除');
+        return;
+      }
+      if (!confirm('确定要删除职位「' + roleName + '」吗？担任该职位的成员将恢复为普通成员。')) return;
+      const membersToReset = role.members || [];
+      membersToReset.forEach(mn => {
+        const m = state.members?.[mn];
+        if (m && m.role === roleName) {
+          window.gameStateManager.applyPatch([{
+            op: 'replace',
+            path: '/members/' + mn + '/role',
+            value: '成员'
+          }]);
+        }
+      });
+      const newOrg = org.filter(r => r.rank !== roleRank).map((r, i) => ({ ...r, rank: i }));
+      window.gameStateManager.applyPatch([{
+        op: 'replace',
+        path: '/sect/organization',
+        value: newOrg
+      }]);
+      const content = `删除职位「${roleName}」，${membersToReset.length > 0 ? membersToReset.join('、') + ' 恢复为普通成员' : '无成员变动'}`;
+      addActionLog('组织架构', roleName, content, 0, { type: 'removeRole', roleRank, roleName });
+      renderSectInfo();
+    }
+
+    function openAddOrgRoleModal() {
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = '新增职位';
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">输入新职位名称：</div>
+        <input type="text" id="new-org-role-name" class="search-box" style="width:100%;margin-bottom:16px" placeholder="例如：护法、执事..." />
+        <div class="building-actions">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+          <button class="opportunity-btn primary" onclick="const name=document.getElementById('new-org-role-name').value.trim();if(!name){alert('请输入职位名称');return;}addOrgRole(name);closeModal();">确认</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function addOrgRole(name) {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const org = state.sect?.organization || [];
+      const newRank = org.length;
+      const newRole = { rank: newRank, name: name, members: [] };
+      window.gameStateManager.applyPatch([{
+        op: 'insert',
+        path: '/sect/organization/-',
+        value: newRole
+      }]);
+      const content = `新增职位「${name}」`;
+      addActionLog('组织架构', name, content, 0, { type: 'addRole', rank: newRank, name });
+      renderSectInfo();
+    }
+
+    function showOrgMemberDetail(memberName, roleName) {
+      const state = window.gameStateManager?.state;
+      if (!state) return;
+      const m = state.members?.[memberName];
+      if (!m) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = memberName;
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:13px;color:rgba(168,230,230,0.7);margin-bottom:12px">
+          职位：${roleName}<br>境界：${m.realm}<br>忠诚度：${m.loyalty}<br>心情：${m.mood}
+        </div>
+        <div class="building-actions">
+          <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
+          <button class="opportunity-btn secondary" style="color:#ff6b6b;border-color:rgba(255,107,107,0.3)" onclick="removeOrgMember(${state.sect?.organization?.findIndex(r => r.name === roleName) || 0}, '${roleName}', '${memberName}');closeModal();">移除</button>
+        </div>
+      `;
+      overlay.classList.add('active');
     }
 
     // ====== DIPLOMACY DATA ======
@@ -8415,6 +8799,30 @@ ${discipleLines || '无'}
           } else if (log.action === 'demolish') {
             userInput += `\n\n【建筑拆卸】玩家决定拆卸「${b.name}」（原Lv.${log.level}）。\n请在剧情中自然地描述拆卸过程：回收了哪些材料？弟子对此有何反应？拆卸后的空地有何用途？可通过 <vars> 补丁移除该建筑，并适当调整相关资源。`;
           }
+        }
+      }
+
+      // 成员互动特殊提示词
+      const memberActionLogs = actionLogs.filter(log => ['夸奖勉励', '批评责备', '邀请双修', '其他'].includes(log.type));
+      if (memberActionLogs.length > 0) {
+        for (const log of memberActionLogs) {
+          const memberName = log.memberName;
+          const m = window.gameStateManager?.state?.members?.[memberName];
+          if (!m) continue;
+          const personality = (m.personality || []).join('、') || '未知';
+          const appearance = (m.appearance || []).join('、') || '未知';
+          const customText = log.customContent || '';
+          let effectDesc = '';
+          if (log.type === '夸奖勉励') {
+            effectDesc = '请根据该成员的性格特点和当前忠诚度/心情，推演夸奖后的效果：成员忠诚度是否提升？心情是否改善？成员对掌门的态度有何变化？';
+          } else if (log.type === '批评责备') {
+            effectDesc = '请根据该成员的性格特点和当前忠诚度/心情，推演批评后的效果：成员是否服气？心情是否下降？忠诚度是否受影响？是否有弟子因此产生不满或反而更加勤勉？';
+          } else if (log.type === '邀请双修') {
+            effectDesc = '请根据双方境界差距和性格匹配度，推演双修过程：是否顺利？双方修为有无精进？关系是否更加亲密？';
+          } else if (log.type === '其他') {
+            effectDesc = `请根据互动内容「${customText}」，推演该互动对成员和宗门的影响。`;
+          }
+          userInput += `\n\n【成员互动】掌门对「${m.name}」进行了${log.type}${customText ? '（' + customText + '）' : ''}。\n\n成员信息：\n- 姓名：${m.name}\n- 境界：${m.realm}\n- 职务：${m.role}\n- 忠诚度：${m.loyalty}\n- 心情：${m.mood}\n- 性格：${personality}\n- 外貌：${appearance}\n\n${effectDesc}\n\n请设计一段剧情来交代这个互动，需要交代互动过程、成员的反应、以及互动对成员忠诚度/心情的影响。`;
         }
       }
 

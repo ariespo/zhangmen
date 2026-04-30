@@ -50,6 +50,8 @@
 | `loyalty` | number | `60` | 0–100 | 忠诚度 |
 | `mood` | number | `70` | 0–100 | 心情 |
 | `skills` | string[] | `[]` | — | 已修功法列表，如 `["太虚真解（第三层）"]` |
+| `personality` | string[] | `[]` | — | 性格标签，如 `["沉稳", "寡言"]` |
+| `appearance` | string[] | `[]` | — | 外貌标签，如 `["清秀", "儒雅"]` |
 | `equipment` | object[] | `[]` | — | 装备列表（见 EquipmentSchema） |
 
 **EquipmentSchema（成员.equipment 中的对象）：**
@@ -452,7 +454,7 @@ value = round(base × stageMultiplier × realmMultiplier)
 
 ---
 
-## 十、玩家（player）
+## 十四、玩家（player）
 
 **路径前缀**：`/player`
 
@@ -485,7 +487,7 @@ value = round(base × stageMultiplier × realmMultiplier)
 
 ---
 
-## 十一、宗门（sect）
+## 十五、宗门（sect）
 
 **路径前缀**：`/sect`
 
@@ -502,6 +504,30 @@ value = round(base × stageMultiplier × realmMultiplier)
 | `arrayName` | string | `""` | 护山大阵名称 |
 | `arrayRank` | string | `""` | 护山大阵品阶 |
 | `arrayDesc` | string | `""` | 护山大阵描述 |
+| `organization` | array | 见下 | 宗门组织架构（见 OrganizationSchema） |
+
+### 15.1 organization 中对象的字段（OrganizationSchema）
+
+数组，每个元素：
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `rank` | number | 索引值 | 职位层级，数值越小层级越高 |
+| `name` | string | `""` | 职位名称 |
+| `members` | string[] | `[]` | 担任该职位的成员姓名列表 |
+
+**操作示例：**
+
+```xml
+<!-- 新增职位 -->
+<vars>[{"op":"insert","path":"/sect/organization/-","value":{"rank":7,"name":"护法","members":[]}}]</vars>
+
+<!-- 安排成员担任职位 -->
+<vars>[{"op":"replace","path":"/sect/organization/1/members","value":["张三","李四"]}]</vars>
+
+<!-- 删除职位 -->
+<vars>[{"op":"remove","path":"/sect/organization/7"}]</vars>
+```
 
 **操作示例：**
 
@@ -511,7 +537,7 @@ value = round(base × stageMultiplier × realmMultiplier)
 
 ---
 
-## 十二、近日要事（events）
+## 十六、近日要事（events）
 
 **类型**：数组  
 **路径前缀**：`/events/{索引}`
@@ -533,4 +559,4 @@ value = round(base × stageMultiplier × realmMultiplier)
 
 ---
 
-*文档版本：v2.1 | 对应游戏版本：2026-04-19*
+*文档版本：v2.2 | 对应游戏版本：2026-04-30*
