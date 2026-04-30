@@ -6868,13 +6868,9 @@
         alert('请输入建筑名称');
         return;
       }
-      const success = addActionLog('建筑', name, `新增建筑「${name}」`, 2, { type: 'addBuilding', name, desc });
+      const success = addActionLog('建筑', name, `新增建筑「${name}」`, 1, { type: 'addBuilding', name, desc });
       if (!success) return;
-      window.gameStateManager.applyPatch([{
-        op: 'insert',
-        path: '/world/buildings/-',
-        value: { name, level: 1, unlocked: true, description: desc || '暂无描述' }
-      }]);
+      // 不直接创建建筑，由 LLM 在剧情中决定修建结果
       closeModal();
     }
 
@@ -9090,6 +9086,8 @@ ${discipleLines || '无'}
             userInput += `\n\n【建筑升级】玩家决定对「${b.name}」进行升级（Lv.${log.fromLevel} → Lv.${log.toLevel}）。\n请在剧情中自然地描述升级过程：需要哪些材料或灵石？施工期间是否遇到意外（如灵气波动、材料短缺、弟子偷懒等）？升级完成后建筑功能有何提升？可通过 <vars> 补丁适当调整建筑的 level 和 description。`;
           } else if (log.action === 'demolish') {
             userInput += `\n\n【建筑拆卸】玩家决定拆卸「${b.name}」（原Lv.${log.level}）。\n请在剧情中自然地描述拆卸过程：回收了哪些材料？弟子对此有何反应？拆卸后的空地有何用途？可通过 <vars> 补丁移除该建筑，并适当调整相关资源。`;
+          } else if (log.action === 'addBuilding') {
+            userInput += `\n\n【建筑新建】${playerName} 决定在山门中新建建筑「${log.extra?.name || b?.name || '未命名'}」，其效果为「${log.extra?.desc || '暂无描述'}」。\n该建筑将在本次剧情里交待修建的结果，并根据建筑本身的效果，扣除宗门的灵石资源，并决定该建筑的等级。请自然地描述修建过程：需要哪些材料？由哪些弟子负责？施工期间遇到什么困难？建成后有什么效果？`;
           }
         }
       }
