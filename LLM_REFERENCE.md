@@ -169,7 +169,14 @@ Record，key 为势力名。
   "value": 50,
   "desc": "",
   "color": "gold",
-  "leader": ""
+  "leader": "",
+  "highestMember": {
+    "name": "",
+    "role": "",
+    "realm": ""
+  },
+  "discipleCount": 0,
+  "controlledRegions": []
 }
 ```
 
@@ -397,6 +404,12 @@ value = round(base × stageMultiplier × realmMultiplier)
 /diplomacy/{势力名}/value
 /diplomacy/{势力名}/desc
 /diplomacy/{势力名}/leader
+/diplomacy/{势力名}/highestMember/name
+/diplomacy/{势力名}/highestMember/role
+/diplomacy/{势力名}/highestMember/realm
+/diplomacy/{势力名}/discipleCount
+/diplomacy/{势力名}/controlledRegions
+/diplomacy/{势力名}/controlledRegions/-   // 追加疆域
 ```
 
 ### quests 路径
