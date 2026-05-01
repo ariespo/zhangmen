@@ -53,14 +53,40 @@ function formatGameStateForPrompt(state) {
   if (!state) return '';
   const lines = [];
 
+  function calcSkillBonus(member, library) {
+    const bonus = { 杀伐: 0, 防御: 0, 身法: 0 };
+    if (!member.skills || !Array.isArray(member.skills)) return bonus;
+    for (const entry of member.skills) {
+      const skill = library.find(s => s.id === entry.skillId);
+      if (skill?.effects) {
+        const multiplier = entry.maxed ? 2 : 1;
+        bonus.杀伐 += (skill.effects.杀伐 || 0) * multiplier;
+        bonus.防御 += (skill.effects.防御 || 0) * multiplier;
+        bonus.身法 += (skill.effects.身法 || 0) * multiplier;
+      }
+    }
+    return bonus;
+  }
+
   // Members
   const members = state.members || {};
   const memberEntries = Object.entries(members);
   if (memberEntries.length > 0) {
     lines.push('【成员】');
     for (const [name, m] of memberEntries) {
-      lines.push(`  ${name} · ${m.daoName || ''} · ${m.realm || ''} · ${m.role || ''} · 状态:${m.status || ''} · 天赋:${m.talent || ''} · 寿元:${m.lifespan?.current || 0}/${m.lifespan?.max || 0} · 忠诚:${m.loyalty || 0} · 心情:${m.mood || 0} · 杀伐:${m.stats?.杀伐 || 0} 防御:${m.stats?.防御 || 0} 身法:${m.stats?.身法 || 0}`);
-      if (m.skills?.length) lines.push(`    功法:${m.skills.join('、')}`);
+      const bonus = calcSkillBonus(m, state.library || []);
+      const total杀伐 = (m.stats?.杀伐 || 0) + bonus.杀伐;
+      const total防御 = (m.stats?.防御 || 0) + bonus.防御;
+      const total身法 = (m.stats?.身法 || 0) + bonus.身法;
+      lines.push(`  ${name} · ${m.daoName || ''} · ${m.realm || ''} · ${m.role || ''} · 状态:${m.status || ''} · 天赋:${m.talent || ''} · 寿元:${m.lifespan?.current || 0}/${m.lifespan?.max || 0} · 忠诚:${m.loyalty || 0} · 心情:${m.mood || 0} · 杀伐:${total杀伐}(${m.stats?.杀伐 || 0}+${bonus.杀伐}) 防御:${total防御}(${m.stats?.防御 || 0}+${bonus.防御}) 身法:${total身法}(${m.stats?.身法 || 0}+${bonus.身法})`);
+      if (m.skills?.length) {
+        const skillTexts = m.skills.map(s => {
+          const skill = (state.library || []).find(sk => sk.id === s.skillId);
+          const n = skill?.name || s.skillId || '未知';
+          return s.maxed ? `${n}(满)` : `${n}(${s.progress || 0}%)`;
+        });
+        lines.push(`    功法:${skillTexts.join('、')}`);
+      }
     }
   }
 
@@ -141,11 +167,17 @@ function formatGameStateForPrompt(state) {
     }
   }
 
-  // Library (just count)
+  // Library
   const library = state.library || [];
   if (library.length > 0) {
     lines.push('');
-    lines.push(`【藏经阁】共藏功法 ${library.length} 部`);
+    lines.push('【藏经阁】');
+    for (const skill of library) {
+      const effects = skill.effects || {};
+      const effectText = [effects.杀伐 && `杀伐+${effects.杀伐}`, effects.防御 && `防御+${effects.防御}`, effects.身法 && `身法+${effects.身法}`].filter(Boolean).join(' ');
+      const reqText = skill.realmReq ? ` [需${skill.realmReq}]` : '';
+      lines.push(`  《${skill.name}》${skill.rank}·${skill.type}${reqText}${effectText ? ' ' + effectText : ''}`);
+    }
   }
 
   return lines.join('\n');
