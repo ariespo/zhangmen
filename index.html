@@ -10402,11 +10402,13 @@ ${discipleLines || '无'}
       sessionStorage.removeItem('zhangmen_stamina');
 
       await gameStateManager.load(settingsData.activeChatId);
+      await window.sillyTavernStore.loadChat(settingsData.activeChatId);
       // 读档后刷新所有 UI
       refreshAllUI();
       renderActionLogs();
       updateStaminaSegments();
       updateTianjiBadge();
+      await renderStoryFromMessages(settingsData.activeChatId);
     }
 
     // 资源条自动订阅
