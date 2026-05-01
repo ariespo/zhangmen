@@ -5873,7 +5873,7 @@
       }
       setLLMProcessing(true);
       try {
-        await callSecondaryApi(text);
+        await callSecondaryApi(text, window._currentRoundIsFirst || false);
         if (secondaryApiError) {
           alert('天道推演受阻：' + secondaryApiError.message);
         } else {
