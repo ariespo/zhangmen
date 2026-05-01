@@ -429,7 +429,23 @@ export async function loadGameState(chatId) {
   if (!chatId) return deepClone(DEFAULT_GAME_STATE);
   try {
     const chat = await db.chats.get(chatId);
-    if (chat?.variables?.gameState) return mergeWithDefaults(chat.variables.gameState, GameStateSchema);
+    if (chat?.variables?.gameState) {
+      const state = mergeWithDefaults(chat.variables.gameState, GameStateSchema);
+      // 向后兼容：旧存档成员 skills 是字符串数组
+      for (const member of Object.values(state.members || {})) {
+        if (member.skills && Array.isArray(member.skills)) {
+          const first = member.skills[0];
+          if (typeof first === 'string') {
+            const library = state.library || [];
+            member.skills = member.skills.map(name => {
+              const skill = library.find(s => s.name === name);
+              return { skillId: skill?.id || '', progress: 0, maxed: false };
+            });
+          }
+        }
+      }
+      return state;
+    }
   } catch (e) { console.error('[GameState] load failed:', e); }
   return deepClone(DEFAULT_GAME_STATE);
 }
