@@ -8144,6 +8144,7 @@ ${discipleLines || '无'}
       capturedVarsEffects = [];
       currentMainParagraph = null;
       currentRoundMaintext = '';
+      currentRoundOptions = '';
       secondaryApiPromise = null;
       secondaryApiCompleted = false;
       secondaryApiError = null;
@@ -8196,6 +8197,7 @@ ${discipleLines || '无'}
 
     // 多 API 模式下，保存当前轮次的 maintext 全文供第二 API 使用
     let currentRoundMaintext = '';
+    let currentRoundOptions = '';
     let secondaryApiPromise = null;
     let secondaryApiCompleted = false;
     let secondaryApiError = null;
@@ -9103,6 +9105,7 @@ ${discipleLines || '无'}
           if (optionEnd !== -1) {
             capturedOptionText += remaining.slice(0, optionEnd);
             updateLiveOptions(capturedOptionText);
+            currentRoundOptions = capturedOptionText;
             remaining = remaining.slice(optionEnd + 9);
             currentCaptureTag = null;
             capturedOptionText = '';
@@ -9110,6 +9113,7 @@ ${discipleLines || '无'}
             if (isFlush) {
               capturedOptionText += remaining;
               updateLiveOptions(capturedOptionText);
+              currentRoundOptions = capturedOptionText;
               capturedOptionText = '';
               return '';
             }
@@ -9709,8 +9713,8 @@ ${discipleLines || '无'}
                   const roundData = {
                     round: currentRound,
                     maintext: currentRoundMaintext,
-                    options: capturedOptionText
-                      ? capturedOptionText.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('<'))
+                    options: currentRoundOptions
+                      ? currentRoundOptions.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('<'))
                       : [],
                     vars: { ...(raw._vars || {}) },
                     timestamp: Date.now(),
