@@ -9701,14 +9701,14 @@ ${discipleLines || '无'}
                   }
                 }
                 // 保存本轮剧情到 storyHistory（gameState 深代理会自动触发 saveGameState）
-                if (window.gameStateManager && capturedMainText) {
+                if (window.gameStateManager && currentRoundMaintext) {
                   const currentRound = (window.gameStateManager.state.storyHistory?.length || 0) + 1;
                   // 获取当前完整 gameState 快照（不含 storyHistory，避免嵌套）
                   const raw = window.gameStateManager.toRaw();
                   const { storyHistory: _sh, ...snapshot } = raw;
                   const roundData = {
                     round: currentRound,
-                    maintext: capturedMainText,
+                    maintext: currentRoundMaintext,
                     options: capturedOptionText
                       ? capturedOptionText.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('<'))
                       : [],
