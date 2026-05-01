@@ -228,6 +228,14 @@ const EventSchema = zObject({
   type: zEnum(['urgent', 'normal', 'info', 'success'], 'normal')
 });
 
+const StoryRoundSchema = zObject({
+  round: zNumber({ default: 0 }),
+  maintext: zString(),
+  options: zArray(zString(), []),
+  vars: zRecord(zString(), {}),
+  timestamp: zNumber({ default: 0 })
+});
+
 const QuestSideSchema = zObject({
   id: zString(),
   name: zString(),
@@ -287,7 +295,8 @@ export const GameStateSchema = zObject({
   }),
   player: PlayerSchema,
   sect: SectSchema,
-  events: zArray(EventSchema, [])
+  events: zArray(EventSchema, []),
+  storyHistory: zArray(StoryRoundSchema, [])
 });
 
 export const DEFAULT_GAME_STATE = buildDefault(GameStateSchema);

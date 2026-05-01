@@ -4102,14 +4102,45 @@
       padding-bottom: 0;
       border-bottom: none;
     }
+    .recap-entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
     .recap-entry-index {
       font-size: 11px;
       color: var(--mythic-gold);
-      margin-bottom: 6px;
       opacity: 0.6;
     }
     .recap-entry-text {
       color: rgba(168,230,230,0.85);
+    }
+    .recap-rewind-btn {
+      padding: 3px 10px;
+      background: rgba(139,126,200,0.15);
+      border: 1px solid rgba(139,126,200,0.3);
+      border-radius: 4px;
+      color: var(--mist-purple);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .recap-rewind-btn:hover {
+      background: rgba(139,126,200,0.3);
+      border-color: var(--mist-purple);
+      color: #a090d0;
+    }
+    .recap-current-tag {
+      font-size: 11px;
+      color: var(--jade-glow);
+      background: rgba(110,207,207,0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .recap-entry.current .recap-entry-text {
+      border-left: 2px solid var(--jade-glow);
+      padding-left: 10px;
     }
     .recap-empty {
       text-align: center;
@@ -8338,7 +8369,7 @@ ${discipleLines || '无'}
 
     // 内部标签定义 —— strip 时去除，stream 时按名捕获
     const STRIP_TAGS = ['thinking', 'think', 'analysis', 'option', 'sum', 'vars', 'foreshadowing'];
-    const EXTRACT_TAGS = { maintext: '$1' };
+    const EXTRACT_TAGS = {};
     function stripInternalTags(text) {
       if (!text) return '';
       let result = text;
@@ -8424,46 +8455,93 @@ ${discipleLines || '无'}
       const body = document.getElementById('recap-panel-body');
       if (!panel || !body) return;
 
-      const chatId = window.gameStateManager?._chatId;
-      if (!chatId) {
+      const history = window.gameStateManager?.state?.storyHistory || [];
+      if (history.length === 0) {
         body.innerHTML = '<div class="recap-empty">暂无剧情记录</div>';
         panel.classList.add('active');
         return;
       }
 
-      try {
-        const chat = await db.chats.get(chatId);
-        if (!chat?.messages?.length) {
-          body.innerHTML = '<div class="recap-empty">暂无剧情记录</div>';
-          panel.classList.add('active');
-          return;
-        }
+      body.innerHTML = history.map((round, idx) => {
+        const isCurrent = idx === history.length - 1;
+        return `
+          <div class="recap-entry ${isCurrent ? 'current' : ''}">
+            <div class="recap-entry-header">
+              <div class="recap-entry-index">第 ${round.round} 回</div>
+              ${!isCurrent ? `<button class="recap-rewind-btn" onclick="rewindToRound(${idx})">回档至此</button>` : '<span class="recap-current-tag">当前</span>'}
+            </div>
+            <div class="recap-entry-text">${formatStoryText(round.maintext)}</div>
+          </div>
+        `;
+      }).join('');
+      panel.classList.add('active');
+    }
 
-        const entries = [];
-        for (let i = 0; i < chat.messages.length; i++) {
-          const msg = chat.messages[i];
-          const content = msg.content || '';
-          const mainMatch = content.match(/<maintext>([\s\S]*?)<\/maintext>/i);
-          if (mainMatch) {
-            entries.push({ index: i + 1, text: mainMatch[1].trim() });
+    async function rewindToRound(index) {
+      const history = window.gameStateManager?.state?.storyHistory || [];
+      if (index < 0 || index >= history.length) return;
+      const targetRound = history[index];
+
+      if (!confirm(`确定要回档到第 ${targetRound.round} 回吗？\n\n回档后，该轮之后的所有剧情和变量变更将被丢弃。`)) return;
+
+      const chatId = window.gameStateManager?._chatId;
+      try {
+        // 1. 截断 storyHistory
+        const newHistory = history.slice(0, index + 1);
+        window.gameStateManager.state.storyHistory = newHistory;
+
+        // 2. 截断 chat.messages（保持 prompt 上下文一致）
+        if (chatId) {
+          const chat = await db.chats.get(chatId);
+          if (chat) {
+            let assistantCount = 0;
+            let cutoffIndex = 0;
+            for (let i = 0; i < chat.messages.length; i++) {
+              if (chat.messages[i].role === 'assistant') {
+                assistantCount++;
+                if (assistantCount === index + 1) {
+                  cutoffIndex = i + 1;
+                  break;
+                }
+              }
+            }
+            if (cutoffIndex > 0) {
+              chat.messages = chat.messages.slice(0, cutoffIndex);
+            }
+
+            // 3. 恢复变量
+            if (targetRound.vars && Object.keys(targetRound.vars).length > 0) {
+              chat.variables = { ...(chat.variables || {}), ...targetRound.vars };
+              window.gameStateManager.applyPatch([{
+                op: 'replace',
+                path: '/_vars',
+                value: targetRound.vars
+              }]);
+            }
+
+            await db.chats.put(chat);
           }
         }
 
-        if (entries.length === 0) {
-          body.innerHTML = '<div class="recap-empty">暂无剧情记录</div>';
-        } else {
-          body.innerHTML = entries.map(e => `
-            <div class="recap-entry">
-              <div class="recap-entry-index">第 ${e.index} 回</div>
-              <div class="recap-entry-text">${formatStoryText(e.text)}</div>
-            </div>
-          `).join('');
+        // 4. 重新渲染当前正文和选项
+        const storyContent = document.getElementById('story-content');
+        const storyChoices = document.getElementById('story-choices');
+        if (storyContent) {
+          storyContent.innerHTML = '';
+          const p = document.createElement('div');
+          p.className = 'story-paragraph';
+          p.innerHTML = formatStoryText(targetRound.maintext);
+          storyContent.appendChild(p);
         }
-        panel.classList.add('active');
+        if (storyChoices && targetRound.options?.length) {
+          updateLiveOptions(targetRound.options.join('\n'));
+        }
+
+        closeRecapPanel();
+        console.log('[Rewind] 已回档到第', targetRound.round, '回');
       } catch (e) {
-        console.error('[openRecapPanel] failed:', e);
-        body.innerHTML = '<div class="recap-empty">加载失败</div>';
-        panel.classList.add('active');
+        console.error('[Rewind] failed:', e);
+        alert('回档失败：' + e.message);
       }
     }
 
@@ -9512,6 +9590,21 @@ ${discipleLines || '无'}
                     }]);
                   }
                 }
+                // 保存本轮剧情到 storyHistory（gameState 深代理会自动触发 saveGameState）
+                if (window.gameStateManager && capturedMainText) {
+                  const currentRound = (window.gameStateManager.state.storyHistory?.length || 0) + 1;
+                  const roundData = {
+                    round: currentRound,
+                    maintext: capturedMainText,
+                    options: capturedOptionText
+                      ? capturedOptionText.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('<'))
+                      : [],
+                    vars: { ...(window.gameStateManager.state._vars || {}) },
+                    timestamp: Date.now()
+                  };
+                  window.gameStateManager.state.storyHistory.push(roundData);
+                }
+
                 // 自动保存 gameState 到当前存档
                 try {
                   const { saveGameState } = await import('./sillytavern/game-state.js');
@@ -10008,7 +10101,6 @@ ${discipleLines || '无'}
     window.__st_db = db;
     window.__st_addChatMessage = addChatMessage;
     window.__st_getActiveChat = getActiveChat;
-    window.storyHistory = [];
     function refreshAllUI() {
       if (typeof renderMembers === 'function') renderMembers();
       if (typeof renderSectInfo === 'function') renderSectInfo();
@@ -10035,7 +10127,6 @@ ${discipleLines || '无'}
       foreshadowingStore = [];
       _fsEditingId = null;
       _reEditingId = null;
-      window.storyHistory = [];
       sessionStorage.removeItem('zhangmen_actionLogs');
       sessionStorage.removeItem('zhangmen_stamina');
 
@@ -10840,12 +10931,24 @@ ${discipleLines || '无'}
 
       // 将开局剧情保存到 chat.messages，以便读档时恢复
       const chatId = window.gameStateManager?._chatId;
+      let plainText = '';
       if (chatId && window.sillyTavernStore) {
-        const plainText = `${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}\n\n${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为，天赋${data.talent || '未详'}。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。\n\n${crisisDesc}\n\n${discipleText}`;
+        plainText = `${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}\n\n${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为，天赋${data.talent || '未详'}。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。\n\n${crisisDesc}\n\n${discipleText}`;
         window.sillyTavernStore.addMessage(chatId, {
           role: 'assistant',
           content: `<maintext>${plainText}</maintext>\n<option>开始你的宗门之旅</option>`
         }).catch(e => console.warn('[generateOpeningStory] save message failed:', e));
+      }
+
+      // 将开局剧情保存到 storyHistory
+      if (window.gameStateManager && plainText) {
+        window.gameStateManager.state.storyHistory.push({
+          round: 1,
+          maintext: plainText,
+          options: ['开始你的宗门之旅'],
+          vars: {},
+          timestamp: Date.now()
+        });
       }
     }
 
@@ -10950,9 +11053,6 @@ ${discipleLines || '无'}
 
     async function renderStoryFromMessages(chatId) {
       try {
-        const chat = await db.chats.get(chatId);
-        if (!chat?.messages?.length) return;
-
         const storyContent = document.getElementById('story-content');
         const storyChoices = document.getElementById('story-choices');
         if (!storyContent) return;
@@ -10960,41 +11060,55 @@ ${discipleLines || '无'}
         storyContent.innerHTML = '';
         if (storyChoices) storyChoices.innerHTML = '';
 
-        let lastOptions = '';
-        let lastMaintext = '';
+        let history = window.gameStateManager?.state?.storyHistory || [];
 
-        for (const msg of chat.messages) {
-          // 只从 assistant 消息中提取剧情内容，避免 user 提示词中的示例占位符污染显示
-          if (msg.role !== 'assistant') continue;
-          const content = msg.content || '';
-
-          // 提取 maintext（只保留最后一个）
-          const mainMatch = content.match(/<maintext>([\s\S]*?)<\/maintext>/i);
-          if (mainMatch) {
-            lastMaintext = mainMatch[1];
-          }
-
-          // 提取 options（保留最后一个）
-          const optionMatch = content.match(/<option>([\s\S]*?)<\/option>/i);
-          if (optionMatch) {
-            lastOptions = optionMatch[1];
+        // 向后兼容：旧存档没有 storyHistory，尝试从 chat.messages 重建
+        if (history.length === 0 && chatId) {
+          try {
+            const chat = await db.chats.get(chatId);
+            if (chat?.messages?.length) {
+              const recovered = [];
+              for (const msg of chat.messages) {
+                if (msg.role !== 'assistant') continue;
+                const content = msg.content || '';
+                const mainMatch = content.match(/<maintext>([\s\S]*?)<\/maintext>/i);
+                const optMatch = content.match(/<option>([\s\S]*?)<\/option>/i);
+                if (mainMatch) {
+                  recovered.push({
+                    round: recovered.length + 1,
+                    maintext: mainMatch[1].trim(),
+                    options: optMatch ? optMatch[1].split('\n').map(l => l.trim()).filter(Boolean) : [],
+                    vars: msg.variables || {},
+                    timestamp: msg.timestamp || Date.now()
+                  });
+                }
+              }
+              if (recovered.length > 0) {
+                window.gameStateManager.state.storyHistory = recovered;
+                history = recovered;
+              }
+            }
+          } catch (e) {
+            console.warn('[renderStoryFromMessages] 从 messages 重建 storyHistory 失败:', e);
           }
         }
 
-        // 只渲染最新一轮 maintext
-        if (lastMaintext) {
-          const p = document.createElement('div');
-          p.className = 'story-paragraph';
-          p.innerHTML = formatStoryText(lastMaintext);
-          storyContent.appendChild(p);
-        } else {
+        if (history.length === 0) {
           // 还没有任何正文，显示默认提示
           storyContent.innerHTML = '<div class="story-paragraph narrator" style="color:rgba(168,230,230,0.4)">天机台静待启封，天道流转，因果将启……</div>';
+          return;
         }
 
-        // 渲染最后一条 option
-        if (lastOptions && storyChoices) {
-          updateLiveOptions(lastOptions);
+        const lastRound = history[history.length - 1];
+        if (lastRound.maintext) {
+          const p = document.createElement('div');
+          p.className = 'story-paragraph';
+          p.innerHTML = formatStoryText(lastRound.maintext);
+          storyContent.appendChild(p);
+        }
+
+        if (lastRound.options?.length && storyChoices) {
+          updateLiveOptions(lastRound.options.join('\n'));
         }
 
         // 滚动到底部
@@ -11013,7 +11127,6 @@ ${discipleLines || '无'}
         foreshadowingStore = [];
         _fsEditingId = null;
         _reEditingId = null;
-        window.storyHistory = [];
         sessionStorage.removeItem('zhangmen_actionLogs');
         sessionStorage.removeItem('zhangmen_stamina');
 
