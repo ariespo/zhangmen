@@ -8424,9 +8424,10 @@ ${discipleLines || '无'}
         }
 
         console.log('[DualAPI] [第二API] 步骤7/8: 解析 <vars> 标签...');
-        const varsMatch = content.match(/<vars>([\s\S]*?)<\/vars>/i);
-        if (varsMatch) {
-          const varsText = varsMatch[1].trim();
+        const varsStart = content.indexOf('<vars>');
+        const varsEnd = content.indexOf('</vars>');
+        if (varsStart !== -1 && varsEnd !== -1 && varsEnd > varsStart) {
+          const varsText = content.substring(varsStart + 6, varsEnd).trim();
           console.log('[DualAPI] [第二API] 步骤7/8 [成功]: 找到 <vars> 标签, 内容长度:', varsText.length, 'chars');
           console.log('[DualAPI] [第二API] <vars> 原始内容:', varsText);
           parseVarsAndApplyPatch(varsText);
