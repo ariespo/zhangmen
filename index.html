@@ -5521,6 +5521,7 @@
         const base = p.baseStats;
         const equippedItems = getMemberEquippedItems(p.name);
 
+        const skillBonus = calcSkillEffects(p);
         const statDiffHtml = (key) => {
           const diff = stats[key] - base[key];
           if (diff > 0) return `<div class="member-detail-stat-card-diff">+${diff}</div>`;
@@ -5531,8 +5532,25 @@
         const lifespanPercent = p.lifespan.max === Infinity ? 100 : Math.round((p.lifespan.current / p.lifespan.max) * 100);
         const lifespanColor = lifespanPercent >= 70 ? 'var(--jade-glow)' : lifespanPercent >= 40 ? 'var(--gold-spirit)' : 'var(--lotus-pink)';
 
+        const library = window.gameStateManager?.state?.library || [];
         const skillListHtml = Array.isArray(p.skills) && p.skills.length > 0
-          ? p.skills.map(s => `<div class="member-detail-skill-item">${s}</div>`).join('')
+          ? p.skills.map(s => {
+              const skill = library.find(sk => sk.id === s.skillId);
+              const skillName = skill?.name || (typeof s === 'string' ? s : '未知功法');
+              const progress = s.progress || 0;
+              const maxed = s.maxed || false;
+              const effects = skill?.effects || {};
+              const effectText = effects.杀伐 || effects.防御 || effects.身法
+                ? `(${effects.杀伐 ? '杀+' + effects.杀伐 : ''}${effects.防御 ? '防+' + effects.防御 : ''}${effects.身法 ? '身+' + effects.身法 : ''}${maxed ? '×2' : ''})`
+                : '';
+              return `
+                <div class="member-detail-skill-item">
+                  <span>${skillName}</span>
+                  ${maxed ? '<span style="color:var(--gold-spirit);font-size:10px">已满级</span>' : `<span style="color:var(--jade-glow);font-size:10px">${progress}%</span>`}
+                  ${effectText ? `<span style="color:var(--gold-spirit);font-size:10px;opacity:0.7">${effectText}</span>` : ''}
+                </div>
+              `;
+            }).join('')
           : '<div class="member-detail-empty">暂无修习功法</div>';
 
         const equipListHtml = equippedItems.length > 0
@@ -5988,8 +6006,25 @@
         return '';
       };
 
+      const library = window.gameStateManager?.state?.library || [];
       const skillListHtml = Array.isArray(m.skills) && m.skills.length > 0
-        ? m.skills.map(s => `<div class="member-detail-skill-item">${s}</div>`).join('')
+        ? m.skills.map(s => {
+            const skill = library.find(sk => sk.id === s.skillId);
+            const skillName = skill?.name || (typeof s === 'string' ? s : '未知功法');
+            const progress = s.progress || 0;
+            const maxed = s.maxed || false;
+            const effects = skill?.effects || {};
+            const effectText = effects.杀伐 || effects.防御 || effects.身法
+              ? `(${effects.杀伐 ? '杀+' + effects.杀伐 : ''}${effects.防御 ? '防+' + effects.防御 : ''}${effects.身法 ? '身+' + effects.身法 : ''}${maxed ? '×2' : ''})`
+              : '';
+            return `
+              <div class="member-detail-skill-item">
+                <span>${skillName}</span>
+                ${maxed ? '<span style="color:var(--gold-spirit);font-size:10px">已满级</span>' : `<span style="color:var(--jade-glow);font-size:10px">${progress}%</span>`}
+                ${effectText ? `<span style="color:var(--gold-spirit);font-size:10px;opacity:0.7">${effectText}</span>` : ''}
+              </div>
+            `;
+          }).join('')
         : '<div class="member-detail-empty">暂无修习功法</div>';
 
       const equipListHtml = equippedItems.length > 0
@@ -7817,6 +7852,16 @@ ${discipleLines || '无'}
    - 旁门左道 → 应有奇门异术（如《百鬼御尸术》《阴阳逆乱经》）
    - 地位越低，功法品阶应越低（末流小派以黄阶/凡阶为主，三流门派可有玄阶）
    - 数量：末流小派1-2部，四流小宗2-3部，三流门派3-4部
+   - 每部功法必须有 effects（属性加成），与功法类型匹配：
+     · 剑诀/杀伐类功法 → effects.杀伐 为主
+     · 炼体/防御类功法 → effects.防御 为主
+     · 身法/遁术类功法 → effects.身法 为主
+     · 综合类功法 → 可有多项加成
+   - 每部功法必须有 realmReq（修习境界要求）：
+     · 黄阶/凡阶功法 → 炼气期即可
+     · 玄阶功法 → 筑基期
+     · 地阶功法 → 金丹期
+     · 天阶功法 → 元婴期及以上
 
 2. 【法宝 /treasury/items】数量与品阶应与宗门地位匹配
    - 末流小派：1-2件残破或低品阶法器（黄阶下品~凡阶），可能有一枚疗伤丹药
@@ -7847,7 +7892,9 @@ ${discipleLines || '无'}
 
 【<vars> 变量规范】
 /sect：{motto:"格言", foundedYear:"年份", location:"地点", founder:"祖师", history:"简史", description:"描述"}
-/library：[{id:"", name:"", type:"道修|神修|魔修|体修|修行百艺", rank:"品阶", desc:"", color:"jade|purple|pink|gold"}, ...]
+/library：[{id:"", name:"", type:"道修|神修|魔修|体修|修行百艺", rank:"品阶", desc:"", color:"jade|purple|pink|gold", effects:{杀伐:0,防御:0,身法:0}, realmReq:""}, ...]
+// effects 必须与功法描述相符（剑诀类加杀伐、炼体类加防御等）
+// realmReq 为修习该功法所需的最低境界（如"炼气期""筑基期"），不可为空
 /diplomacy：{"势力名":{name:"", relation:"盟友|友好|中立|警惕|敌对", value:0-100, desc:"", color:"", leader:"", highestMember:{name:"",role:"",realm:""}, discipleCount:0, controlledRegions:[]}, ...}
 /treasury/items：[{id:"", name:"", type:"武器|防具|遁具|饰品|丹药|材料|功法|法宝|杂物", rank:"", quantity:1, color:"", description:"", owner:"", effects:{杀伐:0,防御:0,身法:0}}, ...]
 /opportunities：[{id:"", title:"", desc:"", category:"tianshi|dili|renhe", cost:1-3, completed:false}, ...] 必须4条
@@ -8289,6 +8336,16 @@ ${discipleLines || '无'}
    - 地位越低，功法品阶应越低（末流小派以黄阶/凡阶为主，三流门派可有玄阶）
    - 数量：末流小派1-2部，四流小宗2-3部，三流门派3-4部
    - 功法名称和描述必须与法门+专长匹配
+   - 每部功法必须有 effects（属性加成），与功法类型匹配：
+     · 剑诀/杀伐类功法 → effects.杀伐 为主
+     · 炼体/防御类功法 → effects.防御 为主
+     · 身法/遁术类功法 → effects.身法 为主
+     · 综合类功法 → 可有多项加成
+   - 每部功法必须有 realmReq（修习境界要求）：
+     · 黄阶/凡阶功法 → 炼气期即可
+     · 玄阶功法 → 筑基期
+     · 地阶功法 → 金丹期
+     · 天阶功法 → 元婴期及以上
 
 2. 【法宝 /treasury/items】数量与品阶应与宗门地位匹配
    - 末流小派：1-2件残破或低品阶法器，可能有一枚疗伤丹药
@@ -10081,6 +10138,22 @@ ${discipleLines || '无'}
       return items.filter(item => item.owner === memberName);
     }
 
+    function calcSkillEffects(member) {
+      const library = window.gameStateManager?.state?.library || [];
+      const bonus = { 杀伐: 0, 防御: 0, 身法: 0 };
+      if (!member.skills || !Array.isArray(member.skills)) return bonus;
+      for (const entry of member.skills) {
+        const skill = library.find(s => s.id === entry.skillId);
+        if (skill?.effects) {
+          const multiplier = entry.maxed ? 2 : 1;
+          bonus.杀伐 += (skill.effects.杀伐 || 0) * multiplier;
+          bonus.防御 += (skill.effects.防御 || 0) * multiplier;
+          bonus.身法 += (skill.effects.身法 || 0) * multiplier;
+        }
+      }
+      return bonus;
+    }
+
     function getTotalStats(memberName) {
       const member = window.gameStateManager.state.members[memberName];
       const player = window.gameStateManager.state.player;
@@ -10093,6 +10166,10 @@ ${discipleLines || '无'}
           stats[key] += val;
         }
       });
+      const skillBonus = calcSkillEffects(target);
+      stats.杀伐 += skillBonus.杀伐;
+      stats.防御 += skillBonus.防御;
+      stats.身法 += skillBonus.身法;
       return stats;
     }
 
