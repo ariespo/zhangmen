@@ -233,7 +233,8 @@ const StoryRoundSchema = zObject({
   maintext: zString(),
   options: zArray(zString(), []),
   vars: zRecord(zString(), {}),
-  timestamp: zNumber({ default: 0 })
+  timestamp: zNumber({ default: 0 }),
+  snapshot: zObject({})
 });
 
 const QuestSideSchema = zObject({

@@ -8488,9 +8488,22 @@ ${discipleLines || '无'}
       try {
         // 1. 截断 storyHistory
         const newHistory = history.slice(0, index + 1);
-        window.gameStateManager.state.storyHistory = newHistory;
 
-        // 2. 截断 chat.messages（保持 prompt 上下文一致）
+        // 2. 用 snapshot 恢复完整 gameState（包含 members、finance 等所有状态）
+        if (targetRound.snapshot) {
+          const restoredState = { ...targetRound.snapshot, storyHistory: newHistory };
+          window.gameStateManager.replaceState(restoredState);
+        } else {
+          // 旧存档无 snapshot，仅截断 storyHistory 并恢复 _vars
+          window.gameStateManager.state.storyHistory = newHistory;
+          window.gameStateManager.applyPatch([{
+            op: 'replace',
+            path: '/_vars',
+            value: targetRound.vars || {}
+          }]);
+        }
+
+        // 3. 截断 chat.messages（保持 prompt 上下文一致）
         if (chatId) {
           const chat = await db.chats.get(chatId);
           if (chat) {
@@ -8507,23 +8520,27 @@ ${discipleLines || '无'}
             }
             if (cutoffIndex > 0) {
               chat.messages = chat.messages.slice(0, cutoffIndex);
+            } else {
+              console.warn('[Rewind] chat.messages 中 assistant 消息数量与 storyHistory 不匹配，未截断 messages');
             }
 
-            // 3. 恢复变量
-            if (targetRound.vars && Object.keys(targetRound.vars).length > 0) {
-              chat.variables = { ...(chat.variables || {}), ...targetRound.vars };
-              window.gameStateManager.applyPatch([{
-                op: 'replace',
-                path: '/_vars',
-                value: targetRound.vars
-              }]);
-            }
-
+            // 同步变量到 chat.variables
+            chat.variables = { ...(chat.variables || {}), ...(targetRound.vars || {}) };
             await db.chats.put(chat);
           }
         }
 
-        // 4. 重新渲染当前正文和选项
+        // 4. 显式保存 gameState，确保立即持久化
+        if (chatId) {
+          try {
+            const { saveGameState } = await import('./sillytavern/game-state.js');
+            await saveGameState(chatId, window.gameStateManager.state);
+          } catch (e) {
+            console.warn('[Rewind] 显式保存 gameState 失败:', e);
+          }
+        }
+
+        // 5. 重新渲染所有 UI
         const storyContent = document.getElementById('story-content');
         const storyChoices = document.getElementById('story-choices');
         if (storyContent) {
@@ -8536,6 +8553,10 @@ ${discipleLines || '无'}
         if (storyChoices && targetRound.options?.length) {
           updateLiveOptions(targetRound.options.join('\n'));
         }
+        refreshAllUI();
+        renderActionLogs();
+        updateStaminaSegments();
+        updateTianjiBadge();
 
         closeRecapPanel();
         console.log('[Rewind] 已回档到第', targetRound.round, '回');
@@ -9350,7 +9371,7 @@ ${discipleLines || '无'}
         const chat = store?.getActiveChat();
         const assembled = assemblePrompt({
           userInput,
-          history: chat?.messages || window.storyHistory || [],
+          history: chat?.messages || [],
           preset: preset || null,
           lorebooks: activeBooks || [],
           userName: window.gameStateManager?.state?.player?.name || playerName || '掌门',
@@ -9593,14 +9614,18 @@ ${discipleLines || '无'}
                 // 保存本轮剧情到 storyHistory（gameState 深代理会自动触发 saveGameState）
                 if (window.gameStateManager && capturedMainText) {
                   const currentRound = (window.gameStateManager.state.storyHistory?.length || 0) + 1;
+                  // 获取当前完整 gameState 快照（不含 storyHistory，避免嵌套）
+                  const raw = window.gameStateManager.toRaw();
+                  const { storyHistory: _sh, ...snapshot } = raw;
                   const roundData = {
                     round: currentRound,
                     maintext: capturedMainText,
                     options: capturedOptionText
                       ? capturedOptionText.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('<'))
                       : [],
-                    vars: { ...(window.gameStateManager.state._vars || {}) },
-                    timestamp: Date.now()
+                    vars: { ...(raw._vars || {}) },
+                    timestamp: Date.now(),
+                    snapshot
                   };
                   window.gameStateManager.state.storyHistory.push(roundData);
                 }
@@ -10929,11 +10954,12 @@ ${discipleLines || '无'}
         `;
       }
 
-      // 将开局剧情保存到 chat.messages，以便读档时恢复
+      // 构建开局剧情纯文本
+      const plainText = `${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}\n\n${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为，天赋${data.talent || '未详'}。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。\n\n${crisisDesc}\n\n${discipleText}`;
+
+      // 将开局剧情保存到 chat.messages
       const chatId = window.gameStateManager?._chatId;
-      let plainText = '';
       if (chatId && window.sillyTavernStore) {
-        plainText = `${data.sectName}，一个以${pathDesc}为修行法门的宗门。宗门专长于${specialtyDesc}，在修仙界中${statusDesc}\n\n${data.name}，${appearanceStr}，${data.age}岁，${realmFull}修为，天赋${data.talent || '未详'}。性格${personalityStr}，${data.gender === '女' ? '她' : data.gender === '其他' ? '其' : '他'}是${data.sectName}的现任掌门。\n\n${crisisDesc}\n\n${discipleText}`;
         window.sillyTavernStore.addMessage(chatId, {
           role: 'assistant',
           content: `<maintext>${plainText}</maintext>\n<option>开始你的宗门之旅</option>`
@@ -10942,12 +10968,15 @@ ${discipleLines || '无'}
 
       // 将开局剧情保存到 storyHistory
       if (window.gameStateManager && plainText) {
+        const raw = window.gameStateManager.toRaw();
+        const { storyHistory: _sh, ...snapshot } = raw;
         window.gameStateManager.state.storyHistory.push({
           round: 1,
           maintext: plainText,
           options: ['开始你的宗门之旅'],
           vars: {},
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          snapshot
         });
       }
     }
@@ -11063,6 +11092,7 @@ ${discipleLines || '无'}
         let history = window.gameStateManager?.state?.storyHistory || [];
 
         // 向后兼容：旧存档没有 storyHistory，尝试从 chat.messages 重建
+        // 注意：旧存档无法恢复每轮的变量快照和 gameState 快照
         if (history.length === 0 && chatId) {
           try {
             const chat = await db.chats.get(chatId);
@@ -11078,7 +11108,7 @@ ${discipleLines || '无'}
                     round: recovered.length + 1,
                     maintext: mainMatch[1].trim(),
                     options: optMatch ? optMatch[1].split('\n').map(l => l.trim()).filter(Boolean) : [],
-                    vars: msg.variables || {},
+                    vars: {},
                     timestamp: msg.timestamp || Date.now()
                   });
                 }
