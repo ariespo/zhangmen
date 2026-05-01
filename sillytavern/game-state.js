@@ -137,7 +137,14 @@ const SkillSchema = zObject({
   type: zEnum(['道修', '神修', '魔修', '体修', '修行百艺'], '道修'),
   rank: zString('黄阶'),
   desc: zString(),
-  color: zEnum(['jade', 'purple', 'pink', 'gold'], 'jade')
+  color: zEnum(['jade', 'purple', 'pink', 'gold'], 'jade'),
+  effects: zObject({
+    杀伐: zNumber({ default: 0 }),
+    防御: zNumber({ default: 0 }),
+    身法: zNumber({ default: 0 })
+  }),
+  realmReq: zString(),
+  maxProgress: zNumber({ default: 100, min: 0 })
 });
 
 const OpportunitySchema = zObject({
