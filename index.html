@@ -5589,17 +5589,17 @@
               <div class="member-detail-stat-cards">
                 <div class="member-detail-stat-card">
                   <div class="member-detail-stat-card-label">杀伐</div>
-                  <div class="member-detail-stat-card-value" style="color:${stats.杀伐 > base.杀伐 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.杀伐}</div>
+                  <div class="member-detail-stat-card-value" style="color:${stats.杀伐 > base.杀伐 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.杀伐}${skillBonus.杀伐 > 0 ? `<span style="font-size:11px;opacity:0.7">(${base.杀伐}+${skillBonus.杀伐})</span>` : ''}</div>
                   ${statDiffHtml('杀伐')}
                 </div>
                 <div class="member-detail-stat-card">
                   <div class="member-detail-stat-card-label">防御</div>
-                  <div class="member-detail-stat-card-value" style="color:${stats.防御 > base.防御 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.防御}</div>
+                  <div class="member-detail-stat-card-value" style="color:${stats.防御 > base.防御 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.防御}${skillBonus.防御 > 0 ? `<span style="font-size:11px;opacity:0.7">(${base.防御}+${skillBonus.防御})</span>` : ''}</div>
                   ${statDiffHtml('防御')}
                 </div>
                 <div class="member-detail-stat-card">
                   <div class="member-detail-stat-card-label">身法</div>
-                  <div class="member-detail-stat-card-value" style="color:${stats.身法 > base.身法 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.身法}</div>
+                  <div class="member-detail-stat-card-value" style="color:${stats.身法 > base.身法 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.身法}${skillBonus.身法 > 0 ? `<span style="font-size:11px;opacity:0.7">(${base.身法}+${skillBonus.身法})</span>` : ''}</div>
                   ${statDiffHtml('身法')}
                 </div>
               </div>
@@ -5975,6 +5975,7 @@
       if (!m) return;
       const stats = getTotalStats(name);
       const base = m.baseStats;
+      const skillBonus = calcSkillEffects(m);
       const equippedItems = getMemberEquippedItems(name);
       const overlay = document.getElementById('modal-overlay');
       const colorMap = {
@@ -6078,17 +6079,17 @@
             <div class="member-detail-stat-cards">
               <div class="member-detail-stat-card">
                 <div class="member-detail-stat-card-label">杀伐</div>
-                <div class="member-detail-stat-card-value" style="color:${stats.杀伐 > base.杀伐 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.杀伐}</div>
+                <div class="member-detail-stat-card-value" style="color:${stats.杀伐 > base.杀伐 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.杀伐}${skillBonus.杀伐 > 0 ? `<span style="font-size:11px;opacity:0.7">(${base.杀伐}+${skillBonus.杀伐})</span>` : ''}</div>
                 ${statDiffHtml('杀伐')}
               </div>
               <div class="member-detail-stat-card">
                 <div class="member-detail-stat-card-label">防御</div>
-                <div class="member-detail-stat-card-value" style="color:${stats.防御 > base.防御 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.防御}</div>
+                <div class="member-detail-stat-card-value" style="color:${stats.防御 > base.防御 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.防御}${skillBonus.防御 > 0 ? `<span style="font-size:11px;opacity:0.7">(${base.防御}+${skillBonus.防御})</span>` : ''}</div>
                 ${statDiffHtml('防御')}
               </div>
               <div class="member-detail-stat-card">
                 <div class="member-detail-stat-card-label">身法</div>
-                <div class="member-detail-stat-card-value" style="color:${stats.身法 > base.身法 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.身法}</div>
+                <div class="member-detail-stat-card-value" style="color:${stats.身法 > base.身法 ? 'var(--jade-glow)' : 'var(--jade-pale)'}">${stats.身法}${skillBonus.身法 > 0 ? `<span style="font-size:11px;opacity:0.7">(${base.身法}+${skillBonus.身法})</span>` : ''}</div>
                 ${statDiffHtml('身法')}
               </div>
             </div>
@@ -6764,7 +6765,7 @@
               <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:1.5px solid rgba(110,207,207,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center"
                 class="member-check-box"
               >&#x200b;</span>
-              <span>${m.name}（${m.realm}）— 忠诚度${m.loyalty} | 杀伐${m.stats?.杀伐 || 0} | 身法${m.stats?.身法 || 0}</span>
+              <span>${m.name}（${m.realm}）— 忠诚度${m.loyalty} | 杀伐${(m.stats?.杀伐 || 0) + (calcSkillEffects(m).杀伐)} | 身法${(m.stats?.身法 || 0) + (calcSkillEffects(m).身法)}</span>
             </div>
           `).join('')}
         </div>
@@ -7333,7 +7334,7 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
               <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;border:1.5px solid rgba(110,207,207,0.4);border-radius:3px;display:flex;align-items:center;justify-content:center"
                 class="member-check-box"
               >​</span>
-              <span>${m.name}（${m.realm}）— 忠诚度${m.loyalty} | 杀伐${m.stats?.杀伐 || 0} | 身法${m.stats?.身法 || 0}</span>
+              <span>${m.name}（${m.realm}）— 忠诚度${m.loyalty} | 杀伐${(m.stats?.杀伐 || 0) + (calcSkillEffects(m).杀伐)} | 身法${(m.stats?.身法 || 0) + (calcSkillEffects(m).身法)}</span>
             </div>
           `).join('')}
         </div>
@@ -9223,7 +9224,8 @@ ${discipleLines || '无'}
           const members = Object.values(window.gameStateManager?.state?.members || {});
           const memberDetails = names.map(n => {
             const m = members.find(x => x.name === n);
-            return m ? `「${n}」（${m.realm}，杀伐${m.stats?.杀伐 || 0}、身法${m.stats?.身法 || 0}）` : `「${n}」（境界未知）`;
+            const mBonus = calcSkillEffects(m);
+            return m ? `「${n}」（${m.realm}，杀伐${(m.stats?.杀伐 || 0) + mBonus.杀伐}、身法${(m.stats?.身法 || 0) + mBonus.身法}）` : `「${n}」（境界未知）`;
           }).join('、');
           const singleDetail = names.length === 1 ? members.find(x => x.name === names[0]) : null;
           if (log.type === '打探') {
