@@ -84,6 +84,12 @@ const EquipmentSchema = zObject({
   type: zEnum(['武器', '防具', '饰品', '法宝'], '武器')
 });
 
+const MemberSkillSchema = zObject({
+  skillId: zString(),
+  progress: zNumber({ default: 0, min: 0, max: 100 }),
+  maxed: zBoolean(false)
+});
+
 const MemberSchema = zObject({
   id: zString(),
   name: zString(),
@@ -111,7 +117,7 @@ const MemberSchema = zObject({
   mood: zNumber({ default: 70, min: 0, max: 100 }),
   personality: zArray(zString(), []),
   appearance: zArray(zString(), []),
-  skills: zArray(zString(), []),
+  skills: zArray(MemberSkillSchema, []),
   equipment: zArray(EquipmentSchema, [])
 });
 
