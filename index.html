@@ -5871,9 +5871,11 @@
       if (window._currentApiMode === undefined) {
         window._currentApiMode = await getApiMode();
       }
+      const extraPrompt = window.prompt('请输入本次重新解析的额外任务要求（可选）：\n\n例如：\n- 请重点关注成员变化\n- 补充更多机缘\n- 增加外交势力数量\n\n留空则按默认规则解析。', '');
+      if (extraPrompt === null) return; // 用户点击取消
       setLLMProcessing(true);
       try {
-        await callSecondaryApi(text, window._currentRoundIsFirst || false);
+        await callSecondaryApi(text, window._currentRoundIsFirst || false, extraPrompt.trim());
         if (secondaryApiError) {
           alert('天道推演受阻：' + secondaryApiError.message);
         } else {
@@ -8229,10 +8231,10 @@ ${discipleLines || '无'}
       if (el) el.style.display = show ? 'flex' : 'none';
     }
 
-    async function callSecondaryApi(maintext, isFirst = false) {
+    async function callSecondaryApi(maintext, isFirst = false, extraPrompt = '') {
       console.log('[DualAPI] ╔═══════════════════════════════════════════════════╗');
       console.log('[DualAPI] ║  第二 API 任务启动                                ║');
-      console.log('[DualAPI] ║  是否开局:', isFirst, '| 正文长度:', maintext?.length || 0);
+      console.log('[DualAPI] ║  是否开局:', isFirst, '| 正文长度:', maintext?.length || 0, '| 额外提示词长度:', extraPrompt?.length || 0);
       console.log('[DualAPI] ╚═══════════════════════════════════════════════════╝');
 
       secondaryApiCompleted = false;
@@ -8383,6 +8385,10 @@ ${discipleLines || '无'}
 7. /quests/main/currentStage：设为当前困境名称
 
 请一次性将上述开局信息全部补充到变量表中，不要遗漏。`;
+      }
+      // 注入用户额外任务要求（重新解析变量时）
+      if (extraPrompt?.trim()) {
+        prompt += `\n\n【本次重新解析的额外任务要求】\n${extraPrompt.trim()}`;
       }
       console.log('[DualAPI] [第二API] 步骤4/8 [成功]: prompt 组装完成, 总长度:', prompt.length, 'chars');
 
