@@ -5867,9 +5867,9 @@
         alert('当前无正文内容');
         return;
       }
-      if (window._currentApiMode !== 'dual') {
-        alert('单 API 模式下，变量由主 API 直接输出。请切换到多 API 模式使用此功能。');
-        return;
+      // 页面刷新后内存变量可能丢失，从设置中重新读取
+      if (window._currentApiMode === undefined) {
+        window._currentApiMode = await getApiMode();
       }
       setLLMProcessing(true);
       try {
