@@ -217,23 +217,29 @@ async function ensureDefaultLorebook(store) {
 
   // Always fetch latest content and update existing entries
   try {
-    const [formatRes, varRes, mainRes, secondRes] = await Promise.all([
+    const [formatRes, varRes, mainRes, secondRes, rulesRes, realmsRes] = await Promise.all([
       fetch('./LLM_FORMAT_SPEC.md'),
       fetch('./LLM_REFERENCE.md'),
       fetch('./docs/LLM_FORMAT_SPEC_MAIN.md'),
-      fetch('./docs/LLM_FORMAT_SPEC_SECOND.md')
+      fetch('./docs/LLM_FORMAT_SPEC_SECOND.md'),
+      fetch('./' + encodeURIComponent('规矩.txt')),
+      fetch('./' + encodeURIComponent('境界.txt'))
     ]);
 
     const formatContent = formatRes.ok ? await formatRes.text() : '';
     const varContent = varRes.ok ? await varRes.text() : '';
     const mainContent = mainRes.ok ? await mainRes.text() : '';
     const secondContent = secondRes.ok ? await secondRes.text() : '';
+    const rulesContent = rulesRes.ok ? await rulesRes.text() : '';
+    const realmsContent = realmsRes.ok ? await realmsRes.text() : '';
 
     const entryDefs = [
-      { comment: '格式规范', content: formatContent, order: 100, enabled: true },
-      { comment: '变量规范', content: varContent, order: 101, enabled: true },
-      { comment: '多API主格式', content: mainContent, order: 200, enabled: false },
-      { comment: '多API第二格式', content: secondContent, order: 201, enabled: false }
+      { comment: '格式规范', content: formatContent, order: 100, enabled: true, depth: 0 },
+      { comment: '变量规范', content: varContent, order: 101, enabled: true, depth: 0 },
+      { comment: '多API主格式', content: mainContent, order: 200, enabled: false, depth: 0 },
+      { comment: '多API第二格式', content: secondContent, order: 201, enabled: false, depth: 0 },
+      { comment: '修仙规矩', content: rulesContent, order: 300, enabled: true, depth: 4 },
+      { comment: '境界', content: realmsContent, order: 301, enabled: true, depth: 4 }
     ];
 
     for (const def of entryDefs) {
@@ -244,6 +250,10 @@ async function ensureDefaultLorebook(store) {
           existing.content = def.content;
           created = true; // reuse flag to trigger save
         }
+        if (def.depth !== undefined && existing.depth !== def.depth) {
+          existing.depth = def.depth;
+          created = true;
+        }
       } else {
         book.entries.push({
           id: crypto.randomUUID(),
@@ -252,7 +262,7 @@ async function ensureDefaultLorebook(store) {
           content: def.content,
           order: def.order,
           position: 'at_depth',
-          depth: 0,
+          depth: def.depth ?? 0,
           selective: false,
           selectiveLogic: 'not_all',
           constant: true,
@@ -287,6 +297,9 @@ async function ensureDefaultLorebook(store) {
     if (entry.comment === '多API第二格式') {
       const shouldEnable = apiMode === 'dual';
       if (entry.enabled !== shouldEnable) { entry.enabled = shouldEnable; needsUpdate = true; }
+    }
+    if (entry.comment === '修仙规矩' || entry.comment === '境界') {
+      if (!entry.enabled) { entry.enabled = true; needsUpdate = true; }
     }
   }
   if (needsUpdate) {
@@ -334,6 +347,10 @@ export async function switchApiLorebookMode(mode, store) {
     if (entry.comment === '多API主格式' || entry.comment === '多API第二格式') {
       const shouldEnable = mode === 'dual';
       if (entry.enabled !== shouldEnable) { entry.enabled = shouldEnable; needsUpdate = true; }
+    }
+    if (entry.comment === '修仙规矩' || entry.comment === '境界') {
+      // 修仙规矩与境界常态开启，不受 API 模式影响
+      if (!entry.enabled) { entry.enabled = true; needsUpdate = true; }
     }
   }
 
