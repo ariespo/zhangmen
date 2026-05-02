@@ -10031,6 +10031,8 @@ ${discipleLines || '无'}
         return typeMatch && rankMatch;
       });
       filtered.forEach(s => {
+        // 确保每个功法有唯一 id
+        if (!s.id) s.id = 'skill_' + (s.name || 'unknown').replace(/\s+/g, '_');
         const style = getSkillStyle(s);
         const effectsText = s.effects ? formatEffects(s.effects) : '';
         const card = document.createElement('div');
@@ -10102,124 +10104,135 @@ ${discipleLines || '无'}
             <div class="info-value" style="font-size:13px;line-height:1.8">${skill.desc}</div>
           </div>
           <div class="info-block full-width" style="margin-top:8px">
-            <button class="title-btn primary" onclick="openPracticeDialog('${skill.id}')" style="width:100%">参悟此功法</button>
+            <button class="title-btn primary" id="skill-practice-btn" style="width:100%">参悟此功法</button>
           </div>
         </div>
       `;
       overlay.classList.add('active');
+      // 绑定参悟按钮事件（避免内联onclick引号问题）
+      const practiceBtn = document.getElementById('skill-practice-btn');
+      if (practiceBtn) {
+        practiceBtn.addEventListener('click', () => openPracticeDialog(skill.id));
+      }
+    }
+
+    // 判断成员境界是否满足功法修习要求（>=）
+    function canComprehendSkill(memberRealm, skillRealmReq) {
+      if (!skillRealmReq) return true;
+      const normalize = s => (s || '').replace('炼气期', '练气期').replace('練氣期', '练气期');
+      const m = parseRealm(normalize(memberRealm));
+      const r = parseRealm(normalize(skillRealmReq));
+      const mBig = REALM_BIG[m.level] ?? 0;
+      const rBig = REALM_BIG[r.level] ?? 0;
+      if (mBig !== rBig) return mBig > rBig;
+      const mSmall = REALM_SMALL[m.stage] ?? 0;
+      const rSmall = REALM_SMALL[r.stage] ?? 0;
+      return mSmall >= rSmall;
     }
 
     function openPracticeDialog(skillId) {
       const skill = (window.gameStateManager?.state?.library || []).find(s => s.id === skillId);
       if (!skill) return;
 
-      const members = Object.entries(window.gameStateManager?.state?.members || {});
+      // 只显示境界满足要求的成员
+      const allMembers = Object.entries(window.gameStateManager?.state?.members || {})
+        .filter(([_, m]) => canComprehendSkill(m.realm, skill.realmReq));
 
-      const practicingMembers = members.filter(([_, m]) =>
-        m.skills?.some(s => s.skillId === skillId)
-      );
-
-      const availableMembers = members.filter(([_, m]) =>
-        !m.skills?.some(s => s.skillId === skillId)
-      );
-
-      const renderMemberOption = ([name, m]) => {
+      const renderCheckbox = ([name, m]) => {
         const hasSkill = m.skills?.some(s => s.skillId === skillId);
         const skillEntry = hasSkill ? m.skills.find(s => s.skillId === skillId) : null;
         const progress = skillEntry?.progress || 0;
         const maxed = skillEntry?.maxed || false;
-        const realmOk = !skill.realmReq || (m.realm || '').includes(skill.realmReq) || m.realm === skill.realmReq;
-        const canPractice = !maxed && stamina.current >= 1 && realmOk;
 
         let status = '';
         if (maxed) status = '<span style="color:var(--gold-spirit)">已满级</span>';
-        else if (!realmOk) status = `<span style="color:var(--lotus-pink)">需${skill.realmReq}</span>`;
         else if (progress > 0) status = `<span style="color:var(--jade-glow)">进度 ${progress}%</span>`;
+        else status = '<span style="color:rgba(168,230,230,0.4)">未修习</span>';
 
         return `
-          <div class="member-option ${canPractice ? '' : 'disabled'}" onclick="${canPractice ? `practiceSkill('${skillId}', '${name}')` : ''}">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div>
-                <div style="font-weight:500">${name} · ${m.realm || '未知'}</div>
-                <div style="font-size:12px;color:rgba(168,230,230,0.5)">${m.role || '成员'}</div>
-              </div>
-              <div style="text-align:right">
-                <div style="font-size:12px">${status}</div>
-                ${canPractice ? '<div style="font-size:11px;color:var(--jade-glow)">消耗 1 体力</div>' : ''}
-              </div>
+          <label class="member-option" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" class="practice-checkbox" value="${escapeHtml(name)}" ${maxed ? 'disabled' : ''} style="flex-shrink:0;width:16px;height:16px;accent-color:var(--jade-glow);">
+            <div style="flex:1">
+              <div style="font-weight:500">${escapeHtml(name)} · ${escapeHtml(m.realm || '未知')}</div>
+              <div style="font-size:12px;color:rgba(168,230,230,0.5)">${escapeHtml(m.role || '成员')} · ${status}</div>
             </div>
-          </div>
+          </label>
         `;
       };
 
+      const hasEligible = allMembers.length > 0;
+      const eligibleHtml = hasEligible
+        ? allMembers.map(renderCheckbox).join('')
+        : '<div style="text-align:center;padding:16px;color:rgba(168,230,230,0.4);font-size:13px;">暂无满足境界要求的成员</div>';
+
       document.getElementById('modal-title').innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>
-        参悟《${skill.name}》
+        参悟《${escapeHtml(skill.name)}》
       `;
       document.getElementById('modal-body').innerHTML = `
         <div style="margin-bottom:12px;font-size:12px;color:rgba(168,230,230,0.5)">
-          选择一名成员参悟此功法，每次消耗 1 体力，进度 +10%
+          选择成员参悟此功法，每人消耗 1 体力。已满级成员不可选择。
+          ${skill.realmReq ? `<br>境界要求：${escapeHtml(skill.realmReq)}` : ''}
         </div>
-        ${practicingMembers.length > 0 ? `
-          <div style="font-size:11px;color:var(--gold-spirit);margin-bottom:8px">正在修习</div>
-          ${practicingMembers.map(renderMemberOption).join('')}
-        ` : ''}
-        ${availableMembers.length > 0 ? `
-          <div style="font-size:11px;color:var(--jade-glow);margin:12px 0 8px">可新修习</div>
-          ${availableMembers.map(renderMemberOption).join('')}
-        ` : ''}
+        <div id="practice-member-list" style="max-height:300px;overflow-y:auto;margin-bottom:12px;">
+          ${eligibleHtml}
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12px;color:rgba(168,230,230,0.5)">
+            已选 <span id="practice-selected-count" style="color:var(--jade-glow)">0</span> 人
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+            <button class="opportunity-btn primary" id="practice-submit-btn" onclick="practiceSkill('${skillId}')" ${hasEligible ? '' : 'disabled'}>加入操作列表</button>
+          </div>
+        </div>
       `;
+
+      // 绑定复选框变化事件
+      const checkboxes = document.querySelectorAll('.practice-checkbox:not(:disabled)');
+      const countEl = document.getElementById('practice-selected-count');
+      const submitBtn = document.getElementById('practice-submit-btn');
+      checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+          const checked = document.querySelectorAll('.practice-checkbox:checked');
+          if (countEl) countEl.textContent = checked.length;
+          if (submitBtn) submitBtn.disabled = checked.length === 0;
+        });
+      });
     }
 
-    function practiceSkill(skillId, memberName) {
+    function practiceSkill(skillId) {
       const state = window.gameStateManager?.state;
       if (!state) return;
-
-      const member = state.members?.[memberName];
-      if (!member) return;
 
       const skill = (state.library || []).find(s => s.id === skillId);
       if (!skill) return;
 
-      if (stamina.current < 1) {
-        alert('体力不足！');
+      const checked = document.querySelectorAll('.practice-checkbox:checked');
+      if (checked.length === 0) {
+        alert('请至少选择一名成员');
         return;
       }
 
-      if (skill.realmReq && member.realm !== skill.realmReq && !(member.realm || '').includes(skill.realmReq)) {
-        alert(`该功法需要 ${skill.realmReq} 修为方可参悟`);
+      const totalCost = checked.length;
+      if (stamina.current < totalCost) {
+        alert(`体力不足！需要 ${totalCost} 点体力`);
         return;
       }
 
-      stamina.current -= 1;
-      updateStaminaSegments();
+      const memberNames = [];
+      checked.forEach(cb => {
+        const name = cb.value;
+        memberNames.push(name);
+      });
 
-      if (!member.skills) member.skills = [];
+      const namesText = memberNames.join('，');
+      const promptText = `（${namesText}）进行了对功法《${skill.name}》的参悟。如果该角色此前尚未掌握该功法，则掌握；如果已经掌握，则提高修行进度，进度提升百分比为1-20，根据角色的天资来调整浮动。`;
 
-      let skillEntry = member.skills.find(s => s.skillId === skillId);
-      if (!skillEntry) {
-        skillEntry = { skillId, progress: 0, maxed: false };
-        member.skills.push(skillEntry);
+      const ok = addActionLog('参悟', `参悟《${skill.name}》`, promptText, totalCost);
+      if (ok) {
+        closeModal();
       }
-
-      if (skillEntry.maxed) {
-        alert('该功法已满级！');
-        return;
-      }
-
-      const increment = 10;
-      const maxProgress = skill.maxProgress || 100;
-      skillEntry.progress = Math.min(skillEntry.progress + increment, maxProgress);
-
-      if (skillEntry.progress >= maxProgress) {
-        skillEntry.maxed = true;
-        alert(`${memberName} 参悟《${skill.name}》已满级！属性加成翻倍！`);
-      } else {
-        alert(`${memberName} 参悟《${skill.name}》进度：${skillEntry.progress}%`);
-      }
-
-      document.getElementById('modal-overlay').classList.remove('active');
-      refreshAllUI();
     }
 
     // ====== OPPORTUNITY SYSTEM ======
