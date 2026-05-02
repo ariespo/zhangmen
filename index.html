@@ -15,8 +15,8 @@
       --jade-mid: #2d5a5a;
       --jade-light: #4a8a8a;
       --jade-glow: #c4a265;
-      --jade-pale: #e8e0d0;
-      --cloud-white: #e8e0d0;
+      --jade-pale: #555;
+      --cloud-white: #333;
       --mist-purple: #8b7ec8;
       --mist-purple-deep: #6b5ea8;
       --lotus-pink: #d4728c;
@@ -1816,19 +1816,57 @@
       color: var(--text-dark);
     }
 
-    /* 内容区卡片内文字统一改为深色（覆盖旧浅色定义） */
-    .page-content .subtitle,
-    .page-content .skill-type,
-    .page-content .skill-desc,
-    .page-content .opportunity-desc,
-    .page-content .region-desc,
-    .page-content .building-desc,
-    .page-content .info-value,
-    .page-content .stat-label,
-    .page-content .member-role,
-    .page-content .treasury-desc,
-    .page-content .tianji-desc {
-      color: var(--text-mid);
+    /* === 文字颜色区域隔离 === */
+    /* 内容区强制所有文字为深色 */
+    .page-content,
+    .page-content * {
+      color: var(--text-dark);
+    }
+
+    /* 恢复深色背景按钮的白色文字 */
+    .page-content .title-btn,
+    .page-content .title-btn.primary,
+    .page-content .modal-close {
+      color: #fff;
+    }
+
+    /* 恢复金色强调 */
+    .page-content .skill-rank,
+    .page-content .gold-spirit,
+    .page-content .stat-value,
+    .page-content .opportunity-cost,
+    .page-content .res-value,
+    .page-content .action-btn-sm,
+    .page-content [style*="color: var(--gold-spirit)"],
+    .page-content [style*="color: var(--jade-glow)"] {
+      color: var(--gold-spirit);
+    }
+
+    /* 恢复紫色 */
+    .page-content [style*="color: var(--mist-purple)"] {
+      color: var(--mist-purple);
+    }
+
+    /* 恢复粉色 */
+    .page-content [style*="color: var(--lotus-pink)"] {
+      color: var(--lotus-pink);
+    }
+
+    /* 恢复绿色（翡翠） */
+    .page-content [style*="color: var(--jade-glow)"] {
+      color: var(--jade-glow);
+    }
+
+    /* 深色区域保持浅色文字 */
+    #top-bar, #side-nav, #bottom-nav, .modal-container {
+      --cloud-white: #e8e0d0;
+      --jade-pale: #e8e0d0;
+    }
+    #top-bar, #top-bar *,
+    #side-nav, #side-nav *,
+    #bottom-nav, #bottom-nav *,
+    .modal-container, .modal-container * {
+      color: var(--cloud-white);
     }
 
     .page-content.active-page {
