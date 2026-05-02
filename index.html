@@ -438,6 +438,128 @@
     .tianji-btn-secondary:hover {
       background: rgba(168, 230, 230, 0.2);
     }
+    .reparse-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .reparse-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .reparse-dialog {
+      background: var(--ink-mid);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 560px;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: scale(0.95);
+      transition: transform 0.3s;
+      padding: 20px;
+    }
+    .reparse-overlay.active .reparse-dialog {
+      transform: scale(1);
+    }
+    .reparse-title {
+      font-size: 16px;
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .reparse-desc {
+      font-size: 12px;
+      color: rgba(168, 230, 230, 0.5);
+      margin-bottom: 12px;
+    }
+    .reparse-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 10px 12px;
+      background: rgba(13, 31, 31, 0.6);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--cloud-white);
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .reparse-textarea:focus {
+      outline: none;
+      border-color: var(--jade-glow);
+    }
+    .reparse-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .reparse-preset-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      border: 1px solid var(--glass-border);
+      background: rgba(168, 230, 230, 0.08);
+      color: rgba(168, 230, 230, 0.75);
+      transition: all 0.2s;
+      line-height: 1.4;
+    }
+    .reparse-preset-btn:hover {
+      background: rgba(110, 207, 207, 0.15);
+      border-color: var(--jade-glow);
+      color: var(--cloud-white);
+    }
+    .reparse-preset-btn.active {
+      background: rgba(110, 207, 207, 0.2);
+      border-color: var(--jade-glow);
+      color: var(--cloud-white);
+    }
+    .reparse-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .reparse-actions button {
+      padding: 8px 20px;
+      font-size: 13px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      border: none;
+      transition: all 0.2s;
+    }
+    .reparse-confirm {
+      background: var(--jade-mid);
+      color: var(--cloud-white);
+    }
+    .reparse-confirm:hover {
+      background: var(--jade-light);
+    }
+    .reparse-cancel {
+      background: rgba(168, 230, 230, 0.1);
+      color: rgba(168, 230, 230, 0.7);
+      border: 1px solid var(--glass-border);
+    }
+    .reparse-cancel:hover {
+      background: rgba(168, 230, 230, 0.2);
+    }
     .tianji-empty {
       text-align: center;
       padding: 24px;
@@ -5858,6 +5980,106 @@
       submitActions();
     }
 
+    const REPARSE_PRESETS = [
+      {
+        label: '补全空缺信息',
+        text: '请检查变量表中所有空缺或默认值的信息，根据剧情正文进行完整填充。包括：宗门信息（motto、founder、history等）、外交势力（relation、value、highestMember等）、疆域（locations、monthlyResources、guardian等）、藏经阁功法（确保数量与宗门地位匹配，每条功法必须有effects和realmReq）、宝库法宝（确保有effects字段）。不要遗漏任何字段。'
+      },
+      {
+        label: '检查数值一致性',
+        text: '请逐一对照剧情正文和变量表，检查所有数值变化是否完全一致。例如：剧情中提到获得灵石+50，变量表中gold必须同步增加50；成员忠诚度、心情等属性若有变化必须正确反映。修复所有不一致，并确保新增/删除的条目已在变量表中正确体现。'
+      },
+      {
+        label: '补充成员详情',
+        text: '请检查剧情正文中提到的新成员加入、弟子离开、境界突破、装备/功法获得、忠诚度/心情变化等所有人事变动。为新增成员补充完整的属性（stats、baseStats）、天赋（talent）、个性（personality）、外观（appearance）等字段。确保成员列表与剧情完全一致。'
+      },
+      {
+        label: '完善机缘与建筑',
+        text: '请确保机缘列表始终有4条（覆盖天时/地利/人和三类）。已分配或过期的机缘应删除并立即补充新的。检查建筑列表是否完整，新解锁或升级的建筑应正确添加到world.buildings中。'
+      },
+      {
+        label: '更新疆域探索',
+        text: '请根据剧情中对疆域的探索描述，更新对应疆域的explorationStage（+1）、locations（新增1-3个与疆域特性相符的地点，如灵泉/古洞/废弃祭坛/灵药圃等）、monthlyResources（适当增加月产，如灵泉→gold+10~30，村落→potentialDisciples+5~15）。确保guardian和spiritualDensity也符合剧情。'
+      },
+      {
+        label: '补充功法与法宝',
+        text: '请检查剧情中提到的功法和法宝，确保藏经阁/library和宝库/treasury/items已正确收录。新增功法必须包含effects（属性加成，如剑诀→杀伐为主）和realmReq（修习境界要求）字段。新增法宝必须包含effects字段。删除剧情中已消耗或损毁的物品。'
+      }
+    ];
+
+    function showReparseDialog() {
+      return new Promise((resolve, reject) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'reparse-overlay';
+        overlay.innerHTML = `
+          <div class="reparse-dialog">
+            <h3 class="reparse-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              重新解析变量
+            </h3>
+            <div class="reparse-desc">在下方输入额外任务要求，或点击预设按钮快速填充。留空则按默认规则解析。</div>
+            <textarea class="reparse-textarea" id="reparse-input" placeholder="额外任务要求..."></textarea>
+            <div class="reparse-presets" id="reparse-presets"></div>
+            <div class="reparse-actions">
+              <button class="reparse-cancel" id="reparse-cancel">取消</button>
+              <button class="reparse-confirm" id="reparse-confirm">确认解析</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+
+        const textarea = overlay.querySelector('#reparse-input');
+        const presetsContainer = overlay.querySelector('#reparse-presets');
+
+        // 渲染预设按钮
+        REPARSE_PRESETS.forEach((preset, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'reparse-preset-btn';
+          btn.textContent = preset.label;
+          btn.title = preset.text.substring(0, 60) + '...';
+          btn.addEventListener('click', () => {
+            const current = textarea.value.trim();
+            if (current) {
+              textarea.value = current + '\n\n' + preset.text;
+            } else {
+              textarea.value = preset.text;
+            }
+            textarea.focus();
+            // 高亮当前按钮
+            presetsContainer.querySelectorAll('.reparse-preset-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          });
+          presetsContainer.appendChild(btn);
+        });
+
+        // 动画显示
+        requestAnimationFrame(() => overlay.classList.add('active'));
+
+        const close = (value) => {
+          overlay.classList.remove('active');
+          setTimeout(() => overlay.remove(), 300);
+          if (value !== undefined) resolve(value);
+          else reject(new Error('用户取消'));
+        };
+
+        overlay.querySelector('#reparse-confirm').addEventListener('click', () => {
+          close(textarea.value.trim());
+        });
+        overlay.querySelector('#reparse-cancel').addEventListener('click', () => {
+          close(undefined);
+        });
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) close(undefined);
+        });
+        textarea.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            close(textarea.value.trim());
+          }
+        });
+      });
+    }
+
     async function reparseVarsFromStory() {
       if (isLLMProcessing) return;
       const content = document.getElementById('story-content');
@@ -5871,11 +6093,15 @@
       if (window._currentApiMode === undefined) {
         window._currentApiMode = await getApiMode();
       }
-      const extraPrompt = window.prompt('请输入本次重新解析的额外任务要求（可选）：\n\n例如：\n- 请重点关注成员变化\n- 补充更多机缘\n- 增加外交势力数量\n\n留空则按默认规则解析。', '');
-      if (extraPrompt === null) return; // 用户点击取消
+      let extraPrompt;
+      try {
+        extraPrompt = await showReparseDialog();
+      } catch (e) {
+        return; // 用户取消
+      }
       setLLMProcessing(true);
       try {
-        await callSecondaryApi(text, window._currentRoundIsFirst || false, extraPrompt.trim());
+        await callSecondaryApi(text, window._currentRoundIsFirst || false, extraPrompt);
         if (secondaryApiError) {
           alert('天道推演受阻：' + secondaryApiError.message);
         } else {
@@ -8105,7 +8331,7 @@ ${discipleLines || '无'}
           apiKey: (cfg.apiKey || '').trim(),
           model: (cfg.model || '').trim() || 'gpt-3.5-turbo',
           temperature: cfg.temperature ?? 0.7,
-          maxTokens: cfg.maxTokens ?? 2048
+          maxTokens: cfg.maxTokens ?? 8000
         };
       }
       return null;

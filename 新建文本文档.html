@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stat Data 查看器</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #1e2139;
+            --surface2: #252845;
+            --surface3: #2b2f4c;
+            --text: #e0e0e0;
+            --text-secondary: #a0a4bc;
+            --text-muted: #6b6f85;
+            --accent: #f0a348;
+            --accent2: #e0882e;
+            --accent-soft: rgba(240, 163, 72, 0.12);
+            --green: #5ec49e;
+            --green-soft: rgba(94, 196, 158, 0.12);
+            --blue: #6da9e9;
+            --blue-soft: rgba(109, 169, 233, 0.12);
+            --red: #e06c75;
+            --red-soft: rgba(224, 108, 117, 0.12);
+            --purple: #c792ea;
+            --purple-soft: rgba(199, 146, 234, 0.12);
+            --border: #353855;
+            --border-light: #3d4268;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-xs: 5px;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', 'Menlo', monospace;
+        }
+ 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+ 
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            padding: 16px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-size: 14px;
+        }
+ 
+        /* 头部 */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-title .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: var(--accent-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .header-title h2 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+            color: var(--text);
+        }
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 11px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            letter-spacing: 0.1px;
+        }
+        .badge-message {
+            background: var(--blue-soft);
+            color: var(--blue);
+        }
+        .badge-time {
+            background: var(--surface3);
+            color: var(--text-secondary);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            transition: all var(--transition);
+            white-space: nowrap;
+            letter-spacing: 0.1px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:hover {
+            background: var(--surface3);
+            border-color: var(--border-light);
+        }
+        .btn:active {
+            transform: scale(0.97);
+            opacity: 0.85;
+        }
+        .btn-accent {
+            background: var(--accent);
+            color: #1a1a2e;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+        .btn-accent:hover {
+            background: var(--accent2);
+            border-color: var(--accent2);
+        }
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px;
+            border-radius: 16px;
+        }
+ 
+        /* 加载与空状态 */
+        .state-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+            gap: 12px;
+        }
+        .state-box .state-icon {
+            font-size: 44px;
+            opacity: 0.7;
+        }
+        .state-box .state-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+            max-width: 320px;
+        }
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+ 
+        /* 概览卡片网格 */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            border-color: var(--border-light);
+            box-shadow: var(--shadow);
+        }
+        .stat-card .stat-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 6px;
+        }
+        .stat-card .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text);
+            word-break: break-all;
+        }
+        .stat-card .stat-value.number {
+            color: var(--accent);
+            font-family: var(--font-mono);
+        }
+        .stat-card .stat-value.string {
+            color: var(--blue);
+            font-size: 16px;
+        }
+        .stat-card .stat-value.empty {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 400;
+            font-style: italic;
+        }
+        .stat-card .stat-value.array-empty {
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 400;
+        }
+        .stat-card .stat-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+        .stat-card.accent-glow {
+            border-color: rgba(240, 163, 72, 0.25);
+        }
+        .stat-card.accent-glow::after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, rgba(240, 163, 72, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            border-radius: 50%;
+        }
+ 
+        /* 分区标题 */
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin: 18px 0 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .section-title:first-of-type {
+            margin-top: 4px;
+        }
+        .section-title .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+ 
+        /* 背包物品卡片 */
+        .backpack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+        .item-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            transition: all var(--transition);
+            position: relative;
+        }
+        .item-card:hover {
+            border-color: var(--border-light);
+            box-shadow: var(--shadow);
+        }
+        .item-card .item-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .item-card .item-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text);
+            line-height: 1.4;
+            flex: 1;
+        }
+        .item-card .item-quantity {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 26px;
+            height: 26px;
+            border-radius: 13px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 13px;
+            padding: 0 8px;
+            font-family: var(--font-mono);
+            flex-shrink: 0;
+        }
+        .item-card .item-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .item-tag {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: var(--radius-xs);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+        .item-tag.type {
+            background: var(--blue-soft);
+            color: var(--blue);
+        }
+        .item-tag.level {
+            background: var(--purple-soft);
+            color: var(--purple);
+        }
+        .item-tag.source {
+            background: var(--green-soft);
+            color: var(--green);
+        }
+        .item-tag.pawn {
+            background: var(--red-soft);
+            color: var(--red);
+        }
+        .item-card .item-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--border-light);
+        }
+        .item-card .item-footer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .item-card .item-footer span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .item-card .item-footer .price {
+            color: var(--accent);
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+        .item-card .item-footer .redeem {
+            color: var(--red);
+            font-weight: 500;
+        }
+ 
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--surface3);
+            color: var(--text);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border-light);
+            letter-spacing: 0.2px;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success {
+            border-color: var(--green);
+        }
+        .toast.error {
+            border-color: var(--red);
+        }
+ 
+        /* 响应式 */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+                font-size: 13px;
+            }
+            .overview-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 8px;
+            }
+            .stat-card {
+                padding: 10px 12px;
+            }
+            .stat-card .stat-value {
+                font-size: 18px;
+            }
+            .backpack-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h2 {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+ 
+    <!-- 头部 -->
+    <div class="header">
+        <div class="header-title">
+            <div class="icon">📊</div>
+            <h2>Stat Data 查看器</h2>
+        </div>
+        <div class="header-meta">
+            <span class="badge badge-message" id="badgeMessage">楼层 --</span>
+            <span class="badge badge-time" id="badgeTime">--</span>
+            <button class="btn btn-accent btn-sm" id="btnRefresh" title="刷新数据">
+                🔄 刷新
+            </button>
+            <button class="btn btn-sm" id="btnCopy" title="复制JSON到剪贴板">
+                📋 复制JSON
+            </button>
+        </div>
+    </div>
+ 
+    <!-- 主体内容区 -->
+    <div id="content">
+        <!-- 加载中 -->
+        <div class="state-box" id="stateLoading">
+            <div class="spinner"></div>
+            <div class="state-text">正在获取变量数据...</div>
+        </div>
+    </div>
+ 
+    <!-- Toast提示 -->
+    <div class="toast" id="toast"></div>
+ 
+    <script>
+        (function() {
+            // ============ DOM 引用 ============
+            const contentEl = document.getElementById('content');
+            const badgeMessage = document.getElementById('badgeMessage');
+            const badgeTime = document.getElementById('badgeTime');
+            const btnRefresh = document.getElementById('btnRefresh');
+            const btnCopy = document.getElementById('btnCopy');
+            const toastEl = document.getElementById('toast');
+ 
+            let currentStatData = null;
+            let toastTimer = null;
+ 
+            // ============ Toast ============
+            function showToast(message, type = '') {
+                if (toastTimer) clearTimeout(toastTimer);
+                toastEl.textContent = message;
+                toastEl.className = 'toast ' + type + ' show';
+                toastTimer = setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, 2000);
+            }
+ 
+            // ============ 工具函数 ============
+            function isNumeric(value) {
+                return typeof value === 'number' && !isNaN(value);
+            }
+ 
+            function isPlainString(value) {
+                return typeof value === 'string';
+            }
+ 
+            function isEmptyArray(value) {
+                return Array.isArray(value) && value.length === 0;
+            }
+ 
+            function isPlainObject(value) {
+                return value !== null && typeof value === 'object' && !Array.isArray(value);
+            }
+ 
+            function formatTime() {
+                const now = new Date();
+                const hh = String(now.getHours()).padStart(2, '0');
+                const mm = String(now.getMinutes()).padStart(2, '0');
+                const ss = String(now.getSeconds()).padStart(2, '0');
+                return `${hh}:${mm}:${ss}`;
+            }
+ 
+            // ============ 数据获取 ============
+            function getStatData() {
+                // 方式1: 尝试通过 getAllVariables 获取
+                if (typeof getAllVariables === 'function') {
+                    try {
+                        const allVars = getAllVariables();
+                        if (allVars && allVars.stat_data && typeof allVars.stat_data === 'object') {
+                            return { data: allVars.stat_data, source: 'getAllVariables' };
+                        }
+                        // stat_data 可能在其他路径
+                        if (allVars && allVars.stat_data !== undefined) {
+                            return { data: allVars.stat_data, source: 'getAllVariables' };
+                        }
+                    } catch (e) {
+                        console.warn('[StatViewer] getAllVariables 调用失败:', e.message);
+                    }
+                }
+ 
+                // 方式2: 尝试通过 Mvu 获取
+                if (typeof Mvu !== 'undefined' && typeof Mvu.getMvuData === 'function') {
+                    try {
+                        let messageId = 'latest';
+                        if (typeof getCurrentMessageId === 'function') {
+                            try {
+                                messageId = getCurrentMessageId();
+                            } catch (e) { /* 忽略 */ }
+                        }
+                        const mvuData = Mvu.getMvuData({ type: 'message', message_id: messageId });
+                        if (mvuData && mvuData.stat_data && typeof mvuData.stat_data === 'object') {
+                            return { data: mvuData.stat_data, source: 'Mvu.getMvuData' };
+                        }
+                    } catch (e) {
+                        console.warn('[StatViewer] Mvu.getMvuData 调用失败:', e.message);
+                    }
+                }
+ 
+                // 方式3: 尝试从 getVariables 获取当前消息楼层变量
+                if (typeof getVariables === 'function' && typeof getCurrentMessageId === 'function') {
+                    try {
+                        const messageId = getCurrentMessageId();
+                        const msgVars = getVariables({ type: 'message', message_id: messageId });
+                        if (msgVars && msgVars.stat_data && typeof msgVars.stat_data === 'object') {
+                            return { data: msgVars.stat_data, source: 'getVariables(message)' };
+                        }
+                    } catch (e) {
+                        console.warn('[StatViewer] getVariables 调用失败:', e.message);
+                    }
+                }
+ 
+                // 方式4: 尝试从聊天变量获取
+                if (typeof getVariables === 'function') {
+                    try {
+                        const chatVars = getVariables({ type: 'chat' });
+                        if (chatVars && chatVars.stat_data && typeof chatVars.stat_data === 'object') {
+                            return { data: chatVars.stat_data, source: 'getVariables(chat)' };
+                        }
+                    } catch (e) {
+                        console.warn('[StatViewer] getVariables(chat) 调用失败:', e.message);
+                    }
+                }
+ 
+                return null;
+            }
+ 
+            function getCurrentMessageIdSafe() {
+                if (typeof getCurrentMessageId === 'function') {
+                    try {
+                        return getCurrentMessageId();
+                    } catch (e) {
+                        return null;
+                    }
+                }
+                return null;
+            }
+ 
+            // ============ 渲染 ============
+            function renderStatCardSimple(key, value) {
+                let valueClass = '';
+                let displayValue = '';
+                let subHtml = '';
+ 
+                if (isNumeric(value)) {
+                    valueClass = 'number';
+                    displayValue = String(value);
+                } else if (isPlainString(value)) {
+                    valueClass = 'string';
+                    displayValue = value === '' ? '（空字符串）' : value;
+                    if (value === '无' || value === '无' || value === 'none') {
+                        valueClass = 'empty';
+                    }
+                } else if (value === null || value === undefined) {
+                    valueClass = 'empty';
+                    displayValue = '—';
+                } else if (isEmptyArray(value)) {
+                    valueClass = 'array-empty';
+                    displayValue = '暂无';
+                } else if (Array.isArray(value)) {
+                    valueClass = 'string';
+                    displayValue = value.map(v => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join('、');
+                    if (!displayValue) displayValue = '（空）';
+                } else if (isPlainObject(value)) {
+                    // 小对象内联显示
+                    const entries = Object.entries(value);
+                    if (entries.length <= 3) {
+                        valueClass = 'string';
+                        displayValue = entries.map(([k, v]) => `${k}: ${isNumeric(v) ? v : String(v)}`).join(' | ');
+                    } else {
+                        valueClass = 'string';
+                        displayValue = `{${entries.length}个字段}`;
+                    }
+                } else if (typeof value === 'boolean') {
+                    valueClass = value ? 'number' : 'empty';
+                    displayValue = value ? '✅ 是' : '❌ 否';
+                } else {
+                    valueClass = 'string';
+                    displayValue = String(value);
+                }
+ 
+                return `
+                    <div class="stat-card${isNumeric(value) ? ' accent-glow' : ''}">
+                        <div class="stat-label">${escapeHtml(key)}</div>
+                        <div class="stat-value ${valueClass}">${escapeHtml(displayValue)}</div>
+                        ${subHtml}
+                    </div>`;
+            }
+ 
+            function renderItemCard(itemName, itemData) {
+                if (!isPlainObject(itemData)) {
+                    return `
+                        <div class="item-card">
+                            <div class="item-header">
+                                <span class="item-name">${escapeHtml(String(itemName))}</span>
+                            </div>
+                            <div class="item-desc">${escapeHtml(String(itemData))}</div>
+                        </div>`;
+                }
+ 
+                const tags = [];
+                if (itemData['类型']) {
+                    tags.push(`<span class="item-tag type">📦 ${escapeHtml(String(itemData['类型']))}</span>`);
+                }
+                if (itemData['等级']) {
+                    tags.push(`<span class="item-tag level">⭐ ${escapeHtml(String(itemData['等级']))}</span>`);
+                }
+                if (itemData['来源']) {
+                    tags.push(`<span class="item-tag source">📍 ${escapeHtml(String(itemData['来源']))}</span>`);
+                }
+                // 检测活当/死当状态
+                const descStr = String(itemData['功能描述'] || '');
+                const hasPawn = descStr.includes('活当') || descStr.includes('死当') || descStr.includes('赎回');
+                if (hasPawn) {
+                    const pawnType = descStr.includes('活当') ? '活当' : (descStr.includes('死当') ? '死当' : '典当');
+                    tags.push(`<span class="item-tag pawn">🏷️ ${pawnType}</span>`);
+                }
+ 
+                const footerParts = [];
+                if (isNumeric(itemData['标准积分估值'])) {
+                    footerParts.push(
+                        `<span>💰 估值：<span class="price">${itemData['标准积分估值']} 积分</span></span>`);
+                }
+                if (isNumeric(itemData['数量'])) {
+                    footerParts.push(`<span>📦 数量：<strong>${itemData['数量']}</strong></span>`);
+                }
+                if (isNumeric(itemData['赎回价格'])) {
+                    footerParts.push(
+                        `<span>🔓 赎回：<span class="redeem">${itemData['赎回价格']} 积分</span></span>`);
+                }
+ 
+                return `
+                    <div class="item-card">
+                        <div class="item-header">
+                            <span class="item-name">🗡️ ${escapeHtml(String(itemName))}</span>
+                            ${isNumeric(itemData['数量']) ? `<span class="item-quantity">×${itemData['数量']}</span>` : ''}
+                        </div>
+                        ${tags.length > 0 ? `<div class="item-tags">${tags.join('')}</div>` : ''}
+                        ${itemData['功能描述'] ? `<div class="item-desc">${escapeHtml(String(itemData['功能描述']))}</div>` : ''}
+                        ${footerParts.length > 0 ? `<div class="item-footer">${footerParts.join('')}</div>` : ''}
+                    </div>`;
+            }
+ 
+            function renderAll(statData) {
+                if (!statData || !isPlainObject(statData)) {
+                    contentEl.innerHTML = `
+                        <div class="state-box">
+                            <div class="state-icon">📭</div>
+                            <div class="state-text">当前楼层暂无 stat_data 数据<br>请确认变量已初始化</div>
+                            <button class="btn btn-accent btn-sm" onclick="document.getElementById('btnRefresh').click()">
+                                🔄 重新获取
+                            </button>
+                        </div>`;
+                    return;
+                }
+ 
+                const entries = Object.entries(statData);
+                // 分类：简单字段 vs 背包（对象）vs 数组字段
+                const simpleFields = [];
+                const backpackFields = []; // 对象字段（如背包）
+                const arrayFields = [];
+ 
+                for (const [key, value] of entries) {
+                    if (key === '背包' && isPlainObject(value)) {
+                        backpackFields.push({ key, value });
+                    } else if (Array.isArray(value) && value.length > 0 && isPlainObject(value[0])) {
+                        // 非空对象数组也特殊处理
+                        backpackFields.push({ key, value });
+                    } else if (Array.isArray(value)) {
+                        arrayFields.push({ key, value });
+                    } else {
+                        simpleFields.push({ key, value });
+                    }
+                }
+ 
+                let html = '';
+ 
+                // 概览卡片
+                if (simpleFields.length > 0 || arrayFields.length > 0) {
+                    html += `<div class="section-title"><span class="dot"></span>概览</div>`;
+                    html += `<div class="overview-grid">`;
+                    for (const { key, value } of simpleFields) {
+                        html += renderStatCardSimple(key, value);
+                    }
+                    for (const { key, value } of arrayFields) {
+                        html += renderStatCardSimple(key, value);
+                    }
+                    html += `</div>`;
+                }
+ 
+                // 背包 / 嵌套对象
+                for (const { key, value } of backpackFields) {
+                    if (key === '背包' && isPlainObject(value)) {
+                        const items = Object.entries(value);
+                        if (items.length > 0) {
+                            html +=
+                                `<div class="section-title"><span class="dot"></span>🎒 背包（${items.length} 件物品）</div>`;
+                            html += `<div class="backpack-grid">`;
+                            for (const [itemName, itemData] of items) {
+                                html += renderItemCard(itemName, itemData);
+                            }
+                            html += `</div>`;
+                        } else {
+                            html +=
+                                `<div class="section-title"><span class="dot"></span>🎒 背包</div>`;
+                            html +=
+                                `<div class="state-box"><div class="state-icon">🎒</div><div class="state-text">背包为空</div></div>`;
+                        }
+                    } else if (isPlainObject(value)) {
+                        const subItems = Object.entries(value);
+                        html +=
+                            `<div class="section-title"><span class="dot"></span>📂 ${escapeHtml(key)}（${subItems.length} 项）</div>`;
+                        html += `<div class="backpack-grid">`;
+                        for (const [subKey, subVal] of subItems) {
+                            html += renderItemCard(subKey, subVal);
+                        }
+                        html += `</div>`;
+                    } else if (Array.isArray(value) && value.length > 0 && isPlainObject(value[0])) {
+                        html +=
+                            `<div class="section-title"><span class="dot"></span>📋 ${escapeHtml(key)}（${value.length} 项）</div>`;
+                        html += `<div class="backpack-grid">`;
+                        value.forEach((item, idx) => {
+                            html += renderItemCard(`#${idx + 1}`, item);
+                        });
+                        html += `</div>`;
+                    }
+                }
+ 
+                // 如果没有任何数据
+                if (!html.trim()) {
+                    html = `
+                        <div class="state-box">
+                            <div class="state-icon">📭</div>
+                            <div class="state-text">stat_data 存在但无可展示的字段</div>
+                        </div>`;
+                }
+ 
+                contentEl.innerHTML = html;
+            }
+ 
+            function escapeHtml(str) {
+                if (typeof str !== 'string') return String(str);
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+ 
+            // ============ 更新显示 ============
+            function updateDisplay() {
+                badgeTime.textContent = formatTime();
+ 
+                const msgId = getCurrentMessageIdSafe();
+                if (msgId !== null && msgId !== undefined) {
+                    badgeMessage.textContent = `楼层 ${msgId}`;
+                } else {
+                    badgeMessage.textContent = '变量查看';
+                }
+ 
+                const result = getStatData();
+                if (result && result.data !== undefined && result.data !== null) {
+                    // 如果 stat_data 是空对象，也显示
+                    if (isPlainObject(result.data) && Object.keys(result.data).length === 0) {
+                        currentStatData = result.data;
+                        contentEl.innerHTML = `
+                            <div class="state-box">
+                                <div class="state-icon">📭</div>
+                                <div class="state-text">stat_data 为空对象<br>变量可能尚未初始化</div>
+                                <button class="btn btn-accent btn-sm" onclick="document.getElementById('btnRefresh').click()">
+                                    🔄 重新获取
+                                </button>
+                            </div>`;
+                    } else if (result.data !== undefined && result.data !== null) {
+                        currentStatData = result.data;
+                        renderAll(result.data);
+                    } else {
+                        currentStatData = null;
+                        renderAll(null);
+                    }
+                } else {
+                    currentStatData = null;
+                    renderAll(null);
+                }
+ 
+                // 更新badge显示数据来源
+                if (result && result.source) {
+                    badgeMessage.textContent =
+                        (msgId !== null ? `楼层 ${msgId}` : '变量') + ` · ${result.source}`;
+                }
+            }
+ 
+            // ============ 复制JSON ============
+            function copyJsonToClipboard() {
+                if (!currentStatData || (isPlainObject(currentStatData) && Object.keys(currentStatData).length ===
+                    0)) {
+                    showToast('⚠️ 暂无数据可复制', 'error');
+                    return;
+                }
+                try {
+                    const jsonStr = JSON.stringify(currentStatData, null, 2);
+                    if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(jsonStr).then(() => {
+                            showToast('✅ 已复制 stat_data JSON 到剪贴板', 'success');
+                        }).catch(() => {
+                            fallbackCopy(jsonStr);
+                        });
+                    } else if (typeof builtin !== 'undefined' && typeof builtin.copyText === 'function') {
+                        builtin.copyText(jsonStr);
+                        showToast('✅ 已复制 stat_data JSON 到剪贴板', 'success');
+                    } else {
+                        fallbackCopy(jsonStr);
+                    }
+                } catch (e) {
+                    showToast('❌ 复制失败: ' + e.message, 'error');
+                }
+            }
+ 
+            function fallbackCopy(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                textarea.style.top = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('✅ 已复制 stat_data JSON 到剪贴板', 'success');
+                } catch (e) {
+                    showToast('❌ 复制失败，请手动选择文本复制', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+ 
+            // ============ 事件绑定 ============
+            btnRefresh.addEventListener('click', () => {
+                btnRefresh.textContent = '⏳ 刷新中...';
+                btnRefresh.disabled = true;
+                // 短暂延迟以确保变量已更新
+                setTimeout(() => {
+                    updateDisplay();
+                    btnRefresh.textContent = '🔄 刷新';
+                    btnRefresh.disabled = false;
+                    showToast('✅ 数据已刷新', 'success');
+                }, 150);
+            });
+ 
+            btnCopy.addEventListener('click', () => {
+                copyJsonToClipboard();
+            });
+ 
+            // ============ 自动刷新监听 ============
+            // 尝试监听 mvu 变量更新事件
+            function setupAutoRefresh() {
+                // 监听 Mvu 事件（如果可用）
+                if (typeof Mvu !== 'undefined' && Mvu.events && typeof eventOn === 'function') {
+                    try {
+                        eventOn(Mvu.events.VARIABLE_UPDATE_ENDED, () => {
+                            console.log('[StatViewer] 检测到 Mvu 变量更新，自动刷新');
+                            updateDisplay();
+                        });
+                        console.log('[StatViewer] 已监听 Mvu VARIABLE_UPDATE_ENDED 事件');
+                    } catch (e) {
+                        console.warn('[StatViewer] 无法监听 Mvu 事件:', e.message);
+                    }
+                }
+ 
+                // 备选：监听酒馆消息更新事件
+                if (typeof tavern_events !== 'undefined' && typeof eventOn === 'function') {
+                    try {
+                        eventOn(tavern_events.MESSAGE_UPDATED, () => {
+                            console.log('[StatViewer] 检测到消息更新，自动刷新');
+                            updateDisplay();
+                        });
+                        console.log('[StatViewer] 已监听 MESSAGE_UPDATED 事件');
+                    } catch (e) {
+                        console.warn('[StatViewer] 无法监听 MESSAGE_UPDATED 事件:', e.message);
+                    }
+                }
+            }
+ 
+            // ============ 初始化 ============
+            function init() {
+                updateDisplay();
+                setupAutoRefresh();
+                console.log('[StatViewer] Stat Data 查看器已初始化');
+                console.log('[StatViewer] 当前 stat_data:', currentStatData);
+            }
+ 
+            // 页面加载完成后初始化
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                // DOM 已就绪，但可能变量还没注入，稍作延迟
+                setTimeout(init, 100);
+            }
+ 
+            // 暴露到全局方便调试
+            window.statViewer = {
+                getStatData,
+                updateDisplay,
+                getCurrentData: () => currentStatData,
+                renderAll,
+                copyJsonToClipboard,
+            };
+ 
+        })();
+    </script>
+</body>
+</html>

@@ -713,7 +713,7 @@ function renderApiSettings(state) {
         </div>
         <div class="st-form-group">
           <label class="st-label">Max Tokens</label>
-          <input type="number" class="st-input" id="st-secondary-maxtokens" min="1" max="8192" value="${sec.maxTokens ?? 2048}">
+          <input type="number" class="st-input" id="st-secondary-maxtokens" min="1" max="8192" value="${sec.maxTokens ?? 8000}">
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
           <button class="st-btn-secondary" id="st-fetch-secondary-models">获取模型列表</button>
@@ -1295,7 +1295,7 @@ function attachSettingsListeners(state, store) {
         apiKey: (document.getElementById('st-secondary-key')?.value || '').trim(),
         model: (document.getElementById('st-secondary-model')?.value || '').trim() || 'gpt-3.5-turbo',
         temperature: parseFloat(document.getElementById('st-secondary-temp')?.value) || 0.7,
-        maxTokens: parseInt(document.getElementById('st-secondary-maxtokens')?.value) || 2048
+        maxTokens: parseInt(document.getElementById('st-secondary-maxtokens')?.value) || 8000
       } : (state.settings.secondaryApi || null)
     });
     // 同步切换世界书模式
