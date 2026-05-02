@@ -10116,20 +10116,6 @@ ${discipleLines || '无'}
       }
     }
 
-    // 判断成员境界是否满足功法修习要求（>=）
-    function canComprehendSkill(memberRealm, skillRealmReq) {
-      if (!skillRealmReq) return true;
-      const normalize = s => (s || '').replace('炼气期', '练气期').replace('練氣期', '练气期');
-      const m = parseRealm(normalize(memberRealm));
-      const r = parseRealm(normalize(skillRealmReq));
-      const mBig = REALM_BIG[m.level] ?? 0;
-      const rBig = REALM_BIG[r.level] ?? 0;
-      if (mBig !== rBig) return mBig > rBig;
-      const mSmall = REALM_SMALL[m.stage] ?? 0;
-      const rSmall = REALM_SMALL[r.stage] ?? 0;
-      return mSmall >= rSmall;
-    }
-
     function openPracticeDialog(skillId) {
       const skill = (window.gameStateManager?.state?.library || []).find(s => s.id === skillId);
       if (!skill) return;
@@ -11189,6 +11175,20 @@ ${discipleLines || '无'}
         }
       }
       return { level: '练气期', stage: '前期' };
+    }
+
+    // 判断成员境界是否满足功法修习要求（>=）
+    function canComprehendSkill(memberRealm, skillRealmReq) {
+      if (!skillRealmReq) return true;
+      const normalize = s => (s || '').replace('炼气期', '练气期').replace('練氣期', '练气期');
+      const m = parseRealm(normalize(memberRealm));
+      const r = parseRealm(normalize(skillRealmReq));
+      const mBig = REALM_BIG[m.level] ?? 0;
+      const rBig = REALM_BIG[r.level] ?? 0;
+      if (mBig !== rBig) return mBig > rBig;
+      const mSmall = REALM_SMALL[m.stage] ?? 0;
+      const rSmall = REALM_SMALL[r.stage] ?? 0;
+      return mSmall >= rSmall;
     }
 
     // ====== GAME STATE INITIALIZATION ======
