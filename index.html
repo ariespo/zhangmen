@@ -7194,7 +7194,11 @@
       }
       const success = addActionLog('建筑', name, `新增建筑「${name}」`, 1, { type: 'addBuilding', name, desc });
       if (!success) return;
-      // 不直接创建建筑，由 LLM 在剧情中决定修建结果
+      window.gameStateManager.applyPatch([{
+        op: 'insert',
+        path: '/world/buildings/-',
+        value: { name, level: 1, unlocked: true, description: desc || '' }
+      }]);
       closeModal();
     }
 
@@ -10237,9 +10241,47 @@ ${discipleLines || '无'}
       const promptText = `（${namesText}）进行了对功法《${skill.name}》的参悟。如果该角色此前尚未掌握该功法，则掌握；如果已经掌握，则提高修行进度，进度提升百分比为1-20，根据角色的天资来调整浮动。`;
 
       const ok = addActionLog('参悟', `参悟《${skill.name}》`, promptText, totalCost);
-      if (ok) {
-        closeModal();
+      if (!ok) return;
+
+      // 根据天资计算进度增量并直接更新成员功法
+      const TALENT_RANKS_LOCAL = ['甲上','甲中','甲下','乙上','乙中','乙下','丙上','丙中','丙下','丁上','丁中','丁下'];
+      const patches = [];
+      memberNames.forEach(name => {
+        const m = state.members?.[name];
+        if (!m) return;
+        const talentIdx = TALENT_RANKS_LOCAL.indexOf(m.talent);
+        const idx = talentIdx >= 0 ? talentIdx : 5; // 未识别天资按乙下处理
+        const increment = 30 - idx * 2;
+        const existingIdx = (m.skills || []).findIndex(s => s.skillId === skillId);
+        if (existingIdx === -1) {
+          patches.push({
+            op: 'insert',
+            path: `/members/${name}/skills/-`,
+            value: { skillId, progress: increment, maxed: false }
+          });
+        } else {
+          const cur = m.skills[existingIdx];
+          if (cur.maxed) return;
+          const newProgress = Math.min(100, (cur.progress || 0) + increment);
+          patches.push({
+            op: 'replace',
+            path: `/members/${name}/skills/${existingIdx}/progress`,
+            value: newProgress
+          });
+          if (newProgress >= 100) {
+            patches.push({
+              op: 'replace',
+              path: `/members/${name}/skills/${existingIdx}/maxed`,
+              value: true
+            });
+          }
+        }
+      });
+      if (patches.length > 0) {
+        window.gameStateManager.applyPatch(patches);
       }
+
+      closeModal();
     }
 
     // ====== OPPORTUNITY SYSTEM ======
