@@ -132,7 +132,8 @@
 - **多 API 模式**：核心功能完成 ✅，提示词增强完成 ✅，**待实际测试**
 - **Bug 修复**：try 块缺失 ✅、preset 回退值 ✅、analysis 标签 ✅、delta 字符串转换 ✅
 - **代码重构**：saveApiConfig ✅、makeDraggable ✅、标签常量 ✅、saveSettings 防抖 ✅
-- **代码已推送**：`1035cbd` 已推送到 GitHub
+- **前端操作即时落库**：新增建筑直接落库 ✅、参悟功法按天资即时更新进度 ✅（2026-05-03）
+- **代码已推送**：`1035cbd` 已推送到 GitHub；`5046058` 待推送（GitHub 网络问题）
 
 ## 今日待办（2026-04-27）
 - [ ] 多 API 模式端到端测试
@@ -140,6 +141,12 @@
 - [ ] makeDraggable 简化（clientY - rect.top）
 - [ ] 111 处内联 onclick 改为事件委托
 - [ ] LLM 层抽离为独立模块
+
+## 今日待办（2026-05-03）
+- [x] `submitAddBuilding` 直接 insert 建筑到 `/world/buildings/-`
+- [x] `practiceSkill` 按天资计算进度增量并即时落库（未修习则添加，已修习则更新 progress / maxed）
+- [ ] 浏览器实测：建筑卡片立即出现、不同天资成员功法进度增量正确（甲上 +30 … 丁下 +8）
+- [ ] 网络恢复后 `git push` 同步 `5046058`
 
 ## 验证命令
 ```bash

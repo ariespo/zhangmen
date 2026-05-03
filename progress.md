@@ -56,3 +56,27 @@
 - [ ] 验证机缘管理规则是否生效（始终保持 4 条机缘）
 - [ ] 单 API 模式下机缘替换逻辑是否正确执行
 - [ ] 第二 API 返回的 `<vars>` 是否包含 `<analysis>` 标签
+
+---
+
+## 2026-05-03
+
+### 已完成 — 前端操作即时落库
+- [x] `submitAddBuilding`：addActionLog 后立即向 `/world/buildings/-` 插入 `{ name, level: 1, unlocked: true, description }`，无需等待 LLM 推演
+- [x] `practiceSkill`：addActionLog 后按选中成员天资计算进度增量并直接修改成员功法
+  - 增量公式：`30 - talentIndex × 2`（甲上 +30 … 乙下 +20 … 丁下 +8）
+  - 未修习：插入 `/members/{name}/skills/-` = `{ skillId, progress: increment, maxed: false }`
+  - 已修习：替换 progress = `min(100, current + increment)`；达 100% 同步置 `maxed: true`
+  - 满级成员复选框已 disabled，无需额外保护；多人选中合并为单次 applyPatch
+  - 未识别天资字段按"乙下"兜底（idx=5）
+- [x] 本地提交 `5046058`
+
+### 阻塞
+- [ ] GitHub 推送失败（`Connection was reset`），网络恢复后重试 `git push`
+
+### 验证清单（待测试）
+- [ ] 山门建筑页：点击「新增建筑」填名称提交，建筑卡片立即出现
+- [ ] 藏经阁：选择功法 → 参悟此功法 → 勾选不同天资成员 → 点击"加入操作列表"
+  - 未修习成员：成员详情功法列表新增一条，进度等于天资增量
+  - 已修习未满成员：进度按天资增量提升，进度达 100% 时显示已满级
+  - 撤销操作时只回退体力与机缘标记（变量修改保留，与现有撤销逻辑一致）
