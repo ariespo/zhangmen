@@ -10654,7 +10654,7 @@ ${discipleLines || '无'}
           path: '/treasury/items/' + idx + '/owner',
           value: targetName || ''
         }]);
-        renderTreasury(currentTreasuryType);
+        refreshTreasuryDisplay();
         closeModal();
       }
     }
@@ -10716,42 +10716,97 @@ ${discipleLines || '无'}
       overlay.classList.add('active');
     }
 
-    const treasuryTypeMap = { weapon: '武器', armor: '防具', escape: '遁具', accessory: '饰品' };
-
-    function renderTreasury(type) {
+    function renderTreasuryItems(items) {
       const grid = document.getElementById('item-grid');
+      const emptyState = document.getElementById('treasury-empty');
       grid.innerHTML = '';
-      const targetType = treasuryTypeMap[type];
-      const items = (window.gameStateManager?.state?.treasury?.items || []).filter(i => i.type === targetType);
+      if (items.length === 0) {
+        grid.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+      grid.style.display = 'grid';
+      emptyState.style.display = 'none';
       items.forEach(item => {
         const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
         const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.12)' : item.color === 'purple' ? 'rgba(139,126,200,0.12)' : item.color === 'pink' ? 'rgba(212,114,140,0.12)' : 'rgba(200,168,110,0.12)';
+        const typeKey = Object.keys(TREASURY_TYPE_MAP).find(k => TREASURY_TYPE_MAP[k].label === item.type) || 'misc';
+        const isEquip = item.type === '武器' || item.type === '防具' || item.type === '遁具' || item.type === '饰品' || item.type === '法宝';
         const card = document.createElement('div');
         card.className = 'item-card';
         card.innerHTML = `
           <div class="item-icon-lg" style="background:${bgVar};color:${colorVar}">
-            ${itemSvgs[type]}
+            ${TREASURY_TYPE_MAP[typeKey]?.svg || TREASURY_TYPE_MAP.misc.svg}
           </div>
           <h5>${item.name}</h5>
           <div class="item-rarity" style="background:${bgVar};color:${colorVar}">${item.rank}</div>
-          <div class="item-owner">${item.owner || '库房'}</div>
+          <div class="item-owner">${item.owner || '库房'}${item.quantity > 1 ? ' · ×' + item.quantity : ''}</div>
           <div style="margin-top:10px;display:flex;gap:6px;justify-content:center">
             <button class="action-btn-sm" onclick="event.stopPropagation();openItemDetail('${item.id}')">详情</button>
-            <button class="action-btn-sm" onclick="event.stopPropagation();openAssignDialog('${item.id}')">分配</button>
+            ${isEquip ? `<button class="action-btn-sm" onclick="event.stopPropagation();openAssignDialog('${item.id}')">分配</button>` : ''}
           </div>
         `;
         grid.appendChild(card);
       });
     }
-    renderTreasury('weapon');
 
-    let currentTreasuryType = 'weapon';
-    function switchTreasury(type, btn) {
-      currentTreasuryType = type;
-      document.querySelectorAll('.treasury-tab').forEach(t => t.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      renderTreasury(type);
+    function renderSubFilters() {
+      const container = document.getElementById('treasury-sub-filters');
+      const config = TREASURY_GROUP_CONFIG[treasuryState.group];
+      if (!config || config.filters.length <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+      container.innerHTML = config.filters.map(f => {
+        const label = f === 'all' ? '全部' : TREASURY_TYPE_MAP[f]?.label || f;
+        const isActive = treasuryState.filter === f;
+        return `<button class="treasury-sub-filter ${isActive ? 'active' : ''}" onclick="switchTreasuryFilter('${f}', this)">${label}</button>`;
+      }).join('');
     }
+
+    function switchTreasuryFilter(filter, btn) {
+      treasuryState.filter = filter;
+      if (btn) {
+        document.querySelectorAll('.treasury-sub-filter').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      refreshTreasuryDisplay();
+    }
+
+    function switchTreasuryGroup(group, btn) {
+      treasuryState.group = group;
+      treasuryState.filter = 'all';
+      treasuryState.search = '';
+      document.getElementById('treasury-search').value = '';
+      document.querySelectorAll('.treasury-group-tab').forEach(t => t.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderSubFilters();
+      refreshTreasuryDisplay();
+    }
+
+    function onTreasurySearch(value) {
+      treasuryState.search = value.trim().toLowerCase();
+      refreshTreasuryDisplay();
+    }
+
+    function refreshTreasuryDisplay() {
+      const allItems = window.gameStateManager?.state?.treasury?.items || [];
+      const groupTypes = TREASURY_GROUP_CONFIG[treasuryState.group].filters
+        .filter(f => f !== 'all')
+        .map(f => TREASURY_TYPE_MAP[f]?.label);
+      let items = allItems.filter(i => groupTypes.includes(i.type));
+      if (treasuryState.filter !== 'all') {
+        const targetLabel = TREASURY_TYPE_MAP[treasuryState.filter]?.label;
+        items = items.filter(i => i.type === targetLabel);
+      }
+      if (treasuryState.search) {
+        items = items.filter(i => i.name.toLowerCase().includes(treasuryState.search));
+      }
+      renderTreasuryItems(items);
+    }
+
+    renderSubFilters();
+    refreshTreasuryDisplay();
 
     // 初始化红点显示和体力条
     updateNotificationDots();
@@ -10821,7 +10876,7 @@ ${discipleLines || '无'}
       if (typeof renderSkills === 'function') renderSkills();
       if (typeof renderOpportunities === 'function') renderOpportunities();
       if (typeof renderQuests === 'function') renderQuests();
-      if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
+      if (typeof refreshTreasuryDisplay === 'function') refreshTreasuryDisplay();
     }
 
     const gameStateManager = createGameStateManager();
@@ -10898,7 +10953,7 @@ ${discipleLines || '无'}
       if (typeof renderRegions === 'function') renderRegions();
     });
     gameStateManager.subscribe('/treasury/items', () => {
-      if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
+      if (typeof refreshTreasuryDisplay === 'function') refreshTreasuryDisplay();
     });
     gameStateManager.subscribe('/treasury', treasury => {
       const nameEl = document.getElementById('sect-array-name');
@@ -11529,7 +11584,7 @@ ${discipleLines || '无'}
       if (typeof renderMembers === 'function') renderMembers();
       if (typeof renderBuildings === 'function') renderBuildings();
       if (typeof renderRegions === 'function') renderRegions();
-      if (typeof renderTreasury === 'function') renderTreasury(window.currentTreasuryType || 'weapon');
+      if (typeof refreshTreasuryDisplay === 'function') refreshTreasuryDisplay();
       if (typeof renderSkills === 'function') renderSkills();
       if (typeof renderOpportunities === 'function') renderOpportunities();
       if (typeof renderQuests === 'function') renderQuests();
