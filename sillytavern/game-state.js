@@ -118,7 +118,8 @@ const MemberSchema = zObject({
   personality: zArray(zString(), []),
   appearance: zArray(zString(), []),
   skills: zArray(MemberSkillSchema, []),
-  equipment: zArray(EquipmentSchema, [])
+  equipment: zArray(EquipmentSchema, []),
+  consumedPills: zArray(zString(), [])
 });
 
 const TreasuryItemSchema = zObject({
