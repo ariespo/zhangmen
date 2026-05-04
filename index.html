@@ -2940,6 +2940,72 @@
       color: var(--jade-glow);
     }
 
+    .treasury-group-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .treasury-group-tab {
+      flex: 1;
+      padding: 10px 16px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: rgba(168, 230, 230, 0.7);
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .treasury-group-tab:hover, .treasury-group-tab.active {
+      background: rgba(110, 207, 207, 0.15);
+      border-color: rgba(110, 207, 207, 0.4);
+      color: var(--jade-glow);
+    }
+    .treasury-sub-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .treasury-sub-filter {
+      padding: 4px 12px;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      color: rgba(168, 230, 230, 0.6);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .treasury-sub-filter:hover, .treasury-sub-filter.active {
+      background: rgba(110, 207, 207, 0.12);
+      border-color: rgba(110, 207, 207, 0.35);
+      color: var(--jade-glow);
+    }
+    .treasury-toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+    .treasury-search {
+      flex: 1;
+      padding: 8px 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+    }
+    .treasury-search::placeholder {
+      color: rgba(168, 230, 230, 0.35);
+    }
+
     .item-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -3926,6 +3992,9 @@
       .member-detail-info-value { font-size: 12px; }
       .member-detail-equip-grid { grid-template-columns: 1fr; }
       .member-detail-chip { padding: 4px 10px; font-size: 11px; }
+      /* treasury mobile */
+      .treasury-toolbar { flex-direction: column; align-items: stretch; }
+      .treasury-search { width: 100%; }
     }
 
     /* === LLM PROCESSING OVERLAY === */
@@ -5216,13 +5285,21 @@
             <h2>万宝阁</h2>
             <div style="font-size:12px;color:rgba(168,230,230,0.5)">宗门法宝，任尔调配</div>
           </div>
-          <div class="treasury-tabs">
-            <button class="treasury-tab active" onclick="switchTreasury('weapon', this)">武器</button>
-            <button class="treasury-tab" onclick="switchTreasury('armor', this)">护具</button>
-            <button class="treasury-tab" onclick="switchTreasury('escape', this)">遁具</button>
-            <button class="treasury-tab" onclick="switchTreasury('accessory', this)">饰品</button>
+          <div class="treasury-group-tabs">
+            <button class="treasury-group-tab active" data-group="equipment" onclick="switchTreasuryGroup('equipment', this)">装备</button>
+            <button class="treasury-group-tab" data-group="consumable" onclick="switchTreasuryGroup('consumable', this)">消耗品</button>
+            <button class="treasury-group-tab" data-group="misc" onclick="switchTreasuryGroup('misc', this)">其他</button>
+          </div>
+          <div class="treasury-sub-filters" id="treasury-sub-filters"></div>
+          <div class="treasury-toolbar">
+            <input type="text" class="treasury-search" id="treasury-search" placeholder="搜索物品..." oninput="onTreasurySearch(this.value)">
+            <button class="action-btn-sm" onclick="openAddItemDialog()">+ 新增物品</button>
           </div>
           <div class="item-grid" id="item-grid"></div>
+          <div class="empty-state" id="treasury-empty" style="display:none;text-align:center;padding:40px 20px;color:rgba(168,230,230,0.4)">
+            <div style="font-size:48px;margin-bottom:12px">📦</div>
+            <div>暂无此类物品</div>
+          </div>
         </div>
 
         <!-- QUESTS PAGE -->
