@@ -10808,6 +10808,147 @@ ${discipleLines || '无'}
     renderSubFilters();
     refreshTreasuryDisplay();
 
+    function openAddItemDialog() {
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><path d="M12 5v14M5 12h14"/></svg>
+        新增物品
+      `;
+
+      const currentFilter = treasuryState.filter !== 'all' ? treasuryState.filter : 'weapon';
+      const presetOptions = Object.keys(TREASURY_PRESETS).map(k => {
+        const presets = TREASURY_PRESETS[k];
+        return `<optgroup label="${TREASURY_TYPE_MAP[k]?.label || k}">
+          ${presets.map((p, i) => `<option value="${k}:${i}">${p.name} · ${p.rank}</option>`).join('')}
+        </optgroup>`;
+      }).join('');
+
+      document.getElementById('modal-body').innerHTML = `
+        <div style="display:flex;gap:16px;max-height:70vh;overflow-y:auto">
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:13px;color:rgba(168,230,230,0.6);margin-bottom:10px">预设库（点击自动填充）</div>
+            <select id="add-item-preset" style="width:100%;padding:8px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit;margin-bottom:10px" onchange="onPresetSelect(this.value)">
+              <option value="">-- 选择预设 --</option>
+              ${presetOptions}
+            </select>
+            <div id="preset-preview" style="font-size:12px;color:rgba(168,230,230,0.5);line-height:1.6"></div>
+          </div>
+          <div style="flex:2;min-width:250px">
+            <div class="form-group">
+              <label>名称 *</label>
+              <input type="text" id="add-item-name" style="width:100%;padding:8px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit" placeholder="物品名称">
+            </div>
+            <div class="form-group">
+              <label>类型</label>
+              <select id="add-item-type" style="width:100%;padding:8px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit">
+                ${Object.keys(TREASURY_TYPE_MAP).map(k => `<option value="${TREASURY_TYPE_MAP[k].label}">${TREASURY_TYPE_MAP[k].label}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>品阶</label>
+              <input type="text" id="add-item-rank" style="width:100%;padding:8px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit" placeholder="黄阶下品" value="黄阶下品">
+            </div>
+            <div class="form-group">
+              <label>配色</label>
+              <div style="display:flex;gap:10px">
+                ${['jade','purple','pink','gold'].map(c => `
+                  <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+                    <input type="radio" name="add-item-color" value="${c}" ${c === 'jade' ? 'checked' : ''}>
+                    <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${c === 'jade' ? '#6ecfcf' : c === 'purple' ? '#8b7ec8' : c === 'pink' ? '#d4728c' : '#c8a86e'}"></span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+            <div class="form-group">
+              <label>效果</label>
+              <div style="display:flex;gap:8px">
+                <div style="flex:1">杀伐 <input type="number" id="add-item-effect-sha" style="width:100%;padding:6px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit" value="0"></div>
+                <div style="flex:1">防御 <input type="number" id="add-item-effect-def" style="width:100%;padding:6px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit" value="0"></div>
+                <div style="flex:1">身法 <input type="number" id="add-item-effect-spd" style="width:100%;padding:6px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit" value="0"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>介绍</label>
+              <textarea id="add-item-desc" style="width:100%;padding:8px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit;min-height:60px;resize:vertical" placeholder="物品描述..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>数量</label>
+              <input type="number" id="add-item-qty" style="width:100%;padding:8px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit" value="1" min="1">
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+          <button class="opportunity-btn primary" id="add-item-submit" onclick="submitAddItem()">确认新增</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function onPresetSelect(value) {
+      if (!value) {
+        document.getElementById('preset-preview').innerHTML = '';
+        return;
+      }
+      const [typeKey, idx] = value.split(':');
+      const preset = TREASURY_PRESETS[typeKey]?.[parseInt(idx)];
+      if (!preset) return;
+      document.getElementById('add-item-name').value = preset.name;
+      document.getElementById('add-item-type').value = preset.type;
+      document.getElementById('add-item-rank').value = preset.rank;
+      const colorInput = document.querySelector(`input[name="add-item-color"][value="${preset.color}"]`);
+      if (colorInput) colorInput.checked = true;
+      document.getElementById('add-item-effect-sha').value = preset.effects?.杀伐 || 0;
+      document.getElementById('add-item-effect-def').value = preset.effects?.防御 || 0;
+      document.getElementById('add-item-effect-spd').value = preset.effects?.身法 || 0;
+      document.getElementById('add-item-desc').value = preset.description || '';
+      document.getElementById('preset-preview').innerHTML = `
+        <div style="padding:10px;background:rgba(110,207,207,0.08);border-radius:8px;border:1px solid rgba(110,207,207,0.2)">
+          <div style="color:var(--jade-glow);margin-bottom:4px">${preset.name} · ${preset.rank}</div>
+          <div>${preset.description}</div>
+        </div>
+      `;
+    }
+
+    function submitAddItem() {
+      const name = document.getElementById('add-item-name').value.trim();
+      if (!name) {
+        alert('请输入物品名称');
+        return;
+      }
+      const type = document.getElementById('add-item-type').value;
+      const rank = document.getElementById('add-item-rank').value.trim() || '黄阶下品';
+      const color = document.querySelector('input[name="add-item-color"]:checked')?.value || 'jade';
+      const effects = {
+        杀伐: parseInt(document.getElementById('add-item-effect-sha').value) || 0,
+        防御: parseInt(document.getElementById('add-item-effect-def').value) || 0,
+        身法: parseInt(document.getElementById('add-item-effect-spd').value) || 0
+      };
+      const description = document.getElementById('add-item-desc').value.trim();
+      const quantity = Math.max(1, parseInt(document.getElementById('add-item-qty').value) || 1);
+
+      const item = {
+        id: 'treasury_' + Date.now(),
+        name,
+        type,
+        rank,
+        color,
+        quantity,
+        description,
+        owner: '',
+        effects
+      };
+
+      window.gameStateManager.applyPatch([{
+        op: 'insert',
+        path: '/treasury/items/-',
+        value: item
+      }]);
+
+      closeModal();
+      refreshTreasuryDisplay();
+    }
+
     // 初始化红点显示和体力条
     updateNotificationDots();
     updateStaminaSegments();
