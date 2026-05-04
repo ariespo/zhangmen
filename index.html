@@ -10504,12 +10504,76 @@ ${discipleLines || '无'}
     renderQuests();
 
     // ====== TREASURY ======
-    const itemSvgs = {
-      weapon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14.5 3.5l6 6-11 11-6-6z"/><path d="M9.5 14.5l-5 5"/><path d="M18 2l4 4"/></svg>',
-      armor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 3L4 7v5c0 5 3.5 9.5 8 10.5 4.5-1 8-5.5 8-10.5V7l-8-4z"/></svg>',
-      escape: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-      accessory: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>'
+    const TREASURY_TYPE_MAP = {
+      weapon: { label: '武器', group: 'equipment', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14.5 3.5l6 6-11 11-6-6z"/><path d="M9.5 14.5l-5 5"/><path d="M18 2l4 4"/></svg>' },
+      armor: { label: '护具', group: 'equipment', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 3L4 7v5c0 5 3.5 9.5 8 10.5 4.5-1 8-5.5 8-10.5V7l-8-4z"/></svg>' },
+      escape: { label: '遁具', group: 'equipment', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>' },
+      accessory: { label: '饰品', group: 'equipment', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>' },
+      magic: { label: '法宝', group: 'equipment', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>' },
+      pill: { label: '丹药', group: 'consumable', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M10 2v7.31"/><path d="M14 2v7.31"/><path d="M8.5 9.3a7 7 0 1 0 7 0"/><path d="M12 16v5"/></svg>' },
+      material: { label: '材料', group: 'consumable', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2l-8 8 8 8 8-8-8-8z"/></svg>' },
+      misc: { label: '杂物', group: 'misc', svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>' }
     };
+
+    const TREASURY_GROUP_CONFIG = {
+      equipment: { label: '装备', filters: ['all', 'weapon', 'armor', 'escape', 'accessory', 'magic'] },
+      consumable: { label: '消耗品', filters: ['all', 'pill', 'material'] },
+      misc: { label: '其他', filters: ['all', 'misc'] }
+    };
+
+    const TREASURY_PRESETS = {
+      weapon: [
+        { name: '青冥剑', type: '武器', rank: '黄阶上品', color: 'jade', effects: { 杀伐: 15, 防御: 0, 身法: 5 }, description: '剑身泛着淡淡青光，锋利异常' },
+        { name: '玄铁重剑', type: '武器', rank: '玄阶下品', color: 'purple', effects: { 杀伐: 25, 防御: 5, 身法: -5 }, description: '以千年玄铁锻造，沉重无比，威力惊人' },
+        { name: '血纹刀', type: '武器', rank: '黄阶中品', color: 'pink', effects: { 杀伐: 12, 防御: 0, 身法: 2 }, description: '刀刃有血丝纹路，饮血后更加锋利' },
+        { name: '竹杖', type: '武器', rank: '凡阶', color: 'jade', effects: { 杀伐: 3, 防御: 0, 身法: 0 }, description: '普通青竹削制而成，聊胜于无' }
+      ],
+      armor: [
+        { name: '玄铁护甲', type: '防具', rank: '黄阶上品', color: 'purple', effects: { 杀伐: 0, 防御: 15, 身法: -3 }, description: '玄铁锻造，沉重但防御力极佳' },
+        { name: '轻云袍', type: '防具', rank: '黄阶中品', color: 'jade', effects: { 杀伐: 0, 防御: 8, 身法: 5 }, description: '以灵蚕吐丝织就，轻盈飘逸' },
+        { name: '皮甲', type: '防具', rank: '凡阶', color: 'jade', effects: { 杀伐: 0, 防御: 4, 身法: 0 }, description: '普通兽皮缝制，基础防护' }
+      ],
+      escape: [
+        { name: '遁地符', type: '遁具', rank: '黄阶中品', color: 'gold', effects: { 杀伐: 0, 防御: 0, 身法: 10 }, description: '贴于足底，可借地脉之力遁走' },
+        { name: '风行靴', type: '遁具', rank: '黄阶上品', color: 'jade', effects: { 杀伐: 0, 防御: 2, 身法: 12 }, description: '刻有风行法阵，踏之如御风' }
+      ],
+      accessory: [
+        { name: '聚灵玉佩', type: '饰品', rank: '黄阶上品', color: 'jade', effects: { 杀伐: 5, 防御: 5, 身法: 5 }, description: '内含微型聚灵阵，可缓慢汇聚灵气' },
+        { name: '护心镜', type: '饰品', rank: '玄阶下品', color: 'gold', effects: { 杀伐: 0, 防御: 10, 身法: 0 }, description: '悬于胸前，可挡致命一击' }
+      ],
+      magic: [
+        { name: '乾坤袋', type: '法宝', rank: '玄阶中品', color: 'gold', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '内有乾坤，可容纳海量物品' },
+        { name: '照妖镜', type: '法宝', rank: '黄阶上品', color: 'purple', effects: { 杀伐: 8, 防御: 0, 身法: 0 }, description: '可照出妖物本体，亦有伤敌之能' }
+      ],
+      pill: [
+        { name: '疗伤丹', type: '丹药', rank: '黄阶下品', color: 'jade', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '疗伤圣药，可恢复伤势与心情' },
+        { name: '回灵丹', type: '丹药', rank: '黄阶下品', color: 'jade', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '恢复灵识清明，提升忠诚度' },
+        { name: '延寿丹', type: '丹药', rank: '玄阶下品', color: 'gold', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '可增加寿元，每名角色只能服用一次' },
+        { name: '聚灵丹', type: '丹药', rank: '黄阶中品', color: 'purple', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '灵气充盈，身心俱泰' },
+        { name: '锻体丹', type: '丹药', rank: '黄阶中品', color: 'pink', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '锤炼体魄，永久性增强三维属性' },
+        { name: '轻灵丹', type: '丹药', rank: '黄阶中品', color: 'jade', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '身法精进，灵动如风' }
+      ],
+      material: [
+        { name: '玄铁矿石', type: '材料', rank: '黄阶上品', color: 'purple', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '炼制玄阶法器的基础材料' },
+        { name: '灵草', type: '材料', rank: '黄阶下品', color: 'jade', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '炼制丹药的常见材料' },
+        { name: '妖丹', type: '材料', rank: '黄阶中品', color: 'pink', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '妖兽内丹，蕴含精纯灵力' }
+      ],
+      misc: [
+        { name: '宗门令牌', type: '杂物', rank: '凡阶', color: 'gold', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '宗门身份象征，无实际效用' },
+        { name: '古旧地图', type: '杂物', rank: '凡阶', color: 'jade', effects: { 杀伐: 0, 防御: 0, 身法: 0 }, description: '残缺的地图，似乎指向某处遗迹' }
+      ]
+    };
+
+    const PILL_EFFECTS = {
+      '疗伤丹': { mood: 15, desc: '伤势好转，心情恢复' },
+      '回灵丹': { loyalty: 10, desc: '灵识清明，忠心渐增' },
+      '延寿丹': { lifespan: 20, desc: '寿元增加', oncePerMember: true },
+      '聚灵丹': { mood: 10, loyalty: 5, desc: '灵气充盈，身心俱泰' },
+      '锻体丹': { stats: { 杀伐: 5, 防御: 3 }, desc: '体魄增强' },
+      '轻灵丹': { stats: { 身法: 8 }, desc: '身法精进' }
+    };
+
+    let treasuryState = { group: 'equipment', filter: 'all', search: '' };
 
     function getMemberEquippedItems(memberName) {
       const items = window.gameStateManager?.state?.treasury?.items || [];
