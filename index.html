@@ -4052,7 +4052,12 @@
     body.llm-processing .action-log-close,
     body.llm-processing .search-box,
     body.llm-processing .story-input,
-    body.llm-processing .opportunity-input {
+    body.llm-processing .opportunity-input,
+    body.llm-processing .treasury-group-tab,
+    body.llm-processing .treasury-sub-filter,
+    body.llm-processing .treasury-search,
+    body.llm-processing #treasury-page .action-btn-sm,
+    body.llm-processing #treasury-page .opportunity-btn {
       pointer-events: none !important;
       opacity: 0.5 !important;
     }
@@ -4067,6 +4072,11 @@
     body.llm-processing .think-panel-close {
       pointer-events: auto !important;
       opacity: 1 !important;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
     /* Think viewer */
