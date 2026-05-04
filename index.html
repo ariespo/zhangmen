@@ -10675,6 +10675,17 @@ ${discipleLines || '无'}
       const colorVar = item.color === 'jade' ? 'var(--jade-glow)' : item.color === 'purple' ? 'var(--mist-purple)' : item.color === 'pink' ? 'var(--lotus-pink)' : 'var(--gold-spirit)';
       const bgVar = item.color === 'jade' ? 'rgba(110,207,207,0.12)' : item.color === 'purple' ? 'rgba(139,126,200,0.12)' : item.color === 'pink' ? 'rgba(212,114,140,0.12)' : 'rgba(200,168,110,0.12)';
       const effects = item.effects || { 杀伐: 0, 防御: 0, 身法: 0 };
+
+      let actionButtons = '<button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>';
+      if (item.type === '武器' || item.type === '防具' || item.type === '遁具' || item.type === '饰品' || item.type === '法宝') {
+        actionButtons += `<button class="opportunity-btn primary" onclick="closeModal();openAssignDialog('${item.id}')">分配/收回</button>`;
+        actionButtons += `<button class="opportunity-btn" style="background:rgba(255,100,100,0.15);border-color:rgba(255,100,100,0.4);color:#ff6464" onclick="destroyItem('${item.id}')">销毁</button>`;
+      } else if (item.type === '丹药') {
+        actionButtons += `<button class="opportunity-btn primary" onclick="closeModal();openConsumePillDialog('${item.id}')">服用</button>`;
+      } else if (item.type === '材料' || item.type === '杂物') {
+        actionButtons += `<button class="opportunity-btn primary" onclick="closeModal();openConsumeMaterialDialog('${item.id}')">消耗</button>`;
+      }
+
       document.getElementById('modal-body').innerHTML = `
         <div class="sect-info-grid">
           <div class="info-block">
@@ -10691,11 +10702,11 @@ ${discipleLines || '无'}
           </div>
           <div class="info-block">
             <h4>当前持有者</h4>
-            <div class="info-value">${item.owner || '宗门库房'}</div>
+            <div class="info-value">${item.owner || '宗门库房'}${item.quantity > 1 ? ' · 库存 ×' + item.quantity : ''}</div>
           </div>
           <div class="info-block full-width">
             <h4>介绍</h4>
-            <div class="info-value" style="font-size:13px;line-height:1.8">${item.description}</div>
+            <div class="info-value" style="font-size:13px;line-height:1.8">${item.description || '暂无介绍'}</div>
           </div>
           <div class="info-block full-width">
             <h4>效果</h4>
@@ -10708,12 +10719,97 @@ ${discipleLines || '无'}
             </div>
           </div>
           <div class="info-block full-width" style="display:flex;gap:10px;justify-content:flex-end;background:transparent;border:none;padding:8px 0 0 0">
-            <button class="opportunity-btn secondary" onclick="closeModal()">关闭</button>
-            <button class="opportunity-btn primary" onclick="closeModal();openAssignDialog('${item.id}')">分配/收回</button>
+            ${actionButtons}
           </div>
         </div>
       `;
       overlay.classList.add('active');
+    }
+
+    function destroyItem(itemId) {
+      const items = window.gameStateManager?.state?.treasury?.items || [];
+      const item = items.find(i => i.id === itemId);
+      if (!item) return;
+      if (!confirm(`确定销毁 ${item.name}？此操作不可撤销。`)) return;
+
+      const idx = items.findIndex(i => i.id === itemId);
+      if (idx === -1) return;
+
+      if (item.owner) {
+        const member = window.gameStateManager.state.members[item.owner];
+        if (member && member.equipment) {
+          const eqIdx = member.equipment.findIndex(e => e.name === item.name);
+          if (eqIdx !== -1) {
+            window.gameStateManager.applyPatch([{
+              op: 'remove',
+              path: '/members/' + item.owner + '/equipment/' + eqIdx
+            }]);
+          }
+        }
+      }
+
+      window.gameStateManager.applyPatch([{
+        op: 'remove',
+        path: '/treasury/items/' + idx
+      }]);
+
+      closeModal();
+      refreshTreasuryDisplay();
+    }
+
+    function openConsumeMaterialDialog(itemId) {
+      const items = window.gameStateManager?.state?.treasury?.items || [];
+      const item = items.find(i => i.id === itemId);
+      if (!item) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = '消耗物品';
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:14px;margin-bottom:16px">
+          消耗 <span style="color:var(--jade-glow)">${item.name}</span>（库存：${item.quantity}）
+        </div>
+        <div class="form-group">
+          <label>数量</label>
+          <input type="number" id="consume-qty" style="width:100%;padding:8px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:6px;color:var(--text-primary);font-family:inherit" value="1" min="1" max="${item.quantity}">
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+          <button class="opportunity-btn secondary" onclick="closeModal()">取消</button>
+          <button class="opportunity-btn primary" onclick="consumeMaterial('${itemId}')">确认消耗</button>
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function consumeMaterial(itemId) {
+      const items = window.gameStateManager?.state?.treasury?.items || [];
+      const idx = items.findIndex(i => i.id === itemId);
+      if (idx === -1) return;
+      const qty = parseInt(document.getElementById('consume-qty').value) || 1;
+      const item = items[idx];
+      if (qty > item.quantity) {
+        alert('消耗数量超过库存');
+        return;
+      }
+      if (qty <= 0) {
+        closeModal();
+        return;
+      }
+
+      if (qty >= item.quantity) {
+        window.gameStateManager.applyPatch([{
+          op: 'remove',
+          path: '/treasury/items/' + idx
+        }]);
+      } else {
+        window.gameStateManager.applyPatch([{
+          op: 'replace',
+          path: '/treasury/items/' + idx + '/quantity',
+          value: item.quantity - qty
+        }]);
+      }
+
+      addActionLog('消耗物品', `消耗 ${item.name} ×${qty}`, '', 0);
+      closeModal();
+      refreshTreasuryDisplay();
     }
 
     function renderTreasuryItems(items) {
