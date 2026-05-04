@@ -10812,6 +10812,128 @@ ${discipleLines || '无'}
       refreshTreasuryDisplay();
     }
 
+    function openConsumePillDialog(itemId) {
+      const items = window.gameStateManager?.state?.treasury?.items || [];
+      const item = items.find(i => i.id === itemId);
+      if (!item) return;
+      const overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:18px;height:18px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        服用丹药
+      `;
+
+      const members = Object.values(window.gameStateManager.state.members || {});
+      const player = window.gameStateManager.state.player;
+      const allTargets = [
+        ...(player ? [{ name: player.name, label: `${player.name} · ${player.realm} · 掌门`, isPlayer: true }] : []),
+        ...members.map(m => ({ name: m.name, label: `${m.name} · ${m.realm} · ${m.role}`, isPlayer: false }))
+      ];
+
+      const effectInfo = PILL_EFFECTS[item.name];
+      let effectText = '效果由剧情驱动';
+      if (effectInfo) {
+        const parts = [];
+        if (effectInfo.mood) parts.push(`心情 +${effectInfo.mood}`);
+        if (effectInfo.loyalty) parts.push(`忠诚 +${effectInfo.loyalty}`);
+        if (effectInfo.lifespan) parts.push(`寿元 +${effectInfo.lifespan}`);
+        if (effectInfo.stats) {
+          if (effectInfo.stats.杀伐) parts.push(`杀伐 +${effectInfo.stats.杀伐}`);
+          if (effectInfo.stats.防御) parts.push(`防御 +${effectInfo.stats.防御}`);
+          if (effectInfo.stats.身法) parts.push(`身法 +${effectInfo.stats.身法}`);
+        }
+        effectText = parts.join('，') + ' · ' + effectInfo.desc;
+        if (effectInfo.oncePerMember) effectText += '（每名角色仅限一次）';
+      }
+
+      document.getElementById('modal-body').innerHTML = `
+        <div style="font-size:14px;margin-bottom:12px">
+          将 <span style="color:var(--jade-glow)">${item.name}</span> 给：
+        </div>
+        <div style="font-size:12px;color:rgba(168,230,230,0.5);margin-bottom:12px">${effectText}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto">
+          ${allTargets.map(t => `
+            <button class="story-choice-btn" onclick="consumePill('${itemId}', '${t.name}', ${t.isPlayer})" style="text-align:left">
+              <span>${t.label}</span>
+            </button>
+          `).join('')}
+        </div>
+      `;
+      overlay.classList.add('active');
+    }
+
+    function consumePill(itemId, memberName, isPlayer) {
+      const items = window.gameStateManager?.state?.treasury?.items || [];
+      const idx = items.findIndex(i => i.id === itemId);
+      if (idx === -1) return;
+      const item = items[idx];
+
+      const memberPath = isPlayer ? '/player' : '/members/' + memberName;
+      const member = isPlayer ? window.gameStateManager.state.player : window.gameStateManager.state.members[memberName];
+      if (!member) {
+        alert('该成员已不在宗门');
+        return;
+      }
+
+      const effect = PILL_EFFECTS[item.name];
+      const patches = [];
+      let effectDesc = '';
+
+      if (effect) {
+        if (effect.oncePerMember) {
+          const consumed = member.consumedPills || [];
+          if (consumed.includes(item.name)) {
+            alert('此丹药对该角色已无效');
+            return;
+          }
+          patches.push({
+            op: 'insert',
+            path: memberPath + '/consumedPills/-',
+            value: item.name
+          });
+        }
+
+        if (effect.mood !== undefined) {
+          const newMood = Math.min(100, Math.max(0, (member.mood || 70) + effect.mood));
+          patches.push({ op: 'replace', path: memberPath + '/mood', value: newMood });
+        }
+        if (effect.loyalty !== undefined) {
+          const newLoyalty = Math.min(100, Math.max(0, (member.loyalty || 60) + effect.loyalty));
+          patches.push({ op: 'replace', path: memberPath + '/loyalty', value: newLoyalty });
+        }
+        if (effect.lifespan !== undefined) {
+          const newLifespan = Math.min(member.lifespan?.max || 200, (member.lifespan?.current || 100) + effect.lifespan);
+          patches.push({ op: 'replace', path: memberPath + '/lifespan/current', value: newLifespan });
+        }
+        if (effect.stats) {
+          const newBaseStats = { ...member.baseStats };
+          if (effect.stats.杀伐) newBaseStats.杀伐 = (newBaseStats.杀伐 || 50) + effect.stats.杀伐;
+          if (effect.stats.防御) newBaseStats.防御 = (newBaseStats.防御 || 50) + effect.stats.防御;
+          if (effect.stats.身法) newBaseStats.身法 = (newBaseStats.身法 || 50) + effect.stats.身法;
+          patches.push({ op: 'replace', path: memberPath + '/baseStats', value: newBaseStats });
+        }
+        effectDesc = effect.desc;
+      }
+
+      if (item.quantity <= 1) {
+        patches.unshift({ op: 'remove', path: '/treasury/items/' + idx });
+      } else {
+        patches.unshift({ op: 'replace', path: '/treasury/items/' + idx + '/quantity', value: item.quantity - 1 });
+      }
+
+      window.gameStateManager.applyPatch(patches);
+
+      addActionLog('服用丹药', `${memberName} 服用 ${item.name}`, effectDesc || '效果由剧情驱动', 0);
+
+      closeModal();
+      refreshTreasuryDisplay();
+
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(20,40,40,0.95);border:1px solid rgba(110,207,207,0.3);color:var(--jade-glow);padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;animation:fadeInUp 0.3s';
+      toast.textContent = `${memberName} 服用 ${item.name} · ${effectDesc || '效果待定'}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 2500);
+    }
+
     function renderTreasuryItems(items) {
       const grid = document.getElementById('item-grid');
       const emptyState = document.getElementById('treasury-empty');
