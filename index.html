@@ -5948,7 +5948,7 @@
           // 解析 mockText 中的 foreshadowing 标签（模拟真实 LLM 响应解析）
           const newForeshadowings = extractForeshadowingTags(mockText);
           if (newForeshadowings.length > 0) {
-            foreshadowingStore.push(...newForeshadowings);
+            _tj().foreshadowings.push(...newForeshadowings);
             updateTianjiBadge();
             console.log('[高级测试] 从 mockText 解析到新伏笔:', newForeshadowings);
           }
@@ -7857,22 +7857,25 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
     } catch (e) { console.warn('恢复 session 状态失败:', e); }
 
     // ====== 天机推演系统 ======
-    let foreshadowingStore = [];
-    let randomEventPool = [
-      { id: 're_none', name: '无事发生', desc: '', probStart: 1, probEnd: 50 },
-      { id: 're_spirit', name: '灵气潮汐', desc: '近日天地灵气异常涌动，宗门内修炼效率有所提升，但外出弟子需格外小心灵气暴走。', probStart: 51, probEnd: 65 },
-      { id: 're_raid', name: '山匪袭扰', desc: '山门附近出现了几股散修山匪，频繁骚扰周边村镇，影响宗门声誉和收入。', probStart: 66, probEnd: 75 },
-      { id: 're_visitor', name: '不速之客', desc: '一位神秘访客来到山门前，自称有重要情报要面见掌门，身份不明，目的未知。', probStart: 76, probEnd: 85 },
-      { id: 're_omen', name: '凶兆显现', desc: '天象有异，宗门护山大阵出现微弱波动，古籍记载这是大劫将至的征兆。', probStart: 86, probEnd: 95 },
-      { id: 're_miracle', name: '天降奇缘', desc: '一道灵光从天而降，落在宗门后山，似乎有什么天地异宝即将出世。', probStart: 96, probEnd: 100 }
-    ];
+    function _tj() {
+      const gm = window.gameStateManager;
+      if (gm && gm.state && gm.state.tianji) return gm.state.tianji;
+      return { foreshadowings: [], randomEventPool: [
+        { id: 're_none', name: '无事发生', desc: '', probStart: 1, probEnd: 50 },
+        { id: 're_spirit', name: '灵气潮汐', desc: '近日天地灵气异常涌动，宗门内修炼效率有所提升，但外出弟子需格外小心灵气暴走。', probStart: 51, probEnd: 65 },
+        { id: 're_raid', name: '山匪袭扰', desc: '山门附近出现了几股散修山匪，频繁骚扰周边村镇，影响宗门声誉和收入。', probStart: 66, probEnd: 75 },
+        { id: 're_visitor', name: '不速之客', desc: '一位神秘访客来到山门前，自称有重要情报要面见掌门，身份不明，目的未知。', probStart: 76, probEnd: 85 },
+        { id: 're_omen', name: '凶兆显现', desc: '天象有异，宗门护山大阵出现微弱波动，古籍记载这是大劫将至的征兆。', probStart: 86, probEnd: 95 },
+        { id: 're_miracle', name: '天降奇缘', desc: '一道灵光从天而降，落在宗门后山，似乎有什么天地异宝即将出世。', probStart: 96, probEnd: 100 }
+      ]};
+    }
     let _fsEditingId = null;
     let _reEditingId = null;
 
     function updateTianjiBadge() {
       const badge = document.getElementById('tianji-badge-count');
       if (!badge) return;
-      const total = foreshadowingStore.length;
+      const total = _tj().foreshadowings.length;
       badge.textContent = total;
     }
 
@@ -7901,7 +7904,7 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       const content = document.getElementById('fs-content');
       const delay = document.getElementById('fs-delay');
       if (id) {
-        const fs = foreshadowingStore.find(f => f.id === id);
+        const fs = _tj().foreshadowings.find(f => f.id === id);
         if (fs) { content.value = fs.content; delay.value = fs.delay; }
       } else {
         content.value = ''; delay.value = 3;
@@ -7918,10 +7921,10 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       const delay = parseInt(document.getElementById('fs-delay').value, 10);
       if (!content || isNaN(delay) || delay < 1) { alert('请填写完整信息'); return; }
       if (_fsEditingId) {
-        const idx = foreshadowingStore.findIndex(f => f.id === _fsEditingId);
-        if (idx !== -1) { foreshadowingStore[idx].content = content; foreshadowingStore[idx].delay = delay; }
+        const idx = _tj().foreshadowings.findIndex(f => f.id === _fsEditingId);
+        if (idx !== -1) { _tj().foreshadowings[idx].content = content; _tj().foreshadowings[idx].delay = delay; }
       } else {
-        foreshadowingStore.push({ id: crypto.randomUUID(), content, delay });
+        _tj().foreshadowings.push({ id: crypto.randomUUID(), content, delay });
       }
       hideForeshadowingForm();
       renderForeshadowings();
@@ -7929,18 +7932,18 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
     }
     function deleteForeshadowing(id) {
       if (!confirm('确定删除此伏笔？')) return;
-      foreshadowingStore = foreshadowingStore.filter(f => f.id !== id);
+      _tj().foreshadowings = _tj().foreshadowings.filter(f => f.id !== id);
       renderForeshadowings();
       updateTianjiBadge();
     }
     function renderForeshadowings() {
       const container = document.getElementById('foreshadowing-list');
       if (!container) return;
-      if (foreshadowingStore.length === 0) {
+      if (_tj().foreshadowings.length === 0) {
         container.innerHTML = '<div class="tianji-empty">暂无伏笔</div>';
         return;
       }
-      container.innerHTML = foreshadowingStore.map(f => `
+      container.innerHTML = _tj().foreshadowings.map(f => `
         <div class="tianji-item">
           <div class="tianji-item-header">
             <span class="tianji-item-title">伏笔 #${f.id.slice(0,4)}</span>
@@ -7964,7 +7967,7 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       const pStart = document.getElementById('re-prob-start');
       const pEnd = document.getElementById('re-prob-end');
       if (id) {
-        const re = randomEventPool.find(r => r.id === id);
+        const re = _tj().randomEventPool.find(r => r.id === id);
         if (re) { name.value = re.name; desc.value = re.desc; pStart.value = re.probStart; pEnd.value = re.probEnd; }
       } else {
         name.value = ''; desc.value = ''; pStart.value = 1; pEnd.value = 50;
@@ -7977,12 +7980,12 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       _reEditingId = null;
     }
     function validateRandomEventPool(editingId) {
-      if (randomEventPool.length === 0) return { valid: false, error: '事件池不能为空' };
-      for (const r of randomEventPool) {
+      if (_tj().randomEventPool.length === 0) return { valid: false, error: '事件池不能为空' };
+      for (const r of _tj().randomEventPool) {
         if (r.probStart < 1 || r.probEnd > 100) return { valid: false, error: '范围必须在 1–100 之间' };
         if (r.probStart > r.probEnd) return { valid: false, error: '起始值不能大于结束值' };
       }
-      const sorted = [...randomEventPool].sort((a, b) => a.probStart - b.probStart);
+      const sorted = [..._tj().randomEventPool].sort((a, b) => a.probStart - b.probStart);
       for (let i = 0; i < sorted.length - 1; i++) {
         const curr = sorted[i], next = sorted[i + 1];
         if (curr.probEnd >= next.probStart) {
@@ -8007,17 +8010,17 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
       if (pStart < 1 || pEnd > 100) { alert('范围必须在 1–100 之间'); return; }
       if (pStart > pEnd) { alert('起始值不能大于结束值'); return; }
       // 临时修改池子用于验证
-      const original = [...randomEventPool];
+      const original = [..._tj().randomEventPool];
       if (_reEditingId) {
-        const idx = randomEventPool.findIndex(r => r.id === _reEditingId);
-        if (idx !== -1) { randomEventPool[idx] = { ...randomEventPool[idx], name, desc, probStart: pStart, probEnd: pEnd }; }
+        const idx = _tj().randomEventPool.findIndex(r => r.id === _reEditingId);
+        if (idx !== -1) { _tj().randomEventPool[idx] = { ..._tj().randomEventPool[idx], name, desc, probStart: pStart, probEnd: pEnd }; }
       } else {
-        randomEventPool.push({ id: crypto.randomUUID(), name, desc, probStart: pStart, probEnd: pEnd });
+        _tj().randomEventPool.push({ id: crypto.randomUUID(), name, desc, probStart: pStart, probEnd: pEnd });
       }
-      randomEventPool.sort((a, b) => a.probStart - b.probStart);
+      _tj().randomEventPool.sort((a, b) => a.probStart - b.probStart);
       const validation = validateRandomEventPool();
       if (!validation.valid) {
-        randomEventPool = original;
+        _tj().randomEventPool = original;
         alert(validation.error);
         return;
       }
@@ -8026,17 +8029,17 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
     }
     function deleteRandomEvent(id) {
       if (!confirm('确定删除此随机事件？')) return;
-      randomEventPool = randomEventPool.filter(r => r.id !== id);
+      _tj().randomEventPool = _tj().randomEventPool.filter(r => r.id !== id);
       renderRandomEvents();
     }
     function renderRandomEvents() {
       const container = document.getElementById('random-event-list');
       if (!container) return;
-      if (randomEventPool.length === 0) {
+      if (_tj().randomEventPool.length === 0) {
         container.innerHTML = '<div class="tianji-empty">暂无随机事件</div>';
         return;
       }
-      container.innerHTML = randomEventPool.map(r => {
+      container.innerHTML = _tj().randomEventPool.map(r => {
         const probWidth = r.probEnd - r.probStart;
         return `
         <div class="tianji-item">
@@ -8059,14 +8062,14 @@ ${regions.map((r, i) => `${i+1}. ${r.name} | 掌控：${r.controlledBy} | 探索
     // 发送请求前：处理伏笔和随机事件
     function processForeshadowingBeforeRequest() {
       // 所有伏笔延迟 -1
-      for (const fs of foreshadowingStore) { fs.delay = Math.max(0, fs.delay - 1); }
+      for (const fs of _tj().foreshadowings) { fs.delay = Math.max(0, fs.delay - 1); }
       // 收集已爆发的伏笔
-      const triggered = foreshadowingStore.filter(f => f.delay === 0);
+      const triggered = _tj().foreshadowings.filter(f => f.delay === 0);
       return triggered;
     }
     function processRandomEventBeforeRequest() {
       const roll = Math.floor(Math.random() * 100) + 1; // 1D100: 1-100
-      const event = randomEventPool.find(r => roll >= r.probStart && roll <= r.probEnd);
+      const event = _tj().randomEventPool.find(r => roll >= r.probStart && roll <= r.probEnd);
       return { roll, event };
     }
 
@@ -9964,16 +9967,16 @@ ${discipleLines || '无'}
         // 解析新伏笔并存储
         const newForeshadowings = extractForeshadowingTags(fullRawResponse);
         if (newForeshadowings.length > 0) {
-          foreshadowingStore.push(...newForeshadowings);
+          _tj().foreshadowings.push(...newForeshadowings);
           updateTianjiBadge();
           console.log('[天机推演] 新增伏笔:', newForeshadowings);
         }
         // 删除已爆发的伏笔（在请求前处理时已间隔-1，此处删除delay=0的）
-        const beforeCount = foreshadowingStore.length;
-        foreshadowingStore = foreshadowingStore.filter(f => f.delay > 0);
-        if (foreshadowingStore.length !== beforeCount) {
+        const beforeCount = _tj().foreshadowings.length;
+        _tj().foreshadowings = _tj().foreshadowings.filter(f => f.delay > 0);
+        if (_tj().foreshadowings.length !== beforeCount) {
           updateTianjiBadge();
-          console.log('[天机推演] 已删除爆发后的伏笔，剩余:', foreshadowingStore.length);
+          console.log('[天机推演] 已删除爆发后的伏笔，剩余:', _tj().foreshadowings.length);
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -11257,7 +11260,7 @@ ${discipleLines || '无'}
     import { initSillyTavernEnhancer, addChatMessage, getActiveChat } from './sillytavern/st-integration.js';
     import { assemblePrompt } from './sillytavern/st-prompt.js';
     import { db } from './sillytavern/st-core.js';
-    import { createGameStateManager, GameStateSchema } from './sillytavern/game-state.js';
+    import { createGameStateManager, GameStateSchema, DEFAULT_RANDOM_EVENT_POOL } from './sillytavern/game-state.js';
     window.__st_assemblePrompt = assemblePrompt;
     window.__st_db = db;
     window.__st_addChatMessage = addChatMessage;
@@ -11285,7 +11288,7 @@ ${discipleLines || '无'}
       // 重置 session 级全局状态，防止跨存档污染
       actionLogs = [];
       stamina.current = stamina.max;
-      foreshadowingStore = [];
+      _tj().foreshadowings = [];
       _fsEditingId = null;
       _reEditingId = null;
       sessionStorage.removeItem('zhangmen_actionLogs');
@@ -12322,7 +12325,7 @@ ${discipleLines || '无'}
         // 重置 session 级全局状态，防止跨存档污染
         actionLogs = [];
         stamina.current = stamina.max;
-        foreshadowingStore = [];
+        _tj().foreshadowings = [];
         _fsEditingId = null;
         _reEditingId = null;
         sessionStorage.removeItem('zhangmen_actionLogs');

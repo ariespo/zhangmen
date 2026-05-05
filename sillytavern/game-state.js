@@ -278,6 +278,29 @@ const RegionSchema = zObject({
   guardian: zString('')
 });
 
+const ForeshadowingSchema = zObject({
+  id: zString(),
+  content: zString(),
+  delay: zNumber({ default: 3, min: 0 })
+});
+
+const RandomEventSchema = zObject({
+  id: zString(),
+  name: zString(),
+  desc: zString(),
+  probStart: zNumber({ default: 1, min: 1, max: 100 }),
+  probEnd: zNumber({ default: 100, min: 1, max: 100 })
+});
+
+export const DEFAULT_RANDOM_EVENT_POOL = [
+  { id: 're_none', name: '无事发生', desc: '', probStart: 1, probEnd: 50 },
+  { id: 're_spirit', name: '灵气潮汐', desc: '近日天地灵气异常涌动，宗门内修炼效率有所提升，但外出弟子需格外小心灵气暴走。', probStart: 51, probEnd: 65 },
+  { id: 're_raid', name: '山匪袭扰', desc: '山门附近出现了几股散修山匪，频繁骚扰周边村镇，影响宗门声誉和收入。', probStart: 66, probEnd: 75 },
+  { id: 're_visitor', name: '不速之客', desc: '一位神秘访客来到山门前，自称有重要情报要面见掌门，身份不明，目的未知。', probStart: 76, probEnd: 85 },
+  { id: 're_omen', name: '凶兆显现', desc: '天象有异，宗门护山大阵出现微弱波动，古籍记载这是大劫将至的征兆。', probStart: 86, probEnd: 95 },
+  { id: 're_miracle', name: '天降奇缘', desc: '一道灵光从天而降，落在宗门后山，似乎有什么天地异宝即将出世。', probStart: 96, probEnd: 100 }
+];
+
 export const GameStateSchema = zObject({
   members: zRecord(MemberSchema, {}),
   finance: zObject({
@@ -311,7 +334,11 @@ export const GameStateSchema = zObject({
   player: PlayerSchema,
   sect: SectSchema,
   events: zArray(EventSchema, []),
-  storyHistory: zArray(StoryRoundSchema, [])
+  storyHistory: zArray(StoryRoundSchema, []),
+  tianji: zObject({
+    foreshadowings: zArray(ForeshadowingSchema, []),
+    randomEventPool: zArray(RandomEventSchema, DEFAULT_RANDOM_EVENT_POOL)
+  })
 });
 
 export const DEFAULT_GAME_STATE = buildDefault(GameStateSchema);
