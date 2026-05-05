@@ -93,7 +93,11 @@ function createModalOverlay() {
   `;
 
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeModal();
+    if (e.target === overlay) {
+      const state = window.sillyTavernStore?.getState();
+      if (state?.activeModal === 'settings') return;
+      closeModal();
+    }
   });
 
   overlay.querySelector('#st-modal-close').addEventListener('click', closeModal);
