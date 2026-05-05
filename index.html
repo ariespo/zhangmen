@@ -1560,6 +1560,26 @@
       box-shadow: 0 0 12px rgba(110, 207, 207, 0.25), inset 0 0 8px rgba(110, 207, 207, 0.08);
       transform: scale(1.05);
     }
+    .tag-input {
+      padding: 6px 10px;
+      background: transparent;
+      border: 1px dashed var(--glass-border);
+      border-radius: 16px;
+      font-size: 13px;
+      font-family: inherit;
+      color: rgba(168, 230, 230, 0.5);
+      width: 70px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .tag-input:focus {
+      border-color: rgba(110, 207, 207, 0.4);
+      color: var(--jade-pale);
+      width: 90px;
+    }
+    .tag-input::placeholder {
+      color: rgba(168, 230, 230, 0.3);
+    }
     .card-select-group {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -3891,6 +3911,9 @@
         display: none;
       }
       #bottom-nav {
+        display: none;
+      }
+      #app:not([style*="none"]) ~ #bottom-nav {
         display: block;
       }
       #main-content {
@@ -3973,6 +3996,8 @@
       /* member detail modal mobile */
       .modal-container { width: 96%; max-height: 90vh; }
       .tag { padding: 5px 10px; font-size: 12px; }
+      .tag-input { padding: 5px 8px; font-size: 12px; width: 60px; }
+      .tag-input:focus { width: 75px; }
       .disciple-card { padding: 14px; padding-top: 48px; }
       .disciple-random { left: 50%; top: 10px; transform: translateX(-50%); width: 28px; height: 28px; }
       .card-select-group { grid-template-columns: 1fr; }
@@ -4573,6 +4598,7 @@
               <span class="tag" data-value="勤勉">勤勉</span>
               <span class="tag" data-value="腹黑">腹黑</span>
               <span class="tag" data-value="随性">随性</span>
+              <input type="text" class="tag-input" placeholder="+ 自定义" maxlength="6">
             </div>
           </div>
           <div class="form-group full-width">
@@ -4594,6 +4620,7 @@
               <span class="tag" data-value="不修边幅">不修边幅</span>
               <span class="tag" data-value="少年老成">少年老成</span>
               <span class="tag" data-value="风华绝代">风华绝代</span>
+              <input type="text" class="tag-input" placeholder="+ 自定义" maxlength="6">
             </div>
           </div>
           <div class="form-group">
@@ -11423,6 +11450,33 @@ ${discipleLines || '无'}
         });
       });
 
+      // Custom tag input
+      function bindTagInputs(scope = document) {
+        scope.querySelectorAll('.tag-input').forEach(input => {
+          if (input._tagBound) return;
+          input._tagBound = true;
+          input.addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
+            const val = input.value.trim();
+            if (!val) return;
+            const group = input.closest('.tag-group');
+            if (!group) return;
+            const existing = Array.from(group.querySelectorAll('.tag')).some(t => t.dataset.value === val);
+            if (existing) {
+              input.value = '';
+              return;
+            }
+            const tag = document.createElement('span');
+            tag.className = 'tag';
+            tag.dataset.value = val;
+            tag.textContent = val;
+            group.insertBefore(tag, input);
+            input.value = '';
+          });
+        });
+      }
+      bindTagInputs();
+
       // Card single selection
       document.querySelectorAll('.card-select-group').forEach(group => {
         group.addEventListener('click', e => {
@@ -11596,12 +11650,14 @@ ${discipleLines || '无'}
                 <label>性格标签（可多选）</label>
                 <div class="tag-group d-personality" data-index="${i}">
                   ${DISCIPLE_PERSONALITY.map(p => `<span class="tag" data-value="${p}">${p}</span>`).join('')}
+                  <input type="text" class="tag-input" placeholder="+ 自定义" maxlength="6">
                 </div>
               </div>
               <div class="form-group full-width">
                 <label>外貌标签（可多选）</label>
                 <div class="tag-group d-appearance" data-index="${i}">
                   ${DISCIPLE_APPEARANCE.map(a => `<span class="tag" data-value="${a}">${a}</span>`).join('')}
+                  <input type="text" class="tag-input" placeholder="+ 自定义" maxlength="6">
                 </div>
               </div>
             </div>
@@ -11617,6 +11673,7 @@ ${discipleLines || '无'}
             }
           });
         });
+        bindTagInputs(container);
 
         // 绑定境界变化时的年龄上限
         container.querySelectorAll('.d-realm').forEach(sel => {
