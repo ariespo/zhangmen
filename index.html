@@ -2197,7 +2197,92 @@
     }
 
     #story-content {
-      padding-top: 52px;
+      padding-top: 8px;
+    }
+
+    .story-message {
+      position: relative;
+      margin-bottom: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      background: rgba(13, 31, 31, 0.4);
+      border: 1px solid var(--glass-border);
+      animation: fadeIn 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .story-message-ai {
+      border-left: 3px solid var(--jade-glow);
+    }
+
+    .story-message-player {
+      border-left: 3px solid var(--gold-spirit);
+      margin-left: 24px;
+    }
+
+    .story-message-label {
+      font-size: 12px;
+      margin-bottom: 8px;
+      opacity: 0.7;
+      letter-spacing: 2px;
+    }
+
+    .story-message-ai .story-message-label {
+      color: var(--jade-glow);
+    }
+
+    .story-message-player .story-message-label {
+      color: var(--gold-spirit);
+    }
+
+    .story-message-content {
+      line-height: 1.8;
+      outline: none;
+    }
+
+    .story-message-ai .story-message-content {
+      text-indent: 2em;
+    }
+
+    .story-message-ai .story-message-content .narrator {
+      text-indent: 0;
+      color: var(--gold-spirit);
+      font-weight: 500;
+    }
+
+    .story-message-editing {
+      border: 1px dashed rgba(110, 207, 207, 0.4) !important;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
+      padding: 8px;
+    }
+
+    .msg-edit-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 4px 8px;
+      background: rgba(110, 207, 207, 0.1);
+      border: 1px solid var(--glass-border);
+      border-radius: 4px;
+      color: var(--jade-pale);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 5;
+    }
+
+    .msg-edit-btn:hover {
+      background: rgba(110, 207, 207, 0.25);
+      border-color: rgba(110, 207, 207, 0.4);
+    }
+
+    .msg-edit-btn svg {
+      width: 12px;
+      height: 12px;
     }
 
     .story-paragraph {
@@ -3988,8 +4073,11 @@
       .step-num { width: 30px; height: 30px; font-size: 12px; }
       /* story page mobile */
       .story-text-area { padding: 16px; }
-      #story-content { padding-top: 44px; }
+      #story-content { padding-top: 4px; }
       .story-paragraph { font-size: 16px; line-height: 1.85; margin-bottom: 16px; }
+      .story-message { padding: 12px; margin-bottom: 16px; }
+      .story-message-player { margin-left: 12px; }
+      .msg-edit-btn { padding: 3px 6px; font-size: 10px; }
       .story-choice-btn { min-height: 48px; padding: 14px 16px; }
       .story-send-btn { min-height: 48px; }
       .story-input { font-size: 16px; min-height: 48px; }
@@ -4106,9 +4194,6 @@
 
     /* Think viewer */
     .think-view-btn {
-      position: absolute;
-      top: 12px;
-      left: 12px;
       display: flex;
       align-items: center;
       gap: 4px;
@@ -4120,7 +4205,7 @@
       font-size: 12px;
       cursor: pointer;
       transition: all 0.3s;
-      z-index: 60;
+      flex-shrink: 0;
     }
     .think-view-btn:hover {
       background: rgba(110, 207, 207, 0.2);
@@ -4257,10 +4342,18 @@
     }
 
     /* === RECAP PANEL === */
+    .story-sticky-bar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+      padding: 8px 0;
+      background: linear-gradient(180deg, var(--ink-dark) 0%, transparent 100%);
+      margin-bottom: 8px;
+    }
+
     .story-recap-btn {
-      position: absolute;
-      top: 12px;
-      right: 144px;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -4271,8 +4364,8 @@
       cursor: pointer;
       color: rgba(184, 155, 107, 0.8);
       font-size: 12px;
-      z-index: 10;
       transition: all 0.2s;
+      flex-shrink: 0;
     }
     .story-recap-btn:hover {
       background: rgba(184, 155, 107, 0.15);
@@ -5145,30 +5238,25 @@
               <div style="color:var(--jade-glow);font-size:16px;letter-spacing:4px">天道运转中</div>
             </div>
             <div class="story-text-area" id="story-text-area">
-              <div class="story-recap-btn" id="story-recap-btn" onclick="openRecapPanel()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
-                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-                </svg>
-                <span>回顾前文</span>
-              </div>
-              <div class="think-view-btn empty" id="think-view-btn" onclick="openThinkPanel()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
-                  <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
-                  <path d="M12 6v6l4 2"/>
-                </svg>
-                <span>天道运转</span>
+              <div class="story-sticky-bar">
+                <div class="story-recap-btn" id="story-recap-btn" onclick="openRecapPanel()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                  </svg>
+                  <span>回顾前文</span>
+                </div>
+                <div class="think-view-btn empty" id="think-view-btn" onclick="openThinkPanel()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
+                    <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                  <span>天道运转</span>
+                </div>
               </div>
               <div class="secondary-api-status" id="secondary-api-status" style="display:none">
                 <div class="secondary-api-spinner"></div>
                 <span>天道推演中</span>
-              </div>
-              <div class="story-edit-btn" onclick="toggleStoryEdit()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                <span id="story-edit-label">编辑</span>
               </div>
               <div class="story-test-btn" onclick="simulateLLMResponse()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
@@ -6247,28 +6335,8 @@
       const success = addActionLog('天机', '剧情抉择', text, 1);
       if (!success) return;
 
-      const area = document.getElementById('story-text-area');
-      const p = document.createElement('div');
-      p.className = 'story-paragraph';
-      p.style.color = 'var(--jade-glow)';
-      p.style.borderLeft = '2px solid var(--jade-glow)';
-      p.style.paddingLeft = '12px';
-      p.style.textIndent = '0';
-      p.textContent = `掌门自决：${text}`;
-      area.appendChild(p);
       input.value = '';
-      area.scrollTop = area.scrollHeight;
-
-      setTimeout(() => {
-        const resp = document.createElement('div');
-        resp.className = 'story-paragraph';
-        resp.style.color = 'rgba(168,230,230,0.5)';
-        resp.style.fontSize = '13px';
-        resp.style.fontStyle = 'italic';
-        resp.textContent = '【操作已记录，点击操作面板中的「就如此行事吧」发送给天道】';
-        area.appendChild(resp);
-        area.scrollTop = area.scrollHeight;
-      }, 500);
+      // 不再直接 append DOM — 统一由 renderStoryFromMessages 渲染
     }
 
     document.getElementById('story-custom-input').addEventListener('keydown', function(e) {
@@ -10071,7 +10139,8 @@ ${discipleLines || '无'}
                       : [],
                     vars: { ...(raw._vars || {}) },
                     timestamp: Date.now(),
-                    snapshot
+                    snapshot,
+                    userInput: isFirst ? '' : userInput
                   };
                   window.gameStateManager.state.storyHistory.push(roundData);
                 }
@@ -12147,7 +12216,8 @@ ${discipleLines || '无'}
           options: ['开始你的宗门之旅'],
           vars: {},
           timestamp: Date.now(),
-          snapshot
+          snapshot,
+          userInput: ''
         });
       }
     }
@@ -12263,7 +12333,6 @@ ${discipleLines || '无'}
         let history = window.gameStateManager?.state?.storyHistory || [];
 
         // 向后兼容：旧存档没有 storyHistory，尝试从 chat.messages 重建
-        // 注意：旧存档无法恢复每轮的变量快照和 gameState 快照
         if (history.length === 0 && chatId) {
           try {
             const chat = await db.chats.get(chatId);
@@ -12280,7 +12349,8 @@ ${discipleLines || '无'}
                     maintext: mainMatch[1].trim(),
                     options: optMatch ? optMatch[1].split('\n').map(l => l.trim()).filter(Boolean) : [],
                     vars: {},
-                    timestamp: msg.timestamp || Date.now()
+                    timestamp: msg.timestamp || Date.now(),
+                    userInput: ''
                   });
                 }
               }
@@ -12295,19 +12365,23 @@ ${discipleLines || '无'}
         }
 
         if (history.length === 0) {
-          // 还没有任何正文，显示默认提示
           storyContent.innerHTML = '<div class="story-paragraph narrator" style="color:rgba(168,230,230,0.4)">天机台静待启封，天道流转，因果将启……</div>';
           return;
         }
 
-        const lastRound = history[history.length - 1];
-        if (lastRound.maintext) {
-          const p = document.createElement('div');
-          p.className = 'story-paragraph';
-          p.innerHTML = formatStoryText(lastRound.maintext);
-          storyContent.appendChild(p);
+        // 渲染开局（第 1 轮）
+        storyContent.appendChild(createMessageBlock(history[0].maintext, 'ai', 0));
+
+        // 渲染后续轮次：玩家输入 + AI 回复
+        for (let i = 1; i < history.length; i++) {
+          const round = history[i];
+          const playerText = round.userInput || '【历史操作未记录】';
+          storyContent.appendChild(createMessageBlock(playerText, 'player', i));
+          storyContent.appendChild(createMessageBlock(round.maintext, 'ai', i));
         }
 
+        // 显示最后一轮的选项
+        const lastRound = history[history.length - 1];
         if (lastRound.options?.length && storyChoices) {
           updateLiveOptions(lastRound.options.join('\n'));
         }
@@ -12317,6 +12391,94 @@ ${discipleLines || '无'}
         if (area) area.scrollTop = area.scrollHeight;
       } catch (e) {
         console.warn('[renderStoryFromMessages] failed:', e);
+      }
+    }
+
+    function createMessageBlock(content, type, roundIndex) {
+      const div = document.createElement('div');
+      div.className = `story-message story-message-${type}`;
+      div.dataset.round = roundIndex;
+      div.dataset.type = type;
+
+      const label = type === 'ai' ? '天道' : '掌门';
+      div.innerHTML = `
+        <div class="story-message-label">${label}</div>
+        <button class="msg-edit-btn" data-round="${roundIndex}" data-type="${type}" title="编辑">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <div class="story-message-content">${type === 'ai' ? formatStoryText(content) : escapeHtml(content)}</div>
+      `;
+
+      const editBtn = div.querySelector('.msg-edit-btn');
+      editBtn.addEventListener('click', () => toggleMessageEdit(div, roundIndex, type));
+
+      return div;
+    }
+
+    function toggleMessageEdit(messageEl, roundIndex, type) {
+      const contentEl = messageEl.querySelector('.story-message-content');
+      const editBtn = messageEl.querySelector('.msg-edit-btn');
+      const isEditing = contentEl.isContentEditable;
+
+      if (isEditing) {
+        // Save
+        const newContent = contentEl.innerText.trim();
+        saveMessageEdit(roundIndex, type, newContent);
+        contentEl.contentEditable = 'false';
+        contentEl.classList.remove('story-message-editing');
+        editBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+      } else {
+        // Enter edit mode
+        contentEl.contentEditable = 'true';
+        contentEl.classList.add('story-message-editing');
+        contentEl.focus();
+        editBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg>`;
+      }
+    }
+
+    function saveMessageEdit(roundIndex, type, newContent) {
+      const history = window.gameStateManager?.state?.storyHistory || [];
+      const round = history[roundIndex];
+      if (!round) return;
+
+      if (type === 'ai') {
+        round.maintext = newContent;
+      } else {
+        round.userInput = newContent;
+        syncUserInputToChatMessages(roundIndex, newContent);
+      }
+      // Proxy auto-triggers saveGameState
+    }
+
+    async function syncUserInputToChatMessages(roundIndex, newContent) {
+      const chatId = window.gameStateManager?._chatId;
+      if (!chatId) return;
+      try {
+        const chat = await db.chats.get(chatId);
+        if (!chat?.messages) return;
+
+        // Find the user message before the (roundIndex+1)-th assistant message
+        let assistantCount = 0;
+        let targetIndex = -1;
+        for (let i = 0; i < chat.messages.length; i++) {
+          if (chat.messages[i].role === 'assistant') {
+            assistantCount++;
+            if (assistantCount === roundIndex + 1) {
+              targetIndex = i - 1;
+              break;
+            }
+          }
+        }
+
+        if (targetIndex >= 0 && chat.messages[targetIndex]?.role === 'user') {
+          chat.messages[targetIndex].content = newContent;
+          await db.chats.put(chat);
+        }
+      } catch (e) {
+        console.warn('[syncUserInput] failed:', e);
       }
     }
 
