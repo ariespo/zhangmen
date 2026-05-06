@@ -13056,6 +13056,38 @@ ${discipleLines || '无'}
           }
         }
 
+        // 回填缺失的 userInput：从 chat.messages 中找到对应用户消息
+        if (history.length > 0 && chatId) {
+          try {
+            const { db } = await import('./sillytavern/st-core.js');
+            const chat = await db.chats.get(chatId);
+            if (chat?.messages?.length) {
+              let assistantCount = 0;
+              const userInputs = []; // userInputs[i] = 第 i 个 assistant 前的 user 消息
+              for (const msg of chat.messages) {
+                if (msg.role === 'assistant') {
+                  assistantCount++;
+                } else if (msg.role === 'user' && assistantCount > 0) {
+                  // 记录该 user 消息对应的下一个 assistant 的索引
+                  userInputs[assistantCount] = msg.content || '';
+                }
+              }
+              for (let i = 1; i < history.length; i++) {
+                if (!history[i].userInput) {
+                  const recovered = userInputs[i] || '';
+                  if (recovered) {
+                    history[i].userInput = recovered;
+                    // 同步回 gameState，避免每次渲染都重新回填
+                    window.gameStateManager.state.storyHistory[i].userInput = recovered;
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('[renderStoryFromMessages] 回填 userInput 失败:', e);
+          }
+        }
+
         if (history.length === 0) {
           storyContent.innerHTML = '<div class="story-paragraph narrator" style="color:rgba(168,230,230,0.4)">天机台静待启封，天道流转，因果将启……</div>';
           return;
