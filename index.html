@@ -13104,7 +13104,8 @@ ${discipleLines || '无'}
         // 渲染后续轮次：玩家输入 + AI 回复
         for (let i = 1; i < history.length; i++) {
           const round = history[i];
-          const playerText = round.userInputDisplay || extractUserInputDisplay(round.userInput) || '【历史操作未记录】';
+          const displayText = round.userInputDisplay || extractUserInputDisplay(round.userInput);
+          const playerText = displayText || (i === 1 ? '【开局推演】' : '【历史操作未记录】');
           storyContent.appendChild(createMessageBlock(playerText, 'player', i));
           storyContent.appendChild(createMessageBlock(round.maintext, 'ai', i));
         }
@@ -13149,6 +13150,8 @@ ${discipleLines || '无'}
 
     function extractUserInputDisplay(userInput) {
       if (!userInput) return '';
+      // 开局提示词不是玩家输入，返回空
+      if (userInput.includes('【天道诏令·开局推演】')) return '';
       const parts = userInput.split('\n\n请根据这些操作');
       if (parts.length > 1) {
         const lines = parts[0].split('\n');
