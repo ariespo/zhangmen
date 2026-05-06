@@ -9939,6 +9939,7 @@ ${discipleLines || '无'}
       console.log('[DualAPI] ╚═══════════════════════════════════════════════');
 
       let userInput;
+      let userInputDisplay = '';
       if (isFirst) {
         userInput = buildOpeningPrompt(window.gameStateManager.state);
       } else {
@@ -9950,6 +9951,7 @@ ${discipleLines || '无'}
           }
           return `执行了「${log.title}」：${log.content}`;
         }).join('\n');
+        userInputDisplay = operations;
 
         userInput = `${playerName}本次决定对${sectName}进行以下的管理操作：\n${operations}\n\n请根据这些操作，给出接下来的剧情发展和可选择的应对策略。`;
       }
@@ -10474,7 +10476,8 @@ ${discipleLines || '无'}
                     vars: { ...(raw._vars || {}) },
                     timestamp: Date.now(),
                     snapshot,
-                    userInput: isFirst ? '' : userInput
+                    userInput: isFirst ? '' : userInput,
+                    userInputDisplay: isFirst ? '' : userInputDisplay
                   };
                   window.gameStateManager.state.storyHistory.push(roundData);
                 }
@@ -13077,8 +13080,10 @@ ${discipleLines || '无'}
                   const recovered = userInputs[i] || '';
                   if (recovered) {
                     history[i].userInput = recovered;
+                    history[i].userInputDisplay = extractUserInputDisplay(recovered);
                     // 同步回 gameState，避免每次渲染都重新回填
                     window.gameStateManager.state.storyHistory[i].userInput = recovered;
+                    window.gameStateManager.state.storyHistory[i].userInputDisplay = history[i].userInputDisplay;
                   }
                 }
               }
@@ -13099,7 +13104,7 @@ ${discipleLines || '无'}
         // 渲染后续轮次：玩家输入 + AI 回复
         for (let i = 1; i < history.length; i++) {
           const round = history[i];
-          const playerText = round.userInput || '【历史操作未记录】';
+          const playerText = round.userInputDisplay || extractUserInputDisplay(round.userInput) || '【历史操作未记录】';
           storyContent.appendChild(createMessageBlock(playerText, 'player', i));
           storyContent.appendChild(createMessageBlock(round.maintext, 'ai', i));
         }
@@ -13142,6 +13147,18 @@ ${discipleLines || '无'}
       return div;
     }
 
+    function extractUserInputDisplay(userInput) {
+      if (!userInput) return '';
+      const parts = userInput.split('\n\n请根据这些操作');
+      if (parts.length > 1) {
+        const lines = parts[0].split('\n');
+        if (lines.length > 1) {
+          return lines.slice(1).join('\n').trim();
+        }
+      }
+      return userInput;
+    }
+
     function toggleMessageEdit(messageEl, roundIndex, type) {
       const contentEl = messageEl.querySelector('.story-message-content');
       const editBtn = messageEl.querySelector('.msg-edit-btn');
@@ -13172,6 +13189,7 @@ ${discipleLines || '无'}
         round.maintext = newContent;
       } else {
         round.userInput = newContent;
+        round.userInputDisplay = newContent;
         syncUserInputToChatMessages(roundIndex, newContent);
       }
       // Proxy auto-triggers saveGameState
