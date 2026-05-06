@@ -1358,6 +1358,9 @@
       cursor: pointer;
       transition: all 0.2s;
       display: flex; justify-content: space-between; align-items: center;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      user-select: none;
     }
     .load-save-card:hover {
       background: rgba(184, 155, 107, 0.08);
@@ -12918,6 +12921,21 @@ ${discipleLines || '无'}
       }
     };
 
+    // Mobile double-tap detection for load-save cards
+    let _lastTapTime = 0;
+    let _lastTapId = null;
+    function handleSaveCardTap(saveId) {
+      const now = Date.now();
+      if (_lastTapId === saveId && now - _lastTapTime < 400) {
+        loadSave(saveId);
+        _lastTapTime = 0;
+        _lastTapId = null;
+      } else {
+        _lastTapTime = now;
+        _lastTapId = saveId;
+      }
+    }
+
     window.hideLoadGameScreen = function() {
       document.getElementById('load-game-screen').style.display = 'none';
       _currentLoadPlayer = null;
@@ -12956,7 +12974,7 @@ ${discipleLines || '无'}
           const date = new Date(save.updatedAt).toLocaleString('zh-CN', {
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
           });
-          return `<div class="load-save-card" ondblclick="loadSave('${save.id}')">
+          return `<div class="load-save-card" ondblclick="loadSave('${save.id}')" ontouchend="handleSaveCardTap('${save.id}')">
             <div class="load-save-info">
               <div class="load-save-name">${escapeHtml(save.name)}</div>
               <div class="load-save-meta">
