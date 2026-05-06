@@ -10870,7 +10870,7 @@ ${discipleLines || '无'}
       btn.disabled = true;
 
       try {
-        const config = await getApiConfig();
+        const config = await getLLMConfig();
         if (!config.apiKey) { alert('未配置 API Key'); return; }
 
         const systemPrompt = `你是一名修仙世界的天道推演师。请根据用户提供的功法描述，输出一个标准格式的功法 JSON 数据。
