@@ -5541,6 +5541,10 @@
         <div id="library-page" class="page-content">
           <div class="page-header">
             <h2>藏经阁</h2>
+            <div style="display:flex;gap:8px">
+              <button class="action-btn-sm" onclick="openCreateSkillModal()">+ 创造功法</button>
+              <button class="action-btn-sm" onclick="openFuseSkillModal()">融合功法</button>
+            </div>
           </div>
 
           <!-- 类型分类 -->
@@ -5837,6 +5841,58 @@
         </button>
       </div>
       <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Create Skill Modal -->
+  <div class="modal-overlay" id="create-skill-overlay" onclick="if(event.target===this)closeCreateSkillModal()">
+    <div class="modal-container" style="max-width:560px">
+      <div class="modal-header">
+        <h2>创造功法</h2>
+        <button class="modal-close" onclick="closeCreateSkillModal()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="create-skill-body">
+        <div class="form-grid" style="gap:14px">
+          <div class="form-group full-width">
+            <label>功法创建者</label>
+            <div id="skill-creator-list" class="tag-group" style="gap:8px;max-height:120px;overflow-y:auto;padding:4px"></div>
+            <div id="skill-creator-info" style="font-size:12px;color:var(--jade-glow);margin-top:4px;min-height:18px"></div>
+          </div>
+          <div class="form-group">
+            <label>功法名称</label>
+            <input type="text" id="cs-name" placeholder="请输入功法名称" maxlength="16">
+          </div>
+          <div class="form-group">
+            <label>流派</label>
+            <select id="cs-type">
+              <option value="道修">道修</option>
+              <option value="神修">神修</option>
+              <option value="魔修">魔修</option>
+              <option value="体修">体修</option>
+              <option value="修行百艺">修行百艺</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label>功法介绍</label>
+            <input type="text" id="cs-desc" placeholder="简短介绍此功法" maxlength="60">
+          </div>
+          <div class="form-group full-width">
+            <label>功法大致情况描述（用于推演）</label>
+            <textarea id="cs-prompt" class="tianji-textarea" placeholder="描述此功法的来历、特点、修炼方式、威力表现等，天道将根据描述推演完整功法数据..." style="min-height:80px"></textarea>
+          </div>
+          <div class="form-group full-width" id="cs-preview-area" style="display:none">
+            <label>推演结果预览</label>
+            <div id="cs-preview" style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;padding:12px;font-size:13px;line-height:1.7"></div>
+          </div>
+          <div class="form-group full-width" style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+            <button class="title-btn secondary" onclick="closeCreateSkillModal()">取消</button>
+            <button class="title-btn" id="cs-deduce-btn" onclick="deduceSkill()">推演功法</button>
+            <button class="title-btn primary" id="cs-save-btn" style="display:none" onclick="saveCreatedSkill()">确认创造</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -10583,6 +10639,215 @@ ${discipleLines || '无'}
       const r = parseRealmLocal(normalize(skillRealmReq));
       if (m.big !== r.big) return m.big > r.big;
       return m.small >= r.small;
+    }
+
+    // ====== 创造功法 ======
+    let _skillCreator = null;
+    let _deducedSkill = null;
+
+    const REALM_TO_RANK_BASE = {
+      '练气期': '凡', '炼气期': '凡',
+      '筑基期': '黄',
+      '金丹期': '玄',
+      '元婴期': '地',
+      '化神期': '天', '化神': '天'
+    };
+
+    function getRealmBase(realm) {
+      if (!realm) return null;
+      const r = realm.replace('炼气期', '练气期');
+      for (const key in REALM_TO_RANK_BASE) {
+        if (r.startsWith(key)) return REALM_TO_RANK_BASE[key];
+      }
+      return null;
+    }
+
+    function calculateSkillRank(realm, talent) {
+      const base = getRealmBase(realm);
+      if (!base) return '凡阶下品';
+      if (base === '凡' || base === '黄') {
+        const tier = talent?.charAt(0);
+        const suffix = tier === '甲' ? '上品' : tier === '乙' ? '中品' : '下品';
+        return base + '阶' + suffix;
+      }
+      return base + '阶上品';
+    }
+
+    function openCreateSkillModal() {
+      _skillCreator = null;
+      _deducedSkill = null;
+      document.getElementById('cs-name').value = '';
+      document.getElementById('cs-type').value = '道修';
+      document.getElementById('cs-desc').value = '';
+      document.getElementById('cs-prompt').value = '';
+      document.getElementById('cs-preview-area').style.display = 'none';
+      document.getElementById('cs-deduce-btn').style.display = '';
+      document.getElementById('cs-save-btn').style.display = 'none';
+      document.getElementById('skill-creator-info').textContent = '';
+      renderSkillCreatorList();
+      document.getElementById('create-skill-overlay').classList.add('active');
+    }
+
+    function closeCreateSkillModal() {
+      document.getElementById('create-skill-overlay').classList.remove('active');
+      _skillCreator = null;
+      _deducedSkill = null;
+    }
+
+    function openFuseSkillModal() {
+      alert('融合功法功能开发中...');
+    }
+
+    function renderSkillCreatorList() {
+      const container = document.getElementById('skill-creator-list');
+      const members = Object.entries(window.gameStateManager?.state?.members || {});
+      const player = window.gameStateManager?.state?.player;
+      const all = [];
+      if (player?.name) all.push([player.name, player]);
+      all.push(...members);
+      if (all.length === 0) {
+        container.innerHTML = '<span style="color:rgba(168,230,230,0.4);font-size:13px">暂无可用人员</span>';
+        return;
+      }
+      container.innerHTML = all.map(([name, m]) => {
+        const isSelected = _skillCreator === name;
+        const rank = calculateSkillRank(m.realm, m.talent);
+        return `<span class="tag ${isSelected ? 'selected' : ''}" onclick="selectSkillCreator('${name}')">
+          ${escapeHtml(name)} · ${escapeHtml(m.realm || '')} · ${escapeHtml(m.talent || '')}
+          <small style="opacity:0.7;margin-left:4px">(${rank})</small>
+        </span>`;
+      }).join('');
+    }
+
+    function selectSkillCreator(name) {
+      _skillCreator = name;
+      const members = window.gameStateManager?.state?.members || {};
+      const player = window.gameStateManager?.state?.player;
+      const m = members[name] || (player?.name === name ? player : null);
+      if (m) {
+        const rank = calculateSkillRank(m.realm, m.talent);
+        document.getElementById('skill-creator-info').textContent = `已选择：${name}，可创造 ${rank}`;
+      }
+      renderSkillCreatorList();
+    }
+
+    async function deduceSkill() {
+      if (!_skillCreator) { alert('请先选择功法创建者'); return; }
+      const name = document.getElementById('cs-name').value.trim();
+      const type = document.getElementById('cs-type').value;
+      const desc = document.getElementById('cs-desc').value.trim();
+      const promptText = document.getElementById('cs-prompt').value.trim();
+      if (!name || !desc || !promptText) { alert('请填写功法名称、介绍和描述'); return; }
+
+      const members = window.gameStateManager?.state?.members || {};
+      const player = window.gameStateManager?.state?.player;
+      const creator = members[_skillCreator] || (player?.name === _skillCreator ? player : null);
+      const rank = calculateSkillRank(creator?.realm, creator?.talent);
+
+      const btn = document.getElementById('cs-deduce-btn');
+      btn.textContent = '推演中...';
+      btn.disabled = true;
+
+      try {
+        const config = await getApiConfig();
+        if (!config.apiKey) { alert('未配置 API Key'); return; }
+
+        const systemPrompt = `你是一名修仙世界的天道推演师。请根据用户提供的功法描述，输出一个标准格式的功法 JSON 数据。
+
+输出格式必须是合法的 JSON，字段如下：
+{
+  "name": "功法名称（用户提供）",
+  "type": "流派（从[道修,神修,魔修,体修,修行百艺]中选择最符合的）",
+  "rank": "品阶（用户提供，不要改动）",
+  "desc": "功法介绍（1-3句话，50字以内）",
+  "color": "颜色标识（jade=青绿道修, purple=紫韵神修, pink=粉红魔修, gold=金黄体修/百艺）",
+  "effects": { "杀伐": 数值, "防御": 数值, "身法": 数值 },
+  "realmReq": "修习境界要求（根据功法品阶设定合理的最低境界）",
+  "maxProgress": 100
+}
+
+规则：
+- effects 三项总和不超过 30，天阶可接近30，凡阶不超过5
+- color 根据 type 选择：道修→jade，神修→purple，魔修→pink，体修/修行百艺→gold
+- realmReq 必须与品阶匹配：凡阶→练气期，黄阶→筑基期，玄阶→金丹期，地阶→元婴期，天阶→化神期
+- 只输出 JSON，不要任何解释、markdown 代码块标记或其他文字。`;
+
+        const userPrompt = `功法名称：${name}
+流派：${type}
+品阶：${rank}
+功法介绍：${desc}
+
+功法大致情况描述：${promptText}
+
+请输出标准 JSON 格式的功法数据。`;
+
+        const response = await fetch(`${config.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 800
+          })
+        });
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content || '';
+
+        // 提取 JSON
+        let jsonStr = content;
+        const codeMatch = content.match(/```json\s*([\s\S]*?)```/);
+        if (codeMatch) jsonStr = codeMatch[1];
+        const braceMatch = content.match(/\{[\s\S]*\}/);
+        if (braceMatch) jsonStr = braceMatch[0];
+
+        const skillData = JSON.parse(jsonStr);
+        // 强制使用规则计算的品阶
+        skillData.rank = rank;
+        skillData.id = 'skill_' + skillData.name.replace(/\s+/g, '_') + '_' + Date.now();
+        if (!skillData.effects) skillData.effects = { 杀伐: 0, 防御: 0, 身法: 0 };
+        if (!skillData.maxProgress) skillData.maxProgress = 100;
+
+        _deducedSkill = skillData;
+
+        // 显示预览
+        const preview = document.getElementById('cs-preview');
+        const style = getSkillStyle(skillData);
+        const effectsText = formatEffects(skillData.effects);
+        preview.innerHTML = `
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
+            <span style="background:${style.bg};color:${style.color};padding:2px 10px;border-radius:12px;font-size:12px">${skillData.rank}</span>
+            <strong style="color:${style.color};font-size:15px">${escapeHtml(skillData.name)}</strong>
+          </div>
+          <div style="color:rgba(168,230,230,0.6);font-size:12px;margin-bottom:6px">${skillData.type} · ${effectsText} · ${skillData.realmReq}</div>
+          <div>${escapeHtml(skillData.desc)}</div>
+        `;
+        document.getElementById('cs-preview-area').style.display = 'block';
+        document.getElementById('cs-deduce-btn').style.display = 'none';
+        document.getElementById('cs-save-btn').style.display = '';
+      } catch (e) {
+        console.error('[DeduceSkill] failed:', e);
+        alert('推演失败：' + (e.message || '请检查 API 配置'));
+      } finally {
+        btn.textContent = '推演功法';
+        btn.disabled = false;
+      }
+    }
+
+    function saveCreatedSkill() {
+      if (!_deducedSkill) return;
+      const library = window.gameStateManager?.state?.library;
+      if (!library) return;
+      // 检查重名
+      const exists = library.some(s => s.name === _deducedSkill.name);
+      if (exists) { alert('藏经阁中已存在同名功法'); return; }
+      library.push(_deducedSkill);
+      renderSkills();
+      closeCreateSkillModal();
+      alert(`功法「${_deducedSkill.name}」已收录至藏经阁`);
     }
 
     function openPracticeDialog(skillId) {
