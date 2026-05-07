@@ -10992,6 +10992,7 @@ ${discipleLines || '无'}
       library.push(skill);
       renderSkills();
       closeCreateSkillModal();
+      addActionLog('藏经阁', '创造功法', `「${skill.name}」（${skill.rank}·${skill.type}）由${_skillCreator}创造`, 0);
       alert(`功法「${skill.name}」已收录至藏经阁`);
     }
 
@@ -11940,6 +11941,7 @@ ${discipleLines || '无'}
         value: item
       }]);
 
+      addActionLog('库房', '新增物品', `「${item.name}」（${item.type}·${item.rank}）×${item.quantity}`, 0);
       closeModal();
       refreshTreasuryDisplay();
     }
