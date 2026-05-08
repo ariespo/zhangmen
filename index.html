@@ -8865,6 +8865,32 @@ ${discipleLines || '无'}
       }
     }
 
+    // 楼层截断：每轮交互(user+assistant)=1层，开局不计入。
+    // 超过15层时隐藏最旧的前N-5层，保留最近5层，并插入全部sum摘要。
+    function truncateChatByLayers(messages) {
+      if (!messages || messages.length <= 1) return messages;
+
+      // 计算交互轮数：开局assistant不计入，之后每对user+assistant=1层
+      const roundCount = Math.floor((messages.length - 1) / 2);
+      if (roundCount <= 15) return messages;
+
+      const hiddenRoundCount = roundCount - 5; // 需要隐藏的层数
+      const firstVisibleRound = hiddenRoundCount + 1; // 第一个可见层
+      const firstVisibleIndex = 2 * firstVisibleRound - 1; // 对应user消息索引
+
+      // 从 gameState.events 构建 sum 摘要
+      const events = window.gameStateManager?.state?.events || [];
+      const summaryLines = events.map(e =>
+        `<sum>时间：${e.time || '未知'} | 地点：${e.location || '未知'} | 人物：${e.people || '未知'} | 事件：${e.text || '无'}</sum>`
+      );
+      const summaryContent = `【历史事件摘要·前${hiddenRoundCount}轮】\n${summaryLines.join('\n') || '暂无历史事件'}`;
+      const summaryMessage = { role: 'assistant', content: summaryContent };
+
+      const result = [messages[0], summaryMessage, ...messages.slice(firstVisibleIndex)];
+      console.log(`[LayerTruncation] 总轮数:${roundCount} 隐藏:${hiddenRoundCount}层 显示:${firstVisibleRound}-${roundCount}层 结果消息数:${result.length}/${messages.length}`);
+      return result;
+    }
+
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
@@ -10216,11 +10242,14 @@ ${discipleLines || '无'}
           };
         }
 
+        // 楼层截断：超过15层时隐藏前N-5层，保留最近5层 + 开局 + 全部sum摘要
+        const chatMessages = chat?.messages || [];
+        const truncatedHistory = truncateChatByLayers(chatMessages);
+
         const assemblePrompt = window.__st_assemblePrompt || (await import('./sillytavern/st-prompt.js')).assemblePrompt;
-        const chat = store?.getActiveChat();
         const assembled = assemblePrompt({
           userInput,
-          history: chat?.messages || [],
+          history: truncatedHistory,
           preset: preset || null,
           lorebooks: activeBooks || [],
           userName: window.gameStateManager?.state?.player?.name || playerName || '掌门',
