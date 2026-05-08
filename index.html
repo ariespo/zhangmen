@@ -10156,11 +10156,10 @@ ${discipleLines || '无'}
         console.log('[DualAPI] [步骤1/8] 多API模式+开局 → 主API不注入开局提示词, 由第二API负责变量填充');
       }
 
-      // 多 API 模式下，强制要求主 API 输出 <maintext> 标签（不依赖 lorebook 格式规范）
-      if (window._currentApiMode === 'dual') {
-        userInput += '\n\n【格式要求】你的回复必须严格按以下顺序输出标签（缺一不可）：\n<maintext>剧情正文</maintext>\n<option>\nA. 【标题】说明\nB. 【标题】说明\n...</option>\n<sum>时间：... | 地点：... | 人物：... | 事件：...</sum>\n\n<maintext> 内写剧情正文，500-1000字。\n<option> 提供2-4个抉择选项。\n<sum> 用一句话概括本次事件（四要素缺一不可）。';
-        console.log('[DualAPI] [步骤1/8] 多API模式 → 强制注入 <maintext> 格式要求到提示词');
-      }
+      // 强制要求主 API 输出完整标签（不依赖 lorebook 格式规范）
+      const formatRequirement = `\n\n【格式要求】你的回复必须严格按以下顺序输出标签，缺一不可，遗漏任何标签都会导致解析失败：\n<maintext>剧情正文</maintext>\n<option>\nA. 【标题】说明\nB. 【标题】说明\nC. 【标题】说明\nD. 【标题】说明\n</option>\n<sum>时间：... | 地点：... | 人物：... | 事件：...</sum>\n${window._currentApiMode === 'single' ? '<vars>[{"op":"..."}]</vars>\n' : ''}<foreshadowing>伏笔内容|爆发间隔</foreshadowing>（可选，有则输出，无则省略）\n\n<maintext> 内写剧情正文，500-1000字。\n<option> 必须提供至少4个抉择选项，每个选项以字母开头。\n<sum> 用一句话概括本次事件（四要素缺一不可）。\n${window._currentApiMode === 'single' ? '<vars> 输出JSON Patch数组更新游戏变量。\n' : ''}请务必确保<option>标签每次都完整输出，不要省略。`;
+      userInput += formatRequirement;
+      console.log('[DualAPI] [步骤1/8] 强制注入格式要求到提示词，模式:', window._currentApiMode);
 
       switchPage('story');
       setLLMProcessing(true);
@@ -10500,7 +10499,7 @@ ${discipleLines || '无'}
         if (fullRawResponse.trim()) {
           window._lastSnapshot = snapshot;
         }
-        // LLM 返回成功，视为经过一个回合：清空操作记录、恢复体力
+        // LLM 返回成功，视为经过一个回合：清空操作记录、恢复体力、结算疆域资源
         if (fullRawResponse.trim()) {
           actionLogs = [];
           stamina.current = stamina.max;
@@ -10508,6 +10507,35 @@ ${discipleLines || '无'}
           renderActionLogs();
           renderOpportunities();
           toggleActionLog();
+
+          // 自动结算疆域月产资源（玩家掌控且探索阶段≥1的疆域）
+          try {
+            const sectName = window.gameStateManager?.state?.sect?.name;
+            const regions = window.gameStateManager?.state?.world?.regions || [];
+            let totalGold = 0;
+            let totalSeeds = 0;
+            const contributingRegions = [];
+            for (const r of regions) {
+              if (r.controlledBy === sectName && (r.explorationStage || 0) >= 1) {
+                const gold = r.monthlyResources?.gold || 0;
+                const seeds = r.monthlyResources?.potentialDisciples || 0;
+                if (gold > 0 || seeds > 0) {
+                  totalGold += gold;
+                  totalSeeds += seeds;
+                  contributingRegions.push(`${r.name}（灵石+${gold} 种子+${seeds}）`);
+                }
+              }
+            }
+            if (totalGold > 0 || totalSeeds > 0) {
+              const patches = [];
+              if (totalGold > 0) patches.push({ op: 'delta', path: '/finance/gold', value: String(totalGold) });
+              if (totalSeeds > 0) patches.push({ op: 'delta', path: '/finance/potentialDisciples', value: String(totalSeeds) });
+              window.gameStateManager.applyPatch(patches);
+              console.log('[TurnSettlement] 疆域资源结算:', contributingRegions.join('、'), '| 总计: 灵石+' + totalGold + ' 种子+' + totalSeeds);
+            }
+          } catch (e) {
+            console.warn('[TurnSettlement] 疆域资源结算失败:', e);
+          }
         }
         // 本轮提交成功，清除 session 中的临时状态
         if (fullRawResponse.trim()) {
