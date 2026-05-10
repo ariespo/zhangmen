@@ -6213,6 +6213,13 @@
             }).join('')
           : '<div class="member-detail-empty" style="grid-column:1/-1">暂无佩戴装备</div>';
 
+        const personalityChips = (p.personality || []).length > 0
+          ? p.personality.map(tag => `<span class="member-detail-chip">${tag}</span>`).join('')
+          : '<div class="member-detail-empty">未设定</div>';
+        const appearanceChips = (p.appearance || []).length > 0
+          ? p.appearance.map(tag => `<span class="member-detail-chip">${tag}</span>`).join('')
+          : '<div class="member-detail-empty">未设定</div>';
+
         title.textContent = '掌门信息';
         body.innerHTML = `
           <div class="member-detail">
@@ -6235,6 +6242,16 @@
                 <div class="member-detail-bar-track"><div class="member-detail-bar-fill" style="width:${lifespanPercent}%;background:${lifespanColor}"></div></div>
                 <span class="member-detail-bar-value">${p.lifespan.max === Infinity ? p.lifespan.current + '/∞' : p.lifespan.current + '/' + p.lifespan.max}</span>
               </div>
+            </div>
+
+            <div class="member-detail-section">
+              <div class="member-detail-section-title">性格</div>
+              <div class="member-detail-chips">${personalityChips}</div>
+            </div>
+
+            <div class="member-detail-section">
+              <div class="member-detail-section-title">外貌</div>
+              <div class="member-detail-chips">${appearanceChips}</div>
             </div>
 
             <div class="member-detail-section">
