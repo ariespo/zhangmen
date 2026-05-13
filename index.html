@@ -10949,6 +10949,7 @@ ${discipleLines || '无'}
       btn.textContent = '推演中...';
       btn.disabled = true;
 
+      let content = '', fixed = '';
       try {
         const config = await getLLMConfig();
         if (!config.apiKey) { alert('未配置 API Key'); return; }
@@ -10983,16 +10984,35 @@ ${discipleLines || '无'}
           })
         });
         const data = await response.json();
-        const content = data.choices?.[0]?.message?.content || '';
+        content = data.choices?.[0]?.message?.content || '';
 
-        // 提取 JSON
-        let jsonStr = content;
+        // 提取 JSON（优先从代码块提取，否则找首个 {...}）
+        let jsonStr = '';
         const codeMatch = content.match(/```json\s*([\s\S]*?)```/);
-        if (codeMatch) jsonStr = codeMatch[1];
-        const braceMatch = content.match(/\{[\s\S]*\}/);
-        if (braceMatch) jsonStr = braceMatch[0];
+        if (codeMatch) {
+          jsonStr = codeMatch[1];
+        } else {
+          const braceMatch = content.match(/\{[\s\S]*?\}/);
+          if (braceMatch) jsonStr = braceMatch[0];
+        }
+        if (!jsonStr.trim()) {
+          throw new Error('天道未返回有效 JSON 数据，原始响应：' + content.slice(0, 200));
+        }
 
-        const skillData = JSON.parse(jsonStr);
+        // 清洗常见 LLM JSON 问题：未转义的换行符、尾部逗号
+        jsonStr = jsonStr.replace(/```json\s*|\s*```/g, '').trim();
+        jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+        fixed = ''; let inStr = false, esc = false;
+        for (let i = 0; i < jsonStr.length; i++) {
+          const c = jsonStr[i];
+          if (esc) { fixed += c; esc = false; continue; }
+          if (c === '\\') { fixed += c; esc = true; continue; }
+          if (c === '"') { inStr = !inStr; fixed += c; continue; }
+          if (inStr && (c === '\n' || c === '\r')) { fixed += '\\n'; continue; }
+          fixed += c;
+        }
+
+        const skillData = JSON.parse(fixed);
         // 用户已填写的字段优先
         const userName = document.getElementById('cs-name').value.trim();
         const userType = document.getElementById('cs-type').value;
@@ -11019,6 +11039,8 @@ ${discipleLines || '无'}
         document.getElementById('cs-preview-area').style.display = 'block';
       } catch (e) {
         console.error('[DeduceSkill] failed:', e);
+        console.error('[DeduceSkill] raw content:', content);
+        console.error('[DeduceSkill] fixed json:', fixed || '(not reached)');
         alert('推演失败：' + (e.message || '请检查 API 配置'));
       } finally {
         btn.textContent = originalText;
