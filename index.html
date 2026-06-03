@@ -4889,6 +4889,15 @@
               <input type="number" id="c-age" min="1" max="150" value="25" style="flex:1">
               <span id="c-lifespan-hint" style="font-size:12px;color:var(--jade-glow);white-space:nowrap">寿元上限：150</span>
             </div>
+            <div class="form-group full-width" style="position:relative;margin-top:12px">
+              <label>自然语言描述</label>
+              <textarea id="c-ai-desc" class="tianji-textarea" placeholder="描述你心中的掌门形象：出身、经历、性格特点、修行资质、外貌特征……天道将根据描述推演完整角色数据" style="min-height:100px;padding-bottom:40px"></textarea>
+              <button class="title-btn" id="c-ai-btn" onclick="deducePlayer()" style="position:absolute;bottom:8px;right:8px;padding:6px 14px;font-size:12px">让天道设计</button>
+            </div>
+            <div class="form-group full-width" id="c-ai-preview-area" style="display:none">
+              <label>推演结果预览</label>
+              <div id="c-ai-preview" style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;padding:12px;font-size:13px;line-height:1.7"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -4960,6 +4969,15 @@
       <!-- Step 3: Disciples -->
       <div class="creation-step" data-step="3">
         <h2 class="creation-title"></h2>
+        <div class="form-group full-width" style="position:relative;margin-bottom:16px">
+          <label>弟子团队描述（批量生成）</label>
+          <textarea id="c-disciples-ai-desc" class="tianji-textarea" placeholder="描述你的弟子团队整体情况：人数、来历、性格搭配、修行层次……天道将根据描述推演所有弟子数据" style="min-height:80px;padding-bottom:40px"></textarea>
+          <button class="title-btn" id="c-disciples-ai-btn" onclick="deduceDisciples()" style="position:absolute;bottom:8px;right:8px;padding:6px 14px;font-size:12px">让天道设计</button>
+        </div>
+        <div class="form-group full-width" id="c-disciples-ai-preview-area" style="display:none;margin-bottom:16px">
+          <label>推演结果预览</label>
+          <div id="c-disciples-ai-preview" style="background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;padding:12px;font-size:13px;line-height:1.7"></div>
+        </div>
         <div id="disciples-container">
           <!-- 动态生成 -->
         </div>
@@ -5425,14 +5443,14 @@
                 <div class="secondary-api-spinner"></div>
                 <span>天道推演中</span>
               </div>
-              <div class="story-test-btn" onclick="simulateLLMResponse()">
+              <div class="story-test-btn" onclick="simulateLLMResponse()" style="display:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
                   <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                   <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span>测试流</span>
               </div>
-              <div class="story-test-btn story-test-advanced" onclick="simulateLLMResponseAdvanced()">
+              <div class="story-test-btn story-test-advanced" onclick="simulateLLMResponseAdvanced()" style="display:none">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px">
                   <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
                   <path d="M12 6v6l4 2"/>
@@ -11048,6 +11066,422 @@ ${discipleLines || '无'}
       }
     }
 
+    /**
+     * 从 LLM 返回的文本中提取并清洗 JSON
+     * @param {string} content - LLM 原始返回文本
+     * @returns {object} { jsonStr: string, error?: string }
+     */
+    function extractAndCleanJson(content) {
+      let jsonStr = '';
+      const codeMatch = content.match(/```json\s*([\s\S]*?)```/);
+      if (codeMatch) {
+        jsonStr = codeMatch[1];
+      } else {
+        const braceMatch = content.match(/\{[\s\S]*?\}/);
+        if (braceMatch) jsonStr = braceMatch[0];
+      }
+      if (!jsonStr.trim()) {
+        return { jsonStr: '', error: '天道未返回有效 JSON 数据，原始响应：' + content.slice(0, 200) };
+      }
+
+      // 清洗常见 LLM JSON 问题：未转义的换行符、尾部逗号
+      jsonStr = jsonStr.replace(/```json\s*|\s*```/g, '').trim();
+      jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+      let fixed = '', inStr = false, esc = false;
+      for (let i = 0; i < jsonStr.length; i++) {
+        const c = jsonStr[i];
+        if (esc) { fixed += c; esc = false; continue; }
+        if (c === '\\') { fixed += c; esc = true; continue; }
+        if (c === '"') { inStr = !inStr; fixed += c; continue; }
+        if (inStr && (c === '\n' || c === '\r')) { fixed += '\\n'; continue; }
+        fixed += c;
+      }
+      return { jsonStr: fixed };
+    }
+
+    async function deducePlayer() {
+      const promptText = document.getElementById('c-ai-desc').value.trim();
+      if (!promptText) { alert('请先输入角色描述'); return; }
+
+      const btn = document.getElementById('c-ai-btn');
+      const originalText = btn.textContent;
+      btn.textContent = '推演中...';
+      btn.disabled = true;
+
+      let content = '';
+      try {
+        const config = await getLLMConfig();
+        if (!config.apiKey) { alert('未配置 API Key'); return; }
+
+        const systemPrompt = `你是一名修仙世界的天道推演师。请根据用户提供的角色描述，输出一个标准格式的角色 JSON 数据。
+
+输出格式必须是合法的 JSON，字段如下：
+{
+  "name": "名字",
+  "gender": "性别（从[男,女,其他]中选择）",
+  "realmLevel": "境界等级（从[练气期,筑基期,金丹期,元婴期,化神期,道祖]中选择）",
+  "realmStage": "境界阶段（从[前期,中期,后期,圆满]中选择）",
+  "age": 年龄数字,
+  "talent": "天赋资质（从[甲上,甲中,甲下,乙上,乙中,乙下,丙上,丙中,丙下,丁上,丁中,丁下]中选择）",
+  "personality": ["性格标签1","性格标签2",...],
+  "appearance": ["外貌标签1","外貌标签2",...]
+}
+
+规则：
+- 只输出 JSON，不要任何解释、markdown 代码块标记或其他文字
+- personality 和 appearance 各最多选3个
+- age 必须在1-150之间`;
+
+        const response = await fetch(`${config.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: promptText }
+            ],
+            temperature: 0.7,
+            max_tokens: 600
+          })
+        });
+        const data = await response.json();
+        content = data.choices?.[0]?.message?.content || '';
+
+        const result = extractAndCleanJson(content);
+        if (result.error) throw new Error(result.error);
+
+        const playerData = JSON.parse(result.jsonStr);
+
+        // 回填表单（用户已填写的字段优先保留）
+        const userName = document.getElementById('c-name').value.trim();
+        if (!userName && playerData.name) document.getElementById('c-name').value = playerData.name;
+
+        if (playerData.gender) {
+          const radio = document.querySelector(`input[name="c-gender"][value="${playerData.gender}"]`);
+          if (radio) radio.checked = true;
+        }
+
+        if (playerData.realmLevel) document.getElementById('c-realm-level').value = playerData.realmLevel;
+        if (playerData.realmStage) document.getElementById('c-realm-stage').value = playerData.realmStage;
+
+        const userAge = document.getElementById('c-age').value;
+        if ((!userAge || userAge === '25') && playerData.age) {
+          document.getElementById('c-age').value = Math.min(150, Math.max(1, playerData.age));
+        }
+
+        if (playerData.talent) document.getElementById('c-talent').value = playerData.talent;
+
+        // 回填性格标签
+        if (Array.isArray(playerData.personality)) {
+          const group = document.getElementById('c-personality');
+          playerData.personality.slice(0, 3).forEach(p => {
+            const tag = group.querySelector(`.tag[data-value="${p}"]`);
+            if (tag) {
+              tag.classList.add('selected');
+            } else {
+              const newTag = document.createElement('span');
+              newTag.className = 'tag selected';
+              newTag.dataset.value = p;
+              newTag.textContent = p;
+              group.insertBefore(newTag, group.querySelector('.tag-input'));
+            }
+          });
+        }
+
+        // 回填外貌标签
+        if (Array.isArray(playerData.appearance)) {
+          const group = document.getElementById('c-appearance');
+          playerData.appearance.slice(0, 3).forEach(a => {
+            const tag = group.querySelector(`.tag[data-value="${a}"]`);
+            if (tag) {
+              tag.classList.add('selected');
+            } else {
+              const newTag = document.createElement('span');
+              newTag.className = 'tag selected';
+              newTag.dataset.value = a;
+              newTag.textContent = a;
+              group.insertBefore(newTag, group.querySelector('.tag-input'));
+            }
+          });
+        }
+
+        // 触发境界变化事件，更新寿元提示
+        document.getElementById('c-realm-level')?.dispatchEvent(new Event('change'));
+
+        // 显示预览
+        const preview = document.getElementById('c-ai-preview');
+        preview.innerHTML = `
+          <div style="color:rgba(168,230,230,0.6);font-size:12px;margin-bottom:4px">天道已根据描述完成推演，请检查并调整下方字段</div>
+          <div style="font-size:14px;color:var(--jade-glow)">${escapeHtml(playerData.name || '')} · ${escapeHtml(playerData.gender || '')} · ${escapeHtml(playerData.realmLevel || '')}${playerData.realmStage ? '·' + escapeHtml(playerData.realmStage) : ''}</div>
+          <div style="font-size:13px;margin-top:4px">天赋：${escapeHtml(playerData.talent || '')} | 年龄：${playerData.age || ''}</div>
+          <div style="font-size:13px;margin-top:2px">性格：${(playerData.personality || []).join('、')} | 外貌：${(playerData.appearance || []).join('、')}</div>
+        `;
+        document.getElementById('c-ai-preview-area').style.display = 'block';
+      } catch (e) {
+        console.error('[DeducePlayer] failed:', e);
+        console.error('[DeducePlayer] raw content:', content);
+        alert('推演失败：' + (e.message || '请检查 API 配置'));
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    /**
+     * 将弟子数据回填到指定索引的弟子卡片
+     * @param {number} index - 弟子卡片索引
+     * @param {object} data - 弟子数据对象
+     */
+    function fillDiscipleCard(index, data) {
+      const card = document.querySelector(`.disciple-card[data-index="${index}"]`);
+      if (!card) return;
+
+      if (data.name) card.querySelector('.d-name').value = data.name;
+      if (data.gender) card.querySelector('.d-gender').value = data.gender;
+      if (data.daoName) card.querySelector('.d-daoName').value = data.daoName;
+
+      if (data.realm) {
+        card.querySelector('.d-realm').value = data.realm;
+        const maxAge = DISCIPLE_REALM_LIFESPAN[data.realm] || 150;
+        const ageInput = card.querySelector('.d-age');
+        ageInput.max = maxAge;
+      }
+
+      if (data.age !== undefined) {
+        const ageInput = card.querySelector('.d-age');
+        const max = parseInt(ageInput.max) || 150;
+        ageInput.value = Math.min(data.age, max);
+      }
+
+      if (data.role) card.querySelector('.d-role').value = data.role;
+      if (data.talent) card.querySelector('.d-talent').value = data.talent;
+      if (data.loyalty !== undefined) {
+        card.querySelector('.d-loyalty').value = Math.min(100, Math.max(0, data.loyalty));
+      }
+
+      // 回填性格标签
+      if (Array.isArray(data.personality)) {
+        const group = card.querySelector('.d-personality');
+        group.querySelectorAll('.tag').forEach(t => t.classList.remove('selected'));
+        data.personality.slice(0, 3).forEach(p => {
+          const tag = group.querySelector(`.tag[data-value="${p}"]`);
+          if (tag) {
+            tag.classList.add('selected');
+          } else {
+            const newTag = document.createElement('span');
+            newTag.className = 'tag selected';
+            newTag.dataset.value = p;
+            newTag.textContent = p;
+            group.insertBefore(newTag, group.querySelector('.tag-input'));
+          }
+        });
+      }
+
+      // 回填外貌标签
+      if (Array.isArray(data.appearance)) {
+        const group = card.querySelector('.d-appearance');
+        group.querySelectorAll('.tag').forEach(t => t.classList.remove('selected'));
+        data.appearance.slice(0, 3).forEach(a => {
+          const tag = group.querySelector(`.tag[data-value="${a}"]`);
+          if (tag) {
+            tag.classList.add('selected');
+          } else {
+            const newTag = document.createElement('span');
+            newTag.className = 'tag selected';
+            newTag.dataset.value = a;
+            newTag.textContent = a;
+            group.insertBefore(newTag, group.querySelector('.tag-input'));
+          }
+        });
+      }
+    }
+
+    async function deduceDisciples() {
+      const promptText = document.getElementById('c-disciples-ai-desc').value.trim();
+      if (!promptText) { alert('请先输入弟子团队描述'); return; }
+
+      const count = getDiscipleCount();
+      if (count === 0) { alert('当前开局无弟子'); return; }
+
+      const btn = document.getElementById('c-disciples-ai-btn');
+      const originalText = btn.textContent;
+      btn.textContent = '推演中...';
+      btn.disabled = true;
+
+      let content = '';
+      try {
+        const config = await getLLMConfig();
+        if (!config.apiKey) { alert('未配置 API Key'); return; }
+
+        const systemPrompt = `你是一名修仙世界的天道推演师。用户将创建 ${count} 名弟子，请根据描述为每名弟子输出标准格式的 JSON 数据。
+
+输出格式必须是合法的 JSON 数组，每个元素包含：
+{
+  "name": "姓名",
+  "gender": "性别（男/女）",
+  "daoName": "道号",
+  "realm": "境界（从[练气期前期,练气期中期,练气期后期,筑基期前期,筑基期中期]中选择）",
+  "age": 年龄数字,
+  "role": "职务（从[内门弟子,外门弟子,成员]中选择）",
+  "talent": "天赋（从[甲上,甲中,甲下,乙上,乙中,乙下,丙上,丙中,丙下,丁上,丁中,丁下]中选择）",
+  "loyalty": 忠诚度数字0-100,
+  "personality": ["性格标签1","性格标签2",...],
+  "appearance": ["外貌标签1","外貌标签2",...]
+}
+
+规则：
+- 只输出 JSON 数组，不要任何解释、markdown 代码块标记或其他文字
+- personality 和 appearance 各最多选3个
+- age 必须在1-150之间
+- 数组长度应为 ${count}，若描述不足则适当补充`;
+
+        const response = await fetch(`${config.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: promptText }
+            ],
+            temperature: 0.7,
+            max_tokens: 1200
+          })
+        });
+        const data = await response.json();
+        content = data.choices?.[0]?.message?.content || '';
+
+        // 尝试提取 JSON 数组（支持直接数组或包裹在代码块中）
+        let jsonStr = '';
+        const codeMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (codeMatch) {
+          jsonStr = codeMatch[1];
+        } else {
+          const arrayMatch = content.match(/\[[\s\S]*\]/);
+          if (arrayMatch) jsonStr = arrayMatch[0];
+        }
+        if (!jsonStr.trim()) {
+          throw new Error('天道未返回有效 JSON 数组，原始响应：' + content.slice(0, 200));
+        }
+
+        // 清洗
+        jsonStr = jsonStr.replace(/```json\s*|\s*```/g, '').trim();
+        jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+        let fixed = '', inStr = false, esc = false;
+        for (let i = 0; i < jsonStr.length; i++) {
+          const c = jsonStr[i];
+          if (esc) { fixed += c; esc = false; continue; }
+          if (c === '\\') { fixed += c; esc = true; continue; }
+          if (c === '"') { inStr = !inStr; fixed += c; continue; }
+          if (inStr && (c === '\n' || c === '\r')) { fixed += '\\n'; continue; }
+          fixed += c;
+        }
+
+        const disciplesData = JSON.parse(fixed);
+        if (!Array.isArray(disciplesData)) {
+          throw new Error('天道返回的数据不是数组格式');
+        }
+
+        // 回填到弟子卡片
+        const fillCount = Math.min(count, disciplesData.length);
+        for (let i = 0; i < fillCount; i++) {
+          fillDiscipleCard(i, disciplesData[i]);
+        }
+
+        // 显示预览
+        const preview = document.getElementById('c-disciples-ai-preview');
+        preview.innerHTML = `
+          <div style="color:rgba(168,230,230,0.6);font-size:12px;margin-bottom:4px">天道已根据描述完成推演，共生成 ${fillCount} 名弟子</div>
+          ${disciplesData.slice(0, count).map((d, i) => `
+            <div style="font-size:13px;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-border)">
+              <span style="color:var(--jade-glow)">${i + 1}. ${escapeHtml(d.name || '未命名')}</span> · ${escapeHtml(d.gender || '')} · ${escapeHtml(d.realm || '')} · ${escapeHtml(d.talent || '')}
+            </div>
+          `).join('')}
+        `;
+        document.getElementById('c-disciples-ai-preview-area').style.display = 'block';
+      } catch (e) {
+        console.error('[DeduceDisciples] failed:', e);
+        console.error('[DeduceDisciples] raw content:', content);
+        alert('推演失败：' + (e.message || '请检查 API 配置'));
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function deduceDisciple(index) {
+      const card = document.querySelector(`.disciple-card[data-index="${index}"]`);
+      if (!card) return;
+
+      const textarea = card.querySelector('.d-ai-desc');
+      const promptText = textarea.value.trim();
+      if (!promptText) { alert('请先输入弟子描述'); return; }
+
+      const btn = card.querySelector('.title-btn');
+      const originalText = btn.textContent;
+      btn.textContent = '推演中...';
+      btn.disabled = true;
+
+      let content = '';
+      try {
+        const config = await getLLMConfig();
+        if (!config.apiKey) { alert('未配置 API Key'); return; }
+
+        const systemPrompt = `你是一名修仙世界的天道推演师。请根据用户提供的弟子描述，输出一个标准格式的弟子 JSON 数据。
+
+输出格式必须是合法的 JSON，字段如下：
+{
+  "name": "姓名",
+  "gender": "性别（男/女）",
+  "daoName": "道号",
+  "realm": "境界（从[练气期前期,练气期中期,练气期后期,筑基期前期,筑基期中期]中选择）",
+  "age": 年龄数字,
+  "role": "职务（从[内门弟子,外门弟子,成员]中选择）",
+  "talent": "天赋（从[甲上,甲中,甲下,乙上,乙中,乙下,丙上,丙中,丙下,丁上,丁中,丁下]中选择）",
+  "loyalty": 忠诚度数字0-100,
+  "personality": ["性格标签1","性格标签2",...],
+  "appearance": ["外貌标签1","外貌标签2",...]
+}
+
+规则：
+- 只输出 JSON，不要任何解释、markdown 代码块标记或其他文字
+- personality 和 appearance 各最多选3个
+- age 必须在1-150之间`;
+
+        const response = await fetch(`${config.baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: promptText }
+            ],
+            temperature: 0.7,
+            max_tokens: 600
+          })
+        });
+        const data = await response.json();
+        content = data.choices?.[0]?.message?.content || '';
+
+        const result = extractAndCleanJson(content);
+        if (result.error) throw new Error(result.error);
+
+        const discipleData = JSON.parse(result.jsonStr);
+        fillDiscipleCard(index, discipleData);
+
+        alert(`弟子「${discipleData.name || '未命名'}」已推演完成`);
+      } catch (e) {
+        console.error('[DeduceDisciple] failed:', e);
+        console.error('[DeduceDisciple] raw content:', content);
+        alert('推演失败：' + (e.message || '请检查 API 配置'));
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
     function saveCreatedSkill() {
       if (!_skillCreator) { alert('请先选择功法创建者'); return; }
       const name = document.getElementById('cs-name').value.trim();
@@ -12497,6 +12931,11 @@ ${discipleLines || '无'}
                   ${DISCIPLE_APPEARANCE.map(a => `<span class="tag" data-value="${a}">${a}</span>`).join('')}
                   <input type="text" class="tag-input" placeholder="+ 自定义" maxlength="6">
                 </div>
+              </div>
+              <div class="form-group full-width" style="position:relative;margin-top:8px">
+                <label style="font-size:12px;color:rgba(168,230,230,0.6)">自然语言描述（单个生成）</label>
+                <textarea class="d-ai-desc tianji-textarea" data-index="${i}" placeholder="描述这名弟子的特点……" style="min-height:60px;padding-bottom:36px;font-size:13px"></textarea>
+                <button class="title-btn" onclick="deduceDisciple(${i})" style="position:absolute;bottom:6px;right:6px;padding:4px 10px;font-size:11px">让天道设计</button>
               </div>
             </div>
           </div>`;
