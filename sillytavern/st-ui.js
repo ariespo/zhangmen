@@ -635,10 +635,12 @@ function renderSettingsModal(state, store) {
     <div class="st-tabs" style="margin-bottom:16px">
       <button class="st-tab ${state.activeTab === 'api' ? 'active' : ''}" data-tab="api">API配置</button>
       <button class="st-tab ${state.activeTab === 'profile' ? 'active' : ''}" data-tab="profile">角色</button>
+      <button class="st-tab ${state.activeTab === 'ui' ? 'active' : ''}" data-tab="ui">界面</button>
       <button class="st-tab ${state.activeTab === 'backup' ? 'active' : ''}" data-tab="backup">备份</button>
     </div>
     ${state.activeTab === 'api' ? renderApiSettings(state) :
       state.activeTab === 'profile' ? renderProfileSettings(state) :
+      state.activeTab === 'ui' ? renderUiSettings() :
       renderBackupSettings()}
   `;
 }
@@ -740,6 +742,32 @@ function renderProfileSettings(state) {
         <label class="st-label">你的名称</label>
         <input type="text" class="st-input" value="${escapeHtml(playerName)}" readonly style="background:rgba(0,0,0,0.2);color:rgba(168,230,230,0.6);cursor:not-allowed">
         <p style="font-size:12px;color:rgba(168,230,230,0.4);margin-top:4px">与当前角色同步，用于替换 {{user}} 宏变量</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderUiSettings() {
+  const savedTheme = localStorage.getItem('zhangmen_theme') || 'light';
+  return `
+    <div style="max-width:500px">
+      <div class="st-form-group">
+        <label class="st-label">主题配色</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid var(--glass-border);background:var(--glass-bg);flex:1;min-width:120px">
+            <input type="radio" name="theme-select" value="light" ${savedTheme === 'light' ? 'checked' : ''} onchange="window.setTheme(this.value)">
+            <span>浅色</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid var(--glass-border);background:var(--glass-bg);flex:1;min-width:120px">
+            <input type="radio" name="theme-select" value="dark" ${savedTheme === 'dark' ? 'checked' : ''} onchange="window.setTheme(this.value)">
+            <span>深色</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 16px;border-radius:8px;border:1px solid var(--glass-border);background:var(--glass-bg);flex:1;min-width:120px">
+            <input type="radio" name="theme-select" value="system" ${savedTheme === 'system' ? 'checked' : ''} onchange="window.setTheme(this.value)">
+            <span>跟随系统</span>
+          </label>
+        </div>
+        <p style="font-size:12px;color:var(--theme-text-muted);margin-top:8px">切换后即时生效，偏好会自动保存</p>
       </div>
     </div>
   `;
