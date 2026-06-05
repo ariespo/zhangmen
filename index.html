@@ -2120,6 +2120,54 @@
       overflow: hidden;
     }
 
+    /* === TIERED FRAME SYSTEM === */
+    .tiered-frame {
+      position: relative;
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 16px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .tiered-frame::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 13px;
+      border: 1px solid rgba(110, 207, 207, 0.12);
+      pointer-events: none;
+    }
+    .tiered-frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      border: 1px solid rgba(200, 168, 110, 0.15);
+      pointer-events: none;
+    }
+    .tiered-frame:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(110, 207, 207, 0.08),
+                  inset 0 0 20px rgba(110, 207, 207, 0.04);
+    }
+
+    /* 四角装饰 */
+    .tiered-frame .corner-tl,
+    .tiered-frame .corner-tr,
+    .tiered-frame .corner-bl,
+    .tiered-frame .corner-br {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .tiered-frame .corner-tl { top: 6px; left: 6px; border-top: 1px solid rgba(200, 168, 110, 0.3); border-left: 1px solid rgba(200, 168, 110, 0.3); }
+    .tiered-frame .corner-tr { top: 6px; right: 6px; border-top: 1px solid rgba(200, 168, 110, 0.3); border-right: 1px solid rgba(200, 168, 110, 0.3); }
+    .tiered-frame .corner-bl { bottom: 6px; left: 6px; border-bottom: 1px solid rgba(200, 168, 110, 0.3); border-left: 1px solid rgba(200, 168, 110, 0.3); }
+    .tiered-frame .corner-br { bottom: 6px; right: 6px; border-bottom: 1px solid rgba(200, 168, 110, 0.3); border-right: 1px solid rgba(200, 168, 110, 0.3); }
+
     /* === SIDE NAV === */
     #side-nav {
       width: 72px;
