@@ -1390,6 +1390,44 @@
       transition: opacity 1.2s ease;
     }
 
+    /* 7-layer visual architecture */
+    #title-screen .layer-bg,
+    #title-screen .layer-mid,
+    #title-screen .layer-fg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    #title-screen .layer-fg.title-content,
+    #title-screen .layer-fg.title-menu {
+      pointer-events: auto;
+    }
+
+    .starfield {
+      background: radial-gradient(ellipse at bottom, #1a3a3a 0%, #0c1418 100%);
+    }
+    .atmosphere {
+      background: radial-gradient(ellipse at 50% 30%, rgba(110,207,207,0.05) 0%, transparent 60%);
+    }
+
+    .mountains-far svg,
+    .mountains-mid svg,
+    .mountains-near svg {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 55%;
+    }
+
+    .title-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+
     /* Mountains SVG */
     .mountains-container {
       position: absolute;
@@ -5213,28 +5251,52 @@
 
   <!-- TITLE SCREEN / OPENING -->
   <div id="title-screen">
-    <div class="mountains-container">
+    <!-- z-0: 星空背景层 -->
+    <div class="layer-bg starfield"></div>
+
+    <!-- z-1: 大气光晕层 -->
+    <div class="layer-bg atmosphere"></div>
+
+    <!-- z-2: 远景山脉 -->
+    <div class="layer-mid mountains-far">
       <svg viewBox="-200 0 2800 1080" preserveAspectRatio="none">
-        <!-- Far mountains -->
-        <path class="mountain-far" fill="rgba(26,40,48,0.7)"
+        <path class="mountain-far-path" fill="none" stroke="rgba(26,40,48,0.7)" stroke-width="1"
           d="M-100,1080 L-100,650 Q200,400 450,550 T950,480 T1450,520 T1950,450 T2400,500 V1080 Z"/>
-        <!-- Mid mountains -->
-        <path class="mountain-mid" fill="rgba(46,70,80,0.8)"
+      </svg>
+    </div>
+
+    <!-- z-3: 中景山脉 -->
+    <div class="layer-mid mountains-mid">
+      <svg viewBox="-200 0 2800 1080" preserveAspectRatio="none">
+        <path class="mountain-mid-path" fill="none" stroke="rgba(46,70,80,0.8)" stroke-width="1.5"
           d="M-100,1080 L-100,750 Q250,580 500,720 T1000,650 T1500,720 T2000,680 V1080 Z"/>
-        <!-- Near mountains -->
-        <path class="mountain-near" fill="none" stroke="rgba(110,207,207,0.15)" stroke-width="2"
+      </svg>
+    </div>
+
+    <!-- z-4: 近景山脉 -->
+    <div class="layer-fg mountains-near">
+      <svg viewBox="-200 0 2800 1080" preserveAspectRatio="none">
+        <path class="mountain-near-path" fill="none" stroke="rgba(110,207,207,0.15)" stroke-width="2"
           d="M-100,1080 L-100,850 Q300,720 600,880 T1100,780 T1600,860 V1080 Z"/>
-        <path class="mountain-near" fill="rgba(12,20,24,0.95)"
+        <path class="mountain-near-fill" fill="rgba(12,20,24,0.95)"
           d="M-100,1080 L-100,860 Q300,740 600,890 T1100,800 T1600,870 V1080 Z"/>
       </svg>
-      <div class="mountain-mist"></div>
     </div>
-    <div class="opening-title" id="opening-title">宗门志</div>
-    <div class="opening-subtitle" id="opening-subtitle">问道长生 · 经营宗门 · 你的仙道由你书写</div>
-    <div class="title-menu" id="title-menu">
+
+    <!-- z-5: 主标题 -->
+    <div class="layer-fg title-content">
+      <div class="opening-title" id="opening-title">宗门志</div>
+      <div class="opening-subtitle" id="opening-subtitle">问道长生 · 经营宗门 · 你的仙道由你书写</div>
+    </div>
+
+    <!-- z-6: UI 按钮 -->
+    <div class="layer-fg title-menu" id="title-menu">
       <button class="title-btn primary" id="btn-new-game" onclick="startNewGame()">开始新游戏</button>
       <button class="title-btn" id="btn-load-game" onclick="loadGame()">读取游戏</button>
     </div>
+
+    <!-- z-7: 山巅雾气 -->
+    <div class="layer-fg mountain-mist"></div>
   </div>
 
   <!-- LOAD GAME SCREEN -->
