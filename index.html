@@ -13099,6 +13099,90 @@ ${discipleLines || '无'}
     }
     makeDraggable(document.getElementById('side-nav'));
   </script>
+  <script>
+    // === 标题页面 GSAP 动画 ===
+    (function initTitleAnimation() {
+      // 注册插件
+      gsap.registerPlugin(DrawSVGPlugin, SplitText, CustomEase);
+
+      // 自定义缓动
+      CustomEase.create("xianqi", "M0,0 C0.2,0 0.2,1 0.4,1 0.6,1 0.8,0.8 1,1");
+      CustomEase.create("ningju", "M0,0 C0.3,0 0.5,1.2 0.7,1 0.85,0.9 1,1 1,1");
+
+      // 初始隐藏动画元素
+      gsap.set([
+        ".mountain-far-path",
+        ".mountain-mid-path",
+        ".mountain-near-path",
+        ".mountain-near-fill",
+        "#opening-title",
+        "#opening-subtitle",
+        "#title-menu"
+      ], { visibility: "hidden" });
+
+      // 主时间线
+      const masterTl = gsap.timeline({
+        defaults: { ease: "power3.out" }
+      });
+
+      // === ACT I: 混沌初开 ===
+      const act1 = gsap.timeline();
+
+      // 0.0s: 背景从纯黑渐变
+      act1.fromTo("#title-screen",
+        { backgroundColor: "#000000" },
+        { backgroundColor: "#0d1f1f", duration: 1.2 }
+      );
+
+      // 0.8s: 星空淡入
+      act1.fromTo(".starfield",
+        { opacity: 0 },
+        { opacity: 1, duration: 1 },
+        0.2
+      );
+
+      // 1.0s: 远景山脉 SVG 轮廓绘制
+      act1.fromTo(".mountain-far-path",
+        { drawSVG: "0%", autoAlpha: 0 },
+        { drawSVG: "100%", autoAlpha: 0.4, duration: 1.5 },
+        0.8
+      );
+
+      // 1.3s: 中景山脉
+      act1.fromTo(".mountain-mid-path",
+        { drawSVG: "0%", autoAlpha: 0, y: 40 },
+        { drawSVG: "100%", autoAlpha: 0.7, y: 0, duration: 1.4 },
+        1.0
+      );
+
+      // 1.6s: 近景山脉轮廓
+      act1.fromTo(".mountain-near-path",
+        { drawSVG: "0%", autoAlpha: 0, y: 50 },
+        { drawSVG: "100%", autoAlpha: 1, y: 0, duration: 1.2 },
+        1.2
+      );
+
+      // 近景填充同步淡入
+      act1.fromTo(".mountain-near-fill",
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 1.0 },
+        1.8
+      );
+
+      // 1.8s: 山巅雾气
+      act1.fromTo(".mountain-mist",
+        { autoAlpha: 0, y: -20 },
+        { autoAlpha: 1, y: 0, duration: 1 },
+        1.5
+      );
+
+      masterTl.add(act1, 0);
+
+      // 暴露全局引用供后续 Act 使用
+      window._titleMasterTl = masterTl;
+      window._titleAct1 = act1;
+    })();
+  </script>
   <script type="module">
     import { initSillyTavernEnhancer, addChatMessage, getActiveChat } from './sillytavern/st-integration.js';
     import { assemblePrompt } from './sillytavern/st-prompt.js';
