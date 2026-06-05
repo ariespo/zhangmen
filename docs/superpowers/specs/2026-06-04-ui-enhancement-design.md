@@ -176,183 +176,94 @@
 
 ## 五、页面级改造清单
 
-### 5.1 标题页面 — GSAP 动画重制（专业级）
+### 5.1 标题页面 — GSAP 动画重制（产品级「开天辟地」）
 
 **技术栈：**
 - GSAP Core 3.12.5 (CDN)
 - DrawSVGPlugin (SVG 轮廓绘制)
 - SplitText (文字拆分动画)
+- CustomEase (自定义缓动)
 - 通过 `gsap.registerPlugin()` 注册
 
-**核心架构：**
-使用 **Master Timeline** 嵌套 **Child Timelines**，配合 Labels 实现精确编排。
+**视觉架构：7 层深度系统**
 
+```
+z-0  星空背景层（最远，视差系数 0.01）
+z-1  大气光晕层（视差系数 0.02）
+z-2  远景山脉层（视差系数 0.03）
+z-3  中景山脉层（视差系数 0.05）
+z-4  近景山脉层（视差系数 0.08）
+z-5  主标题层（视差系数 0.10）
+z-6  UI 按钮层（最近，视差系数 0.12）
+```
+
+**自定义缓动：**
 ```javascript
-// 注册插件（必须在使用前注册）
-gsap.registerPlugin(DrawSVGPlugin, SplitText);
+gsap.registerPlugin(CustomEase);
+CustomEase.create("xianqi", "M0,0 C0.2,0 0.2,1 0.4,1 0.6,1 0.8,0.8 1,1");
+CustomEase.create("ningju", "M0,0 C0.3,0 0.5,1.2 0.7,1 0.85,0.9 1,1 1,1");
+```
 
-// 主时间线
-gsap.set([".mountain-path", ".opening-title", ".opening-subtitle", ".title-btn"], {
-  visibility: "hidden"
-});
+**Act I — 混沌初开 (0.0s → 2.0s)**
 
-const masterTl = gsap.timeline({
-  defaults: { ease: "power3.out" },
-  onComplete: () => startAmbientLoops()
-});
+| 时间 | 元素 | 动画 | 缓动 |
+|------|------|------|------|
+| 0.0s | 屏幕 | `#000000` 纯黑 | — |
+| 0.2s | 天幕光线 | 水平金色细线 `scaleX: 0→1, opacity: 0→1` | `expo.out` |
+| 0.4s | 天幕展开 | 光线向上下扩散 `scaleY: 0→1` | `power4.inOut` |
+| 0.6s | 大气光晕 | 径向光晕 `scale: 0→3, opacity: 0.6→0` | `power2.out` |
+| 0.8s | 星空粒子 | 30 个光点从中心爆发，stagger `from: "center"` | `expo.out` |
+| 1.0s | 远景山脉 | SVG drawSVG `0%→100%` + `y: 40→0` | `power3.out` |
+| 1.3s | 中景山脉 | 同上，stagger 0.15s | `power3.out` |
+| 1.6s | 近景山脉 | 同上，stagger 0.1s | `power3.out` |
+| 1.8s | 山巅雾气 | `y: -20→0, opacity: 0→0.3` | `sine.out` |
 
-// === PHASE 1: 背景与山脉 (0.0s - 1.8s) ===
-const mountainsTl = gsap.timeline();
+**Act II — 道成肉身 (2.0s → 4.8s)**
 
-mountainsTl
-  // 背景淡入
-  .fromTo("#title-screen", 
-    { backgroundColor: "#0c1418" },
-    { backgroundColor: "#0d1f1f", duration: 1.2 }
-  )
-  // 远景山脉：SVG 轮廓绘制 + 淡入
-  .fromTo(".mountain-far path",
-    { drawSVG: "0%", autoAlpha: 0 },
-    { drawSVG: "100%", autoAlpha: 0.3, duration: 1.5, stagger: 0.2 },
-    0.1
-  )
-  // 中景山脉
-  .fromTo(".mountain-mid path",
-    { drawSVG: "0%", autoAlpha: 0, y: 40 },
-    { drawSVG: "100%", autoAlpha: 0.6, y: 0, duration: 1.4, stagger: 0.15 },
-    0.4
-  )
-  // 近景山脉
-  .fromTo(".mountain-near path",
-    { drawSVG: "0%", autoAlpha: 0, y: 30 },
-    { drawSVG: "100%", autoAlpha: 1, y: 0, duration: 1.2, stagger: 0.1 },
-    0.7
-  );
+| 时间 | 元素 | 动画 | 缓动 |
+|------|------|------|------|
+| 2.0s | 天光降下 | 垂直金色光柱 `scaleY: 0→1` | `power4.out` |
+| 2.2s | 「宗」字 | `blur(20px)→0`, `scale: 2→1`, `rotationY: 45°→0°` | `expo.out` |
+| 2.5s | 「门」字 | `x: 100→0`, `rotationY: -30°→0°` | `elastic.out(1, 0.4)` |
+| 2.8s | 「志」字 | `y: 60→0`, `rotationX: -20°→0°` | `back.out(1.7)` |
+| 2.85s | 金色粒子 | 40 个粒子爆发（Physics2D velocity: 300, gravity: 200） | `power2.out` |
+| 3.2s | 三字齐震 | 振幅 2px 微震 0.3s | `sine.inOut` |
+| 3.5s | 金色光环 | SVG 圆环 `drawSVG: 0%→100%` | `power2.inOut` |
+| 3.8s | 光晕扩散 | `box-shadow` 扩散到 `100px` | `power2.out` |
+| 4.2s | 副标题 | SplitText 墨滴入水 mask reveal | `power3.out` |
 
-masterTl.add(mountainsTl, 0);
+**Act III — 人间显现 (4.8s → 7.0s)**
 
-// === PHASE 2: 标题 reveal (1.8s - 3.0s) ===
-const titleTl = gsap.timeline();
+| 时间 | 元素 | 动画 | 缓动 |
+|------|------|------|------|
+| 4.8s | 分割线 | `scaleX: 0→1` | `expo.inOut` |
+| 5.2s | 按钮1 | `rotationX: -90°→0°` | `back.out(1.4)` |
+| 5.4s | 按钮2 | 同上，stagger 0.15s | `back.out(1.4)` |
+| 5.8s | 能量线 | SVG path `drawSVG: 0%→100%` | `power2.inOut` |
+| 6.2s | 场景调光 | `brightness(1.1)→brightness(1.0)` | `power2.out` |
 
-// 使用 SplitText 拆分标题为逐字
-const titleSplit = SplitText.create(".opening-title", { type: "chars" });
+**环境循环（Act III 结束后）：**
+- 星空粒子：独立呼吸 `opacity + scale` 随机，stagger `from: "random"`
+- 山脉雾气：`x: "-30vw"`，duration 30s，无限循环
+- 标题呼吸：`scale: 1.005`，4s 周期
+- 光粒子：上升+漂移 `y: "-=50"`
 
-titleTl
-  // 每个字从模糊+下方出现
-  .fromTo(titleSplit.chars,
-    { autoAlpha: 0, y: 30, filter: "blur(8px)" },
-    {
-      autoAlpha: 1, y: 0, filter: "blur(0px)",
-      duration: 0.8,
-      stagger: { amount: 0.4, from: "center" },
-      ease: "expo.out"
-    }
-  )
-  // 金色光晕扩散（同时开始）
-  .fromTo(".opening-title",
-    { textShadow: "0 0 0px rgba(184,155,107,0)" },
-    { textShadow: "0 0 60px rgba(184,155,107,0.4)", duration: 1.5, ease: "power2.out" },
-    "<"
-  );
+**鼠标交互：**
+- 高性能视差：使用 `gsap.quickTo()` 为每层创建独立的 x/y 动画器
+- 背景层移动 15px，中景 30px，前景 50px
+- 按钮 hover：3D 磁性倾斜 `rotationY/X` 跟随鼠标位置，离开时用 `elastic.out` 回弹
 
-masterTl.add(titleTl, 1.6);
-masterTl.addLabel("titleRevealed", 2.8);
-
-// === PHASE 3: 副标题 (2.8s - 3.6s) ===
-const subtitleSplit = SplitText.create(".opening-subtitle", { type: "chars" });
-
-masterTl.fromTo(subtitleSplit.chars,
-  { autoAlpha: 0, letterSpacing: "14px" },
-  {
-    autoAlpha: 0.7,
-    letterSpacing: "10px",
-    duration: 0.6,
-    stagger: 0.02,
-    ease: "power2.out"
-  },
-  "titleRevealed-=0.2"
-);
-
-// === PHASE 4: 按钮入场 (3.4s - 4.2s) ===
-masterTl.fromTo(".title-btn",
-  { autoAlpha: 0, y: 20 },
-  {
-    autoAlpha: 1, y: 0,
-    duration: 0.5,
-    stagger: 0.12,
-    ease: "back.out(1.4)"
-  },
-  "-=0.4"
-);
-
-// === PHASE 5: 环境循环动画 (入场结束后启动) ===
-function startAmbientLoops() {
-  // 云雾流动
-  gsap.to(".mountain-mist", {
-    x: "-50vw",
-    duration: 40,
-    repeat: -1,
-    ease: "none"
-  });
-
-  // 光粒子系统（使用 function-based values）
-  const particleCount = 12;
-  for (let i = 0; i < particleCount; i++) {
-    const p = document.createElement('div');
-    p.className = 'title-particle';
-    document.getElementById('title-screen').appendChild(p);
-
-    gsap.set(p, {
-      x: () => gsap.utils.random(0, window.innerWidth),
-      y: () => gsap.utils.random(0, window.innerHeight * 0.6),
-      scale: () => gsap.utils.random(0.5, 1.5),
-      autoAlpha: () => gsap.utils.random(0.1, 0.4)
-    });
-
-    // 漂浮 + 呼吸
-    gsap.to(p, {
-      y: "-=30",
-      duration: () => gsap.utils.random(3, 6),
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut"
-    });
-
-    gsap.to(p, {
-      autoAlpha: () => gsap.utils.random(0.05, 0.3),
-      duration: () => gsap.utils.random(2, 4),
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      delay: () => gsap.utils.random(0, 2)
-    });
-  }
-}
-
-// === 无障碍：支持 prefers-reduced-motion ===
+**无障碍：**
+```javascript
 const mm = gsap.matchMedia();
 mm.add("(prefers-reduced-motion: reduce)", () => {
-  // 禁用所有动画，直接显示最终状态
   gsap.set([".mountain-path", ".opening-title", ".opening-subtitle", ".title-btn"], {
-    autoAlpha: 1, y: 0, filter: "blur(0px)"
+    autoAlpha: 1, y: 0, rotationX: 0, rotationY: 0, filter: "blur(0px)"
   });
   masterTl.kill();
   return () => {};
 });
 ```
-
-**关键 GSAP 特性运用：**
-
-| 特性 | 用途 |
-|------|------|
-| **SplitText** | 标题「宗门志」逐字从中心向两侧 reveal；副标题逐字淡入 |
-| **DrawSVGPlugin** | 山脉 SVG path 轮廓从无到有绘制（比简单位移动画更有仪式感） |
-| **Timeline Labels** | `"titleRevealed"` 标签让副标题在标题 reveal 完成后精确衔接 |
-| **autoAlpha** | 替代 opacity，在 0 时自动设置 visibility:hidden（避免阻挡点击） |
-| **function-based values** | 粒子位置和动画参数使用 `() => gsap.utils.random(...)`，每个粒子独立随机 |
-| **gsap.matchMedia()** | 响应 `prefers-reduced-motion`，为运动敏感用户直接显示最终状态 |
-| **嵌套 Timeline** | 山脉、标题、副标题分别用独立 timeline，由 master timeline 编排 |
-| **stagger 对象语法** | `stagger: { amount: 0.4, from: "center" }` 让标题字符从中心向外扩散 |
 
 ### 5.2 创建页面 — 分步骤动效
 
