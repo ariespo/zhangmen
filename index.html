@@ -9,8 +9,6 @@
   <link rel="stylesheet" href="./sillytavern/st-styles.css">
   <!-- GSAP Animation Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/DrawSVGPlugin.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/SplitText.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/CustomEase.min.js"></script>
   <style>
     :root {
@@ -13100,14 +13098,61 @@ ${discipleLines || '无'}
     makeDraggable(document.getElementById('side-nav'));
   </script>
   <script>
+    // === 数字跳动动画（放在 IIFE 外，确保全局可用） ===
+    function animateNumber(element, from, to, duration) {
+      duration = duration || 600;
+      var start = performance.now();
+      var diff = to - from;
+      function update(now) {
+        var elapsed = now - start;
+        var progress = Math.min(elapsed / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        var current = Math.round(from + diff * eased);
+        element.textContent = current.toLocaleString('zh-CN');
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+    window.animateNumber = animateNumber;
+
     // === 标题页面 GSAP 动画 ===
     (function initTitleAnimation() {
-      // 注册插件
-      gsap.registerPlugin(DrawSVGPlugin, SplitText, CustomEase);
+      // CustomEase 可用，DrawSVGPlugin/SplitText 不在公共 CDN 上，改用纯 GSAP Core
+      if (typeof CustomEase !== 'undefined') {
+        CustomEase.create("xianqi", "M0,0 C0.2,0 0.2,1 0.4,1 0.6,1 0.8,0.8 1,1");
+        CustomEase.create("ningju", "M0,0 C0.3,0 0.5,1.2 0.7,1 0.85,0.9 1,1 1,1");
+      }
 
-      // 自定义缓动
-      CustomEase.create("xianqi", "M0,0 C0.2,0 0.2,1 0.4,1 0.6,1 0.8,0.8 1,1");
-      CustomEase.create("ningju", "M0,0 C0.3,0 0.5,1.2 0.7,1 0.85,0.9 1,1 1,1");
+      // 手动拆分文字为 span（替代 SplitText）
+      function splitTextToChars(selector) {
+        var el = document.querySelector(selector);
+        if (!el) return [];
+        var text = el.textContent;
+        el.innerHTML = '';
+        var chars = [];
+        text.split('').forEach(function(char) {
+          var span = document.createElement('span');
+          span.textContent = char;
+          span.style.display = 'inline-block';
+          el.appendChild(span);
+          chars.push(span);
+        });
+        return chars;
+      }
+
+      // 设置山脉 SVG 的 stroke-dasharray 用于绘制动画（替代 DrawSVGPlugin）
+      function setupPathDraw(pathSelector) {
+        var path = document.querySelector(pathSelector);
+        if (!path) return 0;
+        var length = path.getTotalLength ? path.getTotalLength() : 1000;
+        path.style.strokeDasharray = length;
+        path.style.strokeDashoffset = length;
+        return length;
+      }
+
+      var farLen = setupPathDraw('.mountain-far-path');
+      var midLen = setupPathDraw('.mountain-mid-path');
+      var nearLen = setupPathDraw('.mountain-near-path');
 
       // 初始隐藏动画元素
       gsap.set([
@@ -13118,15 +13163,15 @@ ${discipleLines || '无'}
         "#opening-title",
         "#opening-subtitle",
         "#title-menu"
-      ], { visibility: "hidden" });
+      ], { autoAlpha: 0 });
 
       // 主时间线
-      const masterTl = gsap.timeline({
+      var masterTl = gsap.timeline({
         defaults: { ease: "power3.out" }
       });
 
       // === ACT I: 混沌初开 ===
-      const act1 = gsap.timeline();
+      var act1 = gsap.timeline();
 
       // 0.0s: 背景从纯黑渐变
       act1.fromTo("#title-screen",
@@ -13141,24 +13186,31 @@ ${discipleLines || '无'}
         0.2
       );
 
-      // 1.0s: 远景山脉 SVG 轮廓绘制
-      act1.fromTo(".mountain-far-path",
-        { drawSVG: "0%", autoAlpha: 0 },
-        { drawSVG: "100%", autoAlpha: 0.4, duration: 1.5 },
+      // 1.0s: 远景山脉 SVG 轮廓绘制（strokeDashoffset 动画）
+      act1.to(".mountain-far-path",
+        { strokeDashoffset: 0, autoAlpha: 0.4, duration: 1.5 },
         0.8
       );
 
       // 1.3s: 中景山脉
       act1.fromTo(".mountain-mid-path",
-        { drawSVG: "0%", autoAlpha: 0, y: 40 },
-        { drawSVG: "100%", autoAlpha: 0.7, y: 0, duration: 1.4 },
+        { autoAlpha: 0, y: 40 },
+        { autoAlpha: 0.7, y: 0, duration: 1.4 },
+        1.0
+      );
+      act1.to(".mountain-mid-path",
+        { strokeDashoffset: 0, duration: 1.4 },
         1.0
       );
 
       // 1.6s: 近景山脉轮廓
       act1.fromTo(".mountain-near-path",
-        { drawSVG: "0%", autoAlpha: 0, y: 50 },
-        { drawSVG: "100%", autoAlpha: 1, y: 0, duration: 1.2 },
+        { autoAlpha: 0, y: 50 },
+        { autoAlpha: 1, y: 0, duration: 1.2 },
+        1.2
+      );
+      act1.to(".mountain-near-path",
+        { strokeDashoffset: 0, duration: 1.2 },
         1.2
       );
 
@@ -13178,26 +13230,26 @@ ${discipleLines || '无'}
 
       masterTl.add(act1, 0);
 
-      // 暴露全局引用供后续 Act 使用
+      // 暴露全局引用
       window._titleMasterTl = masterTl;
       window._titleAct1 = act1;
 
       // === ACT II: 道成肉身 ===
-      const act2 = gsap.timeline();
+      var act2 = gsap.timeline();
 
-      // 2.0s: 天光降下（大气光晕从中心扩散）
+      // 2.0s: 天光降下
       act2.fromTo(".atmosphere",
         { scale: 0, autoAlpha: 0 },
         { scale: 3, autoAlpha: 0.6, duration: 1.5, ease: "power4.out" },
         0
       );
 
-      // 2.2s: 标题「宗门志」逐字 reveal（从中心向两侧）
-      const titleSplit = SplitText.create("#opening-title", { type: "chars" });
-      act2.fromTo(titleSplit.chars,
-        { autoAlpha: 0, y: 40, filter: "blur(10px)", rotationY: 45 },
+      // 2.2s: 标题「宗门志」逐字 reveal（手动拆分替代 SplitText）
+      var titleChars = splitTextToChars("#opening-title");
+      act2.fromTo(titleChars,
+        { autoAlpha: 0, y: 40, filter: "blur(10px)" },
         {
-          autoAlpha: 1, y: 0, filter: "blur(0px)", rotationY: 0,
+          autoAlpha: 1, y: 0, filter: "blur(0px)",
           duration: 0.8,
           stagger: { amount: 0.5, from: "center" },
           ease: "expo.out"
@@ -13212,7 +13264,7 @@ ${discipleLines || '无'}
         0.8
       );
 
-      // 3.2s: 三字齐震（微妙震动效果）
+      // 3.2s: 三字齐震
       act2.to("#opening-title", {
         y: "+=2",
         duration: 0.05,
@@ -13225,15 +13277,14 @@ ${discipleLines || '无'}
       masterTl.addLabel("titleComplete", 4.0);
 
       // === ACT III: 人间显现 ===
-      const act3 = gsap.timeline();
+      var act3 = gsap.timeline();
 
       // 副标题逐字淡入
-      const subtitleSplit = SplitText.create("#opening-subtitle", { type: "chars" });
-      act3.fromTo(subtitleSplit.chars,
-        { autoAlpha: 0, letterSpacing: "16px" },
+      var subtitleChars = splitTextToChars("#opening-subtitle");
+      act3.fromTo(subtitleChars,
+        { autoAlpha: 0 },
         {
           autoAlpha: 0.7,
-          letterSpacing: "10px",
           duration: 0.6,
           stagger: 0.02,
           ease: "power2.out"
@@ -13256,97 +13307,77 @@ ${discipleLines || '无'}
 
       masterTl.add(act3, "titleComplete-=0.3");
 
-    // === 环境循环动画 ===
-    function startAmbientLoops() {
-      // 雾气流动
-      gsap.to(".mountain-mist", {
-        x: "-20vw",
-        duration: 30,
-        repeat: -1,
-        ease: "none"
-      });
-
-      // 标题呼吸
-      gsap.to("#opening-title", {
-        scale: 1.005,
-        duration: 4,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-    }
-
-    // 在 master timeline 完成时启动环境循环
-    masterTl.eventCallback("onComplete", startAmbientLoops);
-
-    // === 鼠标视差 ===
-    const xToBg = gsap.quickTo(".layer-bg", "x", { duration: 0.8, ease: "power3" });
-    const xToMid = gsap.quickTo(".layer-mid", "x", { duration: 0.6, ease: "power3" });
-    const xToFg = gsap.quickTo(".layer-fg:not(.title-content):not(.title-menu)", "x", { duration: 0.4, ease: "power3" });
-    const yToBg = gsap.quickTo(".layer-bg", "y", { duration: 0.8, ease: "power3" });
-    const yToMid = gsap.quickTo(".layer-mid", "y", { duration: 0.6, ease: "power3" });
-    const yToFg = gsap.quickTo(".layer-fg:not(.title-content):not(.title-menu)", "y", { duration: 0.4, ease: "power3" });
-
-    document.getElementById("title-screen").addEventListener("mousemove", (e) => {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      const dx = (e.clientX - cx) / cx;
-      const dy = (e.clientY - cy) / cy;
-
-      xToBg(dx * 10);  yToBg(dy * 6);
-      xToMid(dx * 25); yToMid(dy * 15);
-      xToFg(dx * 40);  yToFg(dy * 25);
-    });
-
-    // === 按钮 3D 磁性倾斜 ===
-    document.querySelectorAll("#title-menu .title-btn").forEach(btn => {
-      btn.addEventListener("mousemove", (e) => {
-        const rect = btn.getBoundingClientRect();
-        const x = e.clientX - rect.left - rect.width / 2;
-        const y = e.clientY - rect.top - rect.height / 2;
-        gsap.to(btn, {
-          rotationY: x * 0.08,
-          rotationX: -y * 0.08,
-          duration: 0.3,
-          ease: "power2.out"
+      // === 环境循环动画 ===
+      function startAmbientLoops() {
+        gsap.to(".mountain-mist", {
+          x: "-20vw",
+          duration: 30,
+          repeat: -1,
+          ease: "none"
         });
-      });
-      btn.addEventListener("mouseleave", () => {
-        gsap.to(btn, {
-          rotationY: 0,
-          rotationX: 0,
-          duration: 0.5,
-          ease: "elastic.out(1, 0.5)"
+        gsap.to("#opening-title", {
+          scale: 1.005,
+          duration: 4,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut"
         });
-      });
-    });
-
-    // === 数字跳动动画 ===
-    function animateNumber(element, from, to, duration = 600) {
-      const start = performance.now();
-      const diff = to - from;
-      function update(now) {
-        const elapsed = now - start;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = Math.round(from + diff * eased);
-        element.textContent = current.toLocaleString('zh-CN');
-        if (progress < 1) requestAnimationFrame(update);
       }
-      requestAnimationFrame(update);
-    }
-    window.animateNumber = animateNumber;
+      masterTl.eventCallback("onComplete", startAmbientLoops);
 
-    // === prefers-reduced-motion ===
-    const mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: reduce)", () => {
-      gsap.set([
-        ".mountain-far-path", ".mountain-mid-path", ".mountain-near-path", ".mountain-near-fill",
-        "#opening-title", "#opening-subtitle", "#title-menu"
-      ], { autoAlpha: 1, y: 0, rotationX: 0, rotationY: 0, filter: "blur(0px)" });
-      if (window._titleMasterTl) window._titleMasterTl.kill();
-      return () => {};
-    });
+      // === 鼠标视差 ===
+      var xToBg = gsap.quickTo(".layer-bg", "x", { duration: 0.8, ease: "power3" });
+      var xToMid = gsap.quickTo(".layer-mid", "x", { duration: 0.6, ease: "power3" });
+      var xToFg = gsap.quickTo(".layer-fg:not(.title-content):not(.title-menu)", "x", { duration: 0.4, ease: "power3" });
+      var yToBg = gsap.quickTo(".layer-bg", "y", { duration: 0.8, ease: "power3" });
+      var yToMid = gsap.quickTo(".layer-mid", "y", { duration: 0.6, ease: "power3" });
+      var yToFg = gsap.quickTo(".layer-fg:not(.title-content):not(.title-menu)", "y", { duration: 0.4, ease: "power3" });
+
+      document.getElementById("title-screen").addEventListener("mousemove", function(e) {
+        var cx = window.innerWidth / 2;
+        var cy = window.innerHeight / 2;
+        var dx = (e.clientX - cx) / cx;
+        var dy = (e.clientY - cy) / cy;
+        xToBg(dx * 10);  yToBg(dy * 6);
+        xToMid(dx * 25); yToMid(dy * 15);
+        xToFg(dx * 40);  yToFg(dy * 25);
+      });
+
+      // === 按钮 3D 磁性倾斜 ===
+      document.querySelectorAll("#title-menu .title-btn").forEach(function(btn) {
+        btn.addEventListener("mousemove", function(e) {
+          var rect = btn.getBoundingClientRect();
+          var x = e.clientX - rect.left - rect.width / 2;
+          var y = e.clientY - rect.top - rect.height / 2;
+          gsap.to(btn, {
+            rotationY: x * 0.08,
+            rotationX: -y * 0.08,
+            duration: 0.3,
+            ease: "power2.out"
+          });
+        });
+        btn.addEventListener("mouseleave", function() {
+          gsap.to(btn, {
+            rotationY: 0,
+            rotationX: 0,
+            duration: 0.5,
+            ease: "elastic.out(1, 0.5)"
+          });
+        });
+      });
+
+      // === prefers-reduced-motion ===
+      if (gsap.matchMedia) {
+        var mm = gsap.matchMedia();
+        mm.add("(prefers-reduced-motion: reduce)", function() {
+          gsap.set([
+            ".mountain-far-path", ".mountain-mid-path", ".mountain-near-path", ".mountain-near-fill",
+            "#opening-title", "#opening-subtitle", "#title-menu"
+          ], { autoAlpha: 1, y: 0, rotationX: 0, rotationY: 0, filter: "blur(0px)" });
+          if (window._titleMasterTl) window._titleMasterTl.kill();
+          return function() {};
+        });
+      }
     })();
   </script>
   <script type="module">
