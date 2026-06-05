@@ -13181,6 +13181,80 @@ ${discipleLines || '无'}
       // 暴露全局引用供后续 Act 使用
       window._titleMasterTl = masterTl;
       window._titleAct1 = act1;
+
+      // === ACT II: 道成肉身 ===
+      const act2 = gsap.timeline();
+
+      // 2.0s: 天光降下（大气光晕从中心扩散）
+      act2.fromTo(".atmosphere",
+        { scale: 0, autoAlpha: 0 },
+        { scale: 3, autoAlpha: 0.6, duration: 1.5, ease: "power4.out" },
+        0
+      );
+
+      // 2.2s: 标题「宗门志」逐字 reveal（从中心向两侧）
+      const titleSplit = SplitText.create("#opening-title", { type: "chars" });
+      act2.fromTo(titleSplit.chars,
+        { autoAlpha: 0, y: 40, filter: "blur(10px)", rotationY: 45 },
+        {
+          autoAlpha: 1, y: 0, filter: "blur(0px)", rotationY: 0,
+          duration: 0.8,
+          stagger: { amount: 0.5, from: "center" },
+          ease: "expo.out"
+        },
+        0.5
+      );
+
+      // 同时：金色光晕扩散
+      act2.fromTo("#opening-title",
+        { textShadow: "0 0 0px rgba(184,155,107,0)" },
+        { textShadow: "0 0 80px rgba(184,155,107,0.5)", duration: 2, ease: "power2.out" },
+        0.8
+      );
+
+      // 3.2s: 三字齐震（微妙震动效果）
+      act2.to("#opening-title", {
+        y: "+=2",
+        duration: 0.05,
+        repeat: 5,
+        yoyo: true,
+        ease: "sine.inOut"
+      }, 1.8);
+
+      masterTl.add(act2, 2.0);
+      masterTl.addLabel("titleComplete", 4.0);
+
+      // === ACT III: 人间显现 ===
+      const act3 = gsap.timeline();
+
+      // 副标题逐字淡入
+      const subtitleSplit = SplitText.create("#opening-subtitle", { type: "chars" });
+      act3.fromTo(subtitleSplit.chars,
+        { autoAlpha: 0, letterSpacing: "16px" },
+        {
+          autoAlpha: 0.7,
+          letterSpacing: "10px",
+          duration: 0.6,
+          stagger: 0.02,
+          ease: "power2.out"
+        },
+        0
+      );
+
+      // 按钮 3D 翻转入场
+      act3.fromTo("#title-menu .title-btn",
+        { autoAlpha: 0, rotationX: -90, transformOrigin: "50% 0%" },
+        {
+          autoAlpha: 1,
+          rotationX: 0,
+          duration: 0.6,
+          stagger: 0.15,
+          ease: "back.out(1.4)"
+        },
+        0.8
+      );
+
+      masterTl.add(act3, "titleComplete-=0.3");
     })();
   </script>
   <script type="module">
