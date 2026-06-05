@@ -2168,6 +2168,59 @@
     .tiered-frame .corner-bl { bottom: 6px; left: 6px; border-bottom: 1px solid rgba(200, 168, 110, 0.3); border-left: 1px solid rgba(200, 168, 110, 0.3); }
     .tiered-frame .corner-br { bottom: 6px; right: 6px; border-bottom: 1px solid rgba(200, 168, 110, 0.3); border-right: 1px solid rgba(200, 168, 110, 0.3); }
 
+    /* === ANIMATION SYSTEM === */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(110, 207, 207, 0.15); }
+      50% { box-shadow: 0 0 20px rgba(110, 207, 207, 0.35); }
+    }
+    .pulse-hint {
+      animation: pulseGlow 2.5s ease-in-out infinite;
+    }
+
+    @keyframes goldenSweep {
+      from { background-position: -200% 0; }
+      to { background-position: 200% 0; }
+    }
+    .golden-sweep {
+      background: linear-gradient(90deg, transparent, rgba(200,168,110,0.1), transparent);
+      background-size: 200% 100%;
+    }
+    .golden-sweep:hover {
+      animation: goldenSweep 1.5s ease infinite;
+    }
+
+    /* === BRUSH UNDERLINE INTERACTION === */
+    .brush-btn {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .brush-btn::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      width: 80%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-spirit), transparent);
+      transform: translateX(-50%) scaleX(0);
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .brush-btn:hover::after {
+      transform: translateX(-50%) scaleX(1);
+    }
+    .brush-btn:active {
+      transform: scale(0.97);
+    }
+
     /* === SIDE NAV === */
     #side-nav {
       width: 72px;
