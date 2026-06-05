@@ -13321,6 +13321,22 @@ ${discipleLines || '无'}
       });
     });
 
+    // === 数字跳动动画 ===
+    function animateNumber(element, from, to, duration = 600) {
+      const start = performance.now();
+      const diff = to - from;
+      function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(from + diff * eased);
+        element.textContent = current.toLocaleString('zh-CN');
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }
+    window.animateNumber = animateNumber;
+
     // === prefers-reduced-motion ===
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: reduce)", () => {
@@ -13387,11 +13403,17 @@ ${discipleLines || '无'}
     }
     gameStateManager.subscribe('/finance/gold', v => {
       const el = document.getElementById('res-gold');
-      if (el) el.textContent = fmtNumber(v);
+      if (el) {
+        const current = parseInt(el.textContent.replace(/,/g, '')) || 0;
+        if (current !== v) animateNumber(el, current, v);
+      }
     });
     gameStateManager.subscribe('/finance/prestige', v => {
       const el = document.getElementById('res-prestige');
-      if (el) el.textContent = fmtNumber(v);
+      if (el) {
+        const current = parseInt(el.textContent.replace(/,/g, '')) || 0;
+        if (current !== v) animateNumber(el, current, v);
+      }
     });
     gameStateManager.subscribe('/finance/realmTitle', v => {
       const el = document.getElementById('res-realm-title');
@@ -13416,7 +13438,11 @@ ${discipleLines || '无'}
     });
     gameStateManager.subscribe('/members', members => {
       const el = document.getElementById('res-members');
-      if (el) el.textContent = Object.keys(members || {}).length;
+      if (el) {
+        const current = parseInt(el.textContent.replace(/,/g, '')) || 0;
+        const next = Object.keys(members || {}).length;
+        if (current !== next) animateNumber(el, current, next);
+      }
       if (typeof renderMembers === 'function') renderMembers();
     });
     gameStateManager.subscribe('/diplomacy', () => {
@@ -13913,6 +13939,13 @@ ${discipleLines || '无'}
           creationPage.style.display = 'block';
           currentStep = 1;
           updateStepUI();
+          // 创建页入场动效
+          if (typeof gsap !== 'undefined') {
+            gsap.fromTo("#creation-page .form-field, #creation-page .creation-section",
+              { autoAlpha: 0, y: 15 },
+              { autoAlpha: 1, y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out", delay: 0.15 }
+            );
+          }
         }
       };
 
@@ -14315,6 +14348,13 @@ ${discipleLines || '无'}
         const layout = document.querySelector('.load-game-layout');
         if (layout) layout.classList.remove('show-saves');
         document.getElementById('load-game-screen').style.display = 'flex';
+        // 加载页存档卡片入场动效
+        if (typeof gsap !== 'undefined') {
+          gsap.fromTo(".load-save-item, .load-player-item",
+            { autoAlpha: 0, y: 20 },
+            { autoAlpha: 1, y: 0, duration: 0.4, stagger: 0.06, ease: "power2.out", delay: 0.15 }
+          );
+        }
       } catch (e) {
         console.error('[LoadGame] failed:', e);
         alert('读取存档列表失败');
