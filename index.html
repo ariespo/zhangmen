@@ -13255,6 +13255,82 @@ ${discipleLines || '无'}
       );
 
       masterTl.add(act3, "titleComplete-=0.3");
+
+    // === 环境循环动画 ===
+    function startAmbientLoops() {
+      // 雾气流动
+      gsap.to(".mountain-mist", {
+        x: "-20vw",
+        duration: 30,
+        repeat: -1,
+        ease: "none"
+      });
+
+      // 标题呼吸
+      gsap.to("#opening-title", {
+        scale: 1.005,
+        duration: 4,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+    }
+
+    // 在 master timeline 完成时启动环境循环
+    masterTl.eventCallback("onComplete", startAmbientLoops);
+
+    // === 鼠标视差 ===
+    const xToBg = gsap.quickTo(".layer-bg", "x", { duration: 0.8, ease: "power3" });
+    const xToMid = gsap.quickTo(".layer-mid", "x", { duration: 0.6, ease: "power3" });
+    const xToFg = gsap.quickTo(".layer-fg:not(.title-content):not(.title-menu)", "x", { duration: 0.4, ease: "power3" });
+    const yToBg = gsap.quickTo(".layer-bg", "y", { duration: 0.8, ease: "power3" });
+    const yToMid = gsap.quickTo(".layer-mid", "y", { duration: 0.6, ease: "power3" });
+    const yToFg = gsap.quickTo(".layer-fg:not(.title-content):not(.title-menu)", "y", { duration: 0.4, ease: "power3" });
+
+    document.getElementById("title-screen").addEventListener("mousemove", (e) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+
+      xToBg(dx * 10);  yToBg(dy * 6);
+      xToMid(dx * 25); yToMid(dy * 15);
+      xToFg(dx * 40);  yToFg(dy * 25);
+    });
+
+    // === 按钮 3D 磁性倾斜 ===
+    document.querySelectorAll("#title-menu .title-btn").forEach(btn => {
+      btn.addEventListener("mousemove", (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        gsap.to(btn, {
+          rotationY: x * 0.08,
+          rotationX: -y * 0.08,
+          duration: 0.3,
+          ease: "power2.out"
+        });
+      });
+      btn.addEventListener("mouseleave", () => {
+        gsap.to(btn, {
+          rotationY: 0,
+          rotationX: 0,
+          duration: 0.5,
+          ease: "elastic.out(1, 0.5)"
+        });
+      });
+    });
+
+    // === prefers-reduced-motion ===
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: reduce)", () => {
+      gsap.set([
+        ".mountain-far-path", ".mountain-mid-path", ".mountain-near-path", ".mountain-near-fill",
+        "#opening-title", "#opening-subtitle", "#title-menu"
+      ], { autoAlpha: 1, y: 0, rotationX: 0, rotationY: 0, filter: "blur(0px)" });
+      if (window._titleMasterTl) window._titleMasterTl.kill();
+      return () => {};
+    });
     })();
   </script>
   <script type="module">
