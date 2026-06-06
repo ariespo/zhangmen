@@ -1414,9 +1414,15 @@
       pointer-events: auto;
     }
 
-    /* z-0: 深空背景 */
+    /* z-0: 深色底层 */
     .nebula-bg {
       background: radial-gradient(ellipse at 50% 100%, #0d2b2b 0%, #061212 40%, #000000 100%);
+    }
+    /* z-0.5: 仙侠背景图 */
+    .nebula-img {
+      background: url('1780764884612.png') center/cover no-repeat;
+      filter: brightness(0.4) saturate(0.8);
+      opacity: 0.6;
     }
 
     /* z-1: 星云光晕 */
@@ -1468,9 +1474,11 @@
       letter-spacing: clamp(12px, 2vw, 24px);
       color: var(--mythic-gold);
       text-shadow:
-        0 0 40px rgba(184,155,107,0.3),
-        0 0 80px rgba(184,155,107,0.1),
-        0 2px 4px rgba(0,0,0,0.5);
+        0 0 30px rgba(0,0,0,0.8),
+        0 0 60px rgba(0,0,0,0.5),
+        0 0 40px rgba(184,155,107,0.4),
+        0 0 80px rgba(184,155,107,0.15),
+        0 2px 8px rgba(0,0,0,0.9);
       opacity: 0;
       font-weight: 400;
       white-space: nowrap;
@@ -1484,6 +1492,7 @@
       font-size: clamp(12px, 1.8vw, 18px);
       letter-spacing: clamp(6px, 1vw, 12px);
       color: var(--jade-glow);
+      text-shadow: 0 0 20px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.8);
       opacity: 0;
       margin-top: clamp(12px, 2vh, 24px);
       font-weight: 300;
@@ -5242,6 +5251,9 @@
   <div id="title-screen">
     <!-- z-0: 深空背景 -->
     <div class="nebula-layer nebula-bg"></div>
+
+    <!-- z-0.5: 仙侠背景图 -->
+    <div class="nebula-layer nebula-img"></div>
 
     <!-- z-1: 星云光晕 -->
     <div class="nebula-layer nebula-glow"></div>
