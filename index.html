@@ -1388,155 +1388,146 @@
       transition: opacity 1.2s ease;
     }
 
-    /* 7-layer visual architecture */
-    #title-screen .layer-bg,
-    #title-screen .layer-mid,
-    #title-screen .layer-fg {
+    /* === 星云开宗 - 标题页 === */
+    #title-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+      background: #000000;
+      z-index: 100;
+      /* 固定深色配色，不受主题切换影响 */
+      --jade-glow: #6ecfcf;
+      --jade-pale: #a8e6e6;
+      --mythic-gold: #b89b6b;
+      --gold-spirit: #c8a86e;
+      --text-primary: #e8f4f0;
+      --ink-dark: #0d1f1f;
+    }
+
+    .nebula-layer {
       position: absolute;
       inset: 0;
       pointer-events: none;
     }
-    #title-screen .layer-fg.title-content,
-    #title-screen .layer-fg.title-menu {
+    .nebula-content, .nebula-menu {
       pointer-events: auto;
     }
 
-    .starfield {
-      background: radial-gradient(ellipse at bottom, #1a3a3a 0%, #0c1418 100%);
-    }
-    .atmosphere {
-      background: radial-gradient(ellipse at 50% 30%, rgba(110,207,207,0.05) 0%, transparent 60%);
+    /* z-0: 深空背景 */
+    .nebula-bg {
+      background: radial-gradient(ellipse at 50% 100%, #0d2b2b 0%, #061212 40%, #000000 100%);
     }
 
-    .mountains-far svg,
-    .mountains-mid svg,
-    .mountains-near svg {
+    /* z-1: 星云光晕 */
+    .nebula-glow {
+      background:
+        radial-gradient(ellipse at 30% 70%, rgba(110,207,207,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(200,168,110,0.05) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 50%, rgba(110,207,207,0.04) 0%, transparent 60%);
+    }
+
+    /* z-2/z-3: 粒子 */
+    .particle {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 55%;
+      border-radius: 50%;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+    .particle-ambient {
+      background: radial-gradient(circle, rgba(110,207,207,0.8) 0%, transparent 70%);
+    }
+    .particle-gold {
+      background: radial-gradient(circle, rgba(200,168,110,0.9) 0%, transparent 70%);
     }
 
-    .title-content {
+    /* z-4: 核心光球 */
+    .nebula-core {
+      position: absolute;
+      top: 45%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,168,110,0.2) 0%, rgba(110,207,207,0.08) 40%, transparent 70%);
+      pointer-events: none;
+      opacity: 0;
+      z-index: 3;
+    }
+
+    /* z-5: 标题内容 */
+    .nebula-content {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 5;
+      z-index: 4;
     }
-
-    /* Mountains SVG */
-    .mountains-container {
-      position: absolute;
-      bottom: 0; left: 0;
-      width: 100%; height: 65%;
-      z-index: 1;
-      pointer-events: none;
-    }
-    .mountains-container svg {
-      width: 100%; height: 100%;
-    }
-    .mountain-far {
-      opacity: 0;
-      transform: translateY(40px);
-    }
-    .mountain-mid {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    .mountain-near {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    .mountain-far.raised {
-      animation: mountainRise 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-    .mountain-mid.raised {
-      animation: mountainRise 2s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
-    }
-    .mountain-near.raised {
-      animation: mountainRise 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.8s forwards;
-    }
-    @keyframes mountainRise {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Mist overlay */
-    .mountain-mist {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 30%;
-      background: linear-gradient(to top, rgba(12,20,24,0.9) 0%, transparent 100%);
-      z-index: 2;
-      pointer-events: none;
-    }
-
     .opening-title {
-      position: relative;
-      z-index: 3;
       font-family: 'ZCOOL XiaoWei', serif;
-      font-size: 80px;
-      letter-spacing: 20px;
+      font-size: clamp(48px, 10vw, 96px);
+      letter-spacing: clamp(12px, 2vw, 24px);
       color: var(--mythic-gold);
-      text-shadow: 0 0 40px rgba(184,155,107,0.3), 0 2px 4px rgba(0,0,0,0.5);
+      text-shadow:
+        0 0 40px rgba(184,155,107,0.3),
+        0 0 80px rgba(184,155,107,0.1),
+        0 2px 4px rgba(0,0,0,0.5);
       opacity: 0;
-      transform: scale(0.95);
       font-weight: 400;
+      white-space: nowrap;
     }
-    .opening-title.show {
-      animation: titleReveal 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-    @keyframes titleReveal {
-      0% { opacity: 0; transform: scale(0.95); filter: blur(8px); }
-      50% { opacity: 0.8; transform: scale(1.01); filter: blur(1px); }
-      100% { opacity: 1; transform: scale(1); filter: blur(0); }
+    .opening-title span {
+      display: inline-block;
+      will-change: transform, opacity, filter;
     }
     .opening-subtitle {
-      position: relative;
-      z-index: 3;
       font-family: 'Noto Serif SC', serif;
-      font-size: 16px;
-      letter-spacing: 10px;
+      font-size: clamp(12px, 1.8vw, 18px);
+      letter-spacing: clamp(6px, 1vw, 12px);
       color: var(--jade-glow);
       opacity: 0;
-      margin-top: 20px;
+      margin-top: clamp(12px, 2vh, 24px);
       font-weight: 300;
+      white-space: nowrap;
     }
-    .opening-subtitle.show {
-      animation: subtitleFadeIn 1.4s ease 0.5s forwards;
+    .opening-subtitle span {
+      display: inline-block;
+      will-change: transform, opacity;
     }
-    @keyframes subtitleFadeIn {
-      from { opacity: 0; transform: translateY(8px); letter-spacing: 14px; }
-      to { opacity: 0.7; transform: translateY(0); letter-spacing: 10px; }
+
+    /* 横线装饰 */
+    .nebula-divider {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(184,155,107,0.4), transparent);
+      margin: 16px auto;
+      opacity: 0;
     }
-    .title-menu {
-      position: relative;
-      z-index: 3;
+
+    /* z-6: UI按钮 */
+    .nebula-menu {
+      position: absolute;
+      bottom: clamp(60px, 12vh, 120px);
+      left: 50%;
+      top: auto;
+      right: auto;
+      transform: translateX(-50%);
       display: flex;
       flex-direction: column;
       gap: 16px;
       align-items: center;
-      margin-top: 60px;
+      z-index: 5;
       opacity: 0;
-    }
-    .title-menu.show {
-      animation: menuFadeIn 0.8s ease forwards;
-    }
-    @keyframes menuFadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      perspective: 600px;
     }
     .title-btn {
-      width: 220px;
+      width: clamp(180px, 30vw, 240px);
       padding: 14px 0;
       background: transparent;
       border: 1px solid rgba(184,155,107,0.25);
       border-radius: 2px;
       color: rgba(168,230,230,0.8);
       font-family: 'Noto Serif SC', serif;
-      font-size: 16px;
+      font-size: clamp(14px, 1.5vw, 16px);
       letter-spacing: 6px;
       cursor: pointer;
       transition: all 0.4s ease;
@@ -1579,11 +1570,11 @@
     .title-btn.secondary {
       font-size: 13px; padding: 8px 16px;
       border-color: rgba(184,155,107,0.3);
-      color: var(--ink-light);
+      color: rgba(168, 230, 230, 0.6);
     }
     .title-btn.secondary:hover {
       border-color: rgba(184,155,107,0.6);
-      color: var(--text-primary);
+      color: #e8f4f0;
     }
     .title-bg-glow {
       display: none;
@@ -5249,52 +5240,33 @@
 
   <!-- TITLE SCREEN / OPENING -->
   <div id="title-screen">
-    <!-- z-0: 星空背景层 -->
-    <div class="layer-bg starfield"></div>
+    <!-- z-0: 深空背景 -->
+    <div class="nebula-layer nebula-bg"></div>
 
-    <!-- z-1: 大气光晕层 -->
-    <div class="layer-bg atmosphere"></div>
+    <!-- z-1: 星云光晕 -->
+    <div class="nebula-layer nebula-glow"></div>
 
-    <!-- z-2: 远景山脉 -->
-    <div class="layer-mid mountains-far">
-      <svg viewBox="-200 0 2800 1080" preserveAspectRatio="none">
-        <path class="mountain-far-path" fill="none" stroke="rgba(26,40,48,0.7)" stroke-width="1"
-          d="M-100,1080 L-100,650 Q200,400 450,550 T950,480 T1450,520 T1950,450 T2400,500 V1080 Z"/>
-      </svg>
-    </div>
+    <!-- z-2: 环境粒子容器 -->
+    <div class="nebula-layer nebula-particles" id="ambient-particles"></div>
 
-    <!-- z-3: 中景山脉 -->
-    <div class="layer-mid mountains-mid">
-      <svg viewBox="-200 0 2800 1080" preserveAspectRatio="none">
-        <path class="mountain-mid-path" fill="none" stroke="rgba(46,70,80,0.8)" stroke-width="1.5"
-          d="M-100,1080 L-100,750 Q250,580 500,720 T1000,650 T1500,720 T2000,680 V1080 Z"/>
-      </svg>
-    </div>
+    <!-- z-3: 汇聚粒子容器 -->
+    <div class="nebula-layer nebula-converge" id="converge-particles"></div>
 
-    <!-- z-4: 近景山脉 -->
-    <div class="layer-fg mountains-near">
-      <svg viewBox="-200 0 2800 1080" preserveAspectRatio="none">
-        <path class="mountain-near-path" fill="none" stroke="rgba(110,207,207,0.15)" stroke-width="2"
-          d="M-100,1080 L-100,850 Q300,720 600,880 T1100,780 T1600,860 V1080 Z"/>
-        <path class="mountain-near-fill" fill="rgba(12,20,24,0.95)"
-          d="M-100,1080 L-100,860 Q300,740 600,890 T1100,800 T1600,870 V1080 Z"/>
-      </svg>
-    </div>
+    <!-- z-4: 核心光球 -->
+    <div class="nebula-core" id="nebula-core"></div>
 
     <!-- z-5: 主标题 -->
-    <div class="layer-fg title-content">
+    <div class="nebula-layer nebula-content">
       <div class="opening-title" id="opening-title">宗门志</div>
+      <div class="nebula-divider" id="nebula-divider"></div>
       <div class="opening-subtitle" id="opening-subtitle">问道长生 · 经营宗门 · 你的仙道由你书写</div>
     </div>
 
     <!-- z-6: UI 按钮 -->
-    <div class="layer-fg title-menu" id="title-menu">
+    <div class="nebula-layer nebula-menu" id="title-menu">
       <button class="title-btn primary" id="btn-new-game" onclick="startNewGame()">开始新游戏</button>
       <button class="title-btn" id="btn-load-game" onclick="loadGame()">读取游戏</button>
     </div>
-
-    <!-- z-7: 山巅雾气 -->
-    <div class="layer-fg mountain-mist"></div>
   </div>
 
   <!-- LOAD GAME SCREEN -->
@@ -13115,181 +13087,243 @@ ${discipleLines || '无'}
     }
     window.animateNumber = animateNumber;
 
-    // === 标题页面 GSAP 动画 ===
-    (function initTitleAnimation() {
-      // CustomEase 可用，DrawSVGPlugin/SplitText 不在公共 CDN 上，改用纯 GSAP Core
+    // === 标题页面 GSAP 动画 - 星云开宗 ===
+    (function initNebulaTitleAnimation() {
+      // 注册自定义缓动
       if (typeof CustomEase !== 'undefined') {
         CustomEase.create("xianqi", "M0,0 C0.2,0 0.2,1 0.4,1 0.6,1 0.8,0.8 1,1");
         CustomEase.create("ningju", "M0,0 C0.3,0 0.5,1.2 0.7,1 0.85,0.9 1,1 1,1");
       }
 
-      // 手动拆分文字为 span（替代 SplitText）
-      function splitTextToChars(selector) {
+      // 创建环境粒子
+      function createAmbientParticles(count) {
+        var container = document.getElementById('ambient-particles');
+        if (!container) return [];
+        var particles = [];
+        for (var i = 0; i < count; i++) {
+          var p = document.createElement('div');
+          p.className = 'particle particle-ambient';
+          var size = Math.random() * 3 + 1;
+          p.style.width = size + 'px';
+          p.style.height = size + 'px';
+          p.style.left = Math.random() * 100 + '%';
+          p.style.top = Math.random() * 100 + '%';
+          p.style.opacity = Math.random() * 0.4 + 0.1;
+          container.appendChild(p);
+          particles.push(p);
+        }
+        return particles;
+      }
+
+      // 创建汇聚粒子
+      function createConvergeParticles(count) {
+        var container = document.getElementById('converge-particles');
+        if (!container) return [];
+        var particles = [];
+        for (var i = 0; i < count; i++) {
+          var p = document.createElement('div');
+          p.className = 'particle particle-gold';
+          var size = Math.random() * 4 + 2;
+          p.style.width = size + 'px';
+          p.style.height = size + 'px';
+          var side = Math.floor(Math.random() * 4);
+          var x, y;
+          switch(side) {
+            case 0: x = Math.random() * 100; y = -5; break;
+            case 1: x = 105; y = Math.random() * 100; break;
+            case 2: x = Math.random() * 100; y = 105; break;
+            case 3: x = -5; y = Math.random() * 100; break;
+          }
+          p.style.left = x + '%';
+          p.style.top = y + '%';
+          container.appendChild(p);
+          particles.push({ el: p, startX: x, startY: y });
+        }
+        return particles;
+      }
+
+      // 手动拆分文字为 span
+      function splitTextToSpans(selector) {
         var el = document.querySelector(selector);
         if (!el) return [];
         var text = el.textContent;
         el.innerHTML = '';
-        var chars = [];
+        var spans = [];
         text.split('').forEach(function(char) {
           var span = document.createElement('span');
           span.textContent = char;
           span.style.display = 'inline-block';
           el.appendChild(span);
-          chars.push(span);
+          spans.push(span);
         });
-        return chars;
+        return spans;
       }
 
-      // 设置山脉 SVG 的 stroke-dasharray 用于绘制动画（替代 DrawSVGPlugin）
-      function setupPathDraw(pathSelector) {
-        var path = document.querySelector(pathSelector);
-        if (!path) return 0;
-        var length = path.getTotalLength ? path.getTotalLength() : 1000;
-        path.style.strokeDasharray = length;
-        path.style.strokeDashoffset = length;
-        return length;
-      }
+      // 创建粒子
+      createAmbientParticles(80);
+      createConvergeParticles(40);
 
-      var farLen = setupPathDraw('.mountain-far-path');
-      var midLen = setupPathDraw('.mountain-mid-path');
-      var nearLen = setupPathDraw('.mountain-near-path');
+      // 拆分文字
+      var titleChars = splitTextToSpans('#opening-title');
+      var subtitleChars = splitTextToSpans('#opening-subtitle');
 
-      // 初始隐藏动画元素
+      // === 初始状态 ===
       gsap.set([
-        ".mountain-far-path",
-        ".mountain-mid-path",
-        ".mountain-near-path",
-        ".mountain-near-fill",
-        "#opening-title",
-        "#opening-subtitle",
-        "#title-menu"
+        '.nebula-bg', '.nebula-glow', '.nebula-core',
+        '#opening-title', '#opening-subtitle', '#title-menu', '#nebula-divider'
       ], { autoAlpha: 0 });
+      gsap.set('.particle', { autoAlpha: 0, scale: 0 });
 
-      // 主时间线
+      // === 主时间线 ===
       var masterTl = gsap.timeline({
         defaults: { ease: "power3.out" }
       });
 
-      // === ACT I: 混沌初开 ===
+      // === ACT I: 混沌初开 (0s - 2.5s) ===
       var act1 = gsap.timeline();
 
-      // 0.0s: 背景从纯黑渐变
+      // 0.0s: 从纯黑到深空
       act1.fromTo("#title-screen",
         { backgroundColor: "#000000" },
-        { backgroundColor: "#0d1f1f", duration: 1.2 }
+        { backgroundColor: "#0a1a1a", duration: 1.5 }
       );
 
-      // 0.8s: 星空淡入
-      act1.fromTo(".starfield",
-        { opacity: 0 },
-        { opacity: 1, duration: 1 },
-        0.2
-      );
-
-      // 1.0s: 远景山脉 SVG 轮廓绘制（strokeDashoffset 动画）
-      act1.to(".mountain-far-path",
-        { strokeDashoffset: 0, autoAlpha: 0.4, duration: 1.5 },
-        0.8
-      );
-
-      // 1.3s: 中景山脉
-      act1.fromTo(".mountain-mid-path",
-        { autoAlpha: 0, y: 40 },
-        { autoAlpha: 0.7, y: 0, duration: 1.4 },
-        1.0
-      );
-      act1.to(".mountain-mid-path",
-        { strokeDashoffset: 0, duration: 1.4 },
-        1.0
-      );
-
-      // 1.6s: 近景山脉轮廓
-      act1.fromTo(".mountain-near-path",
-        { autoAlpha: 0, y: 50 },
-        { autoAlpha: 1, y: 0, duration: 1.2 },
-        1.2
-      );
-      act1.to(".mountain-near-path",
-        { strokeDashoffset: 0, duration: 1.2 },
-        1.2
-      );
-
-      // 近景填充同步淡入
-      act1.fromTo(".mountain-near-fill",
+      // 0.3s: 深空背景淡入
+      act1.fromTo(".nebula-bg",
         { autoAlpha: 0 },
-        { autoAlpha: 1, duration: 1.0 },
-        1.8
+        { autoAlpha: 1, duration: 1.2 },
+        0.3
       );
 
-      // 1.8s: 山巅雾气
-      act1.fromTo(".mountain-mist",
-        { autoAlpha: 0, y: -20 },
-        { autoAlpha: 1, y: 0, duration: 1 },
-        1.5
-      );
-
-      masterTl.add(act1, 0);
-
-      // 暴露全局引用
-      window._titleMasterTl = masterTl;
-      window._titleAct1 = act1;
-
-      // === ACT II: 道成肉身 ===
-      var act2 = gsap.timeline();
-
-      // 2.0s: 天光降下
-      act2.fromTo(".atmosphere",
-        { scale: 0, autoAlpha: 0 },
-        { scale: 3, autoAlpha: 0.6, duration: 1.5, ease: "power4.out" },
-        0
-      );
-
-      // 2.2s: 标题「宗门志」逐字 reveal（手动拆分替代 SplitText）
-      var titleChars = splitTextToChars("#opening-title");
-      act2.fromTo(titleChars,
-        { autoAlpha: 0, y: 40, filter: "blur(10px)" },
-        {
-          autoAlpha: 1, y: 0, filter: "blur(0px)",
-          duration: 0.8,
-          stagger: { amount: 0.5, from: "center" },
-          ease: "expo.out"
-        },
+      // 0.5s: 星云光晕从中心扩散
+      act1.fromTo(".nebula-glow",
+        { autoAlpha: 0, scale: 0.5 },
+        { autoAlpha: 1, scale: 1, duration: 2, ease: "power2.out" },
         0.5
       );
 
-      // 同时：金色光晕扩散
-      act2.fromTo("#opening-title",
-        { textShadow: "0 0 0px rgba(184,155,107,0)" },
-        { textShadow: "0 0 80px rgba(184,155,107,0.5)", duration: 2, ease: "power2.out" },
-        0.8
+      // 0.8s: 环境粒子 stagger 淡入
+      act1.to(".particle-ambient", {
+        autoAlpha: function(i) { return Math.random() * 0.4 + 0.15; },
+        scale: 1,
+        duration: 1,
+        stagger: { amount: 1, from: "random" },
+        ease: "power2.out"
+      }, 0.8);
+
+      masterTl.add(act1, 0);
+
+      // === ACT II: 道成肉身 (2s - 5s) ===
+      var act2 = gsap.timeline();
+
+      // 2.0s: 汇聚粒子从四周飞向中心
+      act2.to(".particle-gold", {
+        left: "50%",
+        top: "45%",
+        xPercent: -50,
+        yPercent: -50,
+        autoAlpha: function() { return Math.random() * 0.5 + 0.3; },
+        scale: function() { return Math.random() * 0.6 + 0.4; },
+        duration: function() { return Math.random() * 1.5 + 1; },
+        stagger: { amount: 0.6, from: "random" },
+        ease: "power4.inOut"
+      }, 0);
+
+      // 2.5s: 核心光球亮起
+      act2.fromTo(".nebula-core",
+        { autoAlpha: 0, scale: 0.3 },
+        { autoAlpha: 1, scale: 1.2, duration: 1.5, ease: "power2.out" },
+        0.5
       );
 
-      // 3.2s: 三字齐震
+      // 3.0s: 标题容器 + 逐字 reveal
+      act2.fromTo("#opening-title",
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.3 },
+        1.0
+      );
+      act2.fromTo(titleChars,
+        { autoAlpha: 0, y: 40, filter: "blur(12px)", scale: 1.3 },
+        {
+          autoAlpha: 1, y: 0, filter: "blur(0px)", scale: 1,
+          duration: 0.8,
+          stagger: { amount: 0.6, from: "center" },
+          ease: "expo.out"
+        },
+        1.0
+      );
+
+      // 3.2s: 金色光晕从标题扩散
+      act2.fromTo("#opening-title",
+        { textShadow: "0 0 0px rgba(184,155,107,0)" },
+        {
+          textShadow: "0 0 60px rgba(184,155,107,0.4), 0 0 120px rgba(184,155,107,0.15), 0 2px 4px rgba(0,0,0,0.5)",
+          duration: 1.5,
+          ease: "power2.out"
+        },
+        1.5
+      );
+
+      // 4.0s: 三字齐震
       act2.to("#opening-title", {
-        y: "+=2",
-        duration: 0.05,
-        repeat: 5,
+        y: "+=3",
+        duration: 0.04,
+        repeat: 7,
         yoyo: true,
         ease: "sine.inOut"
-      }, 1.8);
+      }, 2.2);
+
+      // 4.5s: 核心光球收缩消失，粒子散开
+      act2.to(".nebula-core",
+        { autoAlpha: 0, scale: 2, duration: 1, ease: "power2.in" },
+        2.5
+      );
+      act2.to(".particle-gold", {
+        autoAlpha: 0,
+        scale: 0.2,
+        duration: 0.8,
+        stagger: { amount: 0.4, from: "random" },
+        ease: "power2.in"
+      }, 2.8);
 
       masterTl.add(act2, 2.0);
-      masterTl.addLabel("titleComplete", 4.0);
+      masterTl.addLabel("titleComplete", 5.0);
 
-      // === ACT III: 人间显现 ===
+      // === ACT III: 人间显现 (5s - 7s) ===
       var act3 = gsap.timeline();
 
-      // 副标题逐字淡入
-      var subtitleChars = splitTextToChars("#opening-subtitle");
-      act3.fromTo(subtitleChars,
+      // 副标题容器淡入
+      act3.fromTo("#opening-subtitle",
         { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.3 },
+        0
+      );
+
+      // 横线展开
+      act3.fromTo("#nebula-divider",
+        { autoAlpha: 0, scaleX: 0 },
+        { autoAlpha: 1, scaleX: 1, duration: 0.6, ease: "expo.out" },
+        0
+      );
+
+      // 副标题逐字淡入
+      act3.fromTo(subtitleChars,
+        { autoAlpha: 0, y: 10 },
         {
           autoAlpha: 0.7,
-          duration: 0.6,
+          y: 0,
+          duration: 0.5,
           stagger: 0.02,
           ease: "power2.out"
         },
-        0
+        0.2
+      );
+
+      // 按钮容器淡入
+      act3.fromTo("#title-menu",
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.3 },
+        0.5
       );
 
       // 按钮 3D 翻转入场
@@ -13305,19 +13339,38 @@ ${discipleLines || '无'}
         0.8
       );
 
-      masterTl.add(act3, "titleComplete-=0.3");
+      masterTl.add(act3, "titleComplete");
 
       // === 环境循环动画 ===
       function startAmbientLoops() {
-        gsap.to(".mountain-mist", {
-          x: "-20vw",
-          duration: 30,
-          repeat: -1,
-          ease: "none"
+        // 粒子呼吸
+        gsap.to(".particle-ambient", {
+          opacity: function() { return Math.random() * 0.3 + 0.15; },
+          scale: function() { return Math.random() * 0.4 + 0.8; },
+          duration: function() { return Math.random() * 3 + 2; },
+          stagger: {
+            amount: 4,
+            from: "random",
+            repeat: -1,
+            yoyo: true
+          },
+          ease: "sine.inOut"
         });
+
+        // 标题呼吸
         gsap.to("#opening-title", {
-          scale: 1.005,
+          scale: 1.008,
           duration: 4,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut"
+        });
+
+        // 星云光晕缓慢漂移
+        gsap.to(".nebula-glow", {
+          x: "2vw",
+          y: "-1vh",
+          duration: 8,
           repeat: -1,
           yoyo: true,
           ease: "sine.inOut"
@@ -13326,21 +13379,21 @@ ${discipleLines || '无'}
       masterTl.eventCallback("onComplete", startAmbientLoops);
 
       // === 鼠标视差 ===
-      var xToBg = gsap.quickTo(".layer-bg", "x", { duration: 0.8, ease: "power3" });
-      var xToMid = gsap.quickTo(".layer-mid", "x", { duration: 0.6, ease: "power3" });
-      var xToFg = gsap.quickTo(".layer-fg:not(.title-content):not(.title-menu)", "x", { duration: 0.4, ease: "power3" });
-      var yToBg = gsap.quickTo(".layer-bg", "y", { duration: 0.8, ease: "power3" });
-      var yToMid = gsap.quickTo(".layer-mid", "y", { duration: 0.6, ease: "power3" });
-      var yToFg = gsap.quickTo(".layer-fg:not(.title-content):not(.title-menu)", "y", { duration: 0.4, ease: "power3" });
+      var xToBg = gsap.quickTo(".nebula-bg", "x", { duration: 1, ease: "power3" });
+      var xToGlow = gsap.quickTo(".nebula-glow", "x", { duration: 0.8, ease: "power3" });
+      var xToParticles = gsap.quickTo(".nebula-particles, .nebula-converge", "x", { duration: 0.6, ease: "power3" });
+      var yToBg = gsap.quickTo(".nebula-bg", "y", { duration: 1, ease: "power3" });
+      var yToGlow = gsap.quickTo(".nebula-glow", "y", { duration: 0.8, ease: "power3" });
+      var yToParticles = gsap.quickTo(".nebula-particles, .nebula-converge", "y", { duration: 0.6, ease: "power3" });
 
       document.getElementById("title-screen").addEventListener("mousemove", function(e) {
         var cx = window.innerWidth / 2;
         var cy = window.innerHeight / 2;
         var dx = (e.clientX - cx) / cx;
         var dy = (e.clientY - cy) / cy;
-        xToBg(dx * 10);  yToBg(dy * 6);
-        xToMid(dx * 25); yToMid(dy * 15);
-        xToFg(dx * 40);  yToFg(dy * 25);
+        xToBg(dx * 8);  yToBg(dy * 5);
+        xToGlow(dx * 15); yToGlow(dy * 10);
+        xToParticles(dx * 25); yToParticles(dy * 18);
       });
 
       // === 按钮 3D 磁性倾斜 ===
@@ -13371,13 +13424,16 @@ ${discipleLines || '无'}
         var mm = gsap.matchMedia();
         mm.add("(prefers-reduced-motion: reduce)", function() {
           gsap.set([
-            ".mountain-far-path", ".mountain-mid-path", ".mountain-near-path", ".mountain-near-fill",
-            "#opening-title", "#opening-subtitle", "#title-menu"
-          ], { autoAlpha: 1, y: 0, rotationX: 0, rotationY: 0, filter: "blur(0px)" });
-          if (window._titleMasterTl) window._titleMasterTl.kill();
+            ".nebula-bg", ".nebula-glow", ".particle", ".nebula-core",
+            "#opening-title", "#opening-subtitle", "#title-menu", "#nebula-divider"
+          ], { autoAlpha: 1, x: 0, y: 0, scale: 1, rotationX: 0, rotationY: 0, filter: "blur(0px)" });
+          if (window._nebulaMasterTl) window._nebulaMasterTl.kill();
           return function() {};
         });
       }
+
+      // 暴露全局引用
+      window._nebulaMasterTl = masterTl;
     })();
   </script>
   <script type="module">
