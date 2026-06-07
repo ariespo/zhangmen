@@ -11636,14 +11636,35 @@ ${discipleLines || '无'}
       if (codeMatch) {
         jsonStr = codeMatch[1];
       } else {
-        const braceMatch = content.match(/\{[\s\S]*?\}/);
-        if (braceMatch) jsonStr = braceMatch[0];
+        // 使用括号深度匹配找到第一个完整的 JSON 对象
+        const startIdx = content.indexOf('{');
+        if (startIdx !== -1) {
+          let depth = 0;
+          let inString = false;
+          let escaped = false;
+          for (let i = startIdx; i < content.length; i++) {
+            const c = content[i];
+            if (escaped) { escaped = false; continue; }
+            if (c === '\\') { escaped = true; continue; }
+            if (c === '"' && !escaped) { inString = !inString; continue; }
+            if (!inString) {
+              if (c === '{') depth++;
+              else if (c === '}') {
+                depth--;
+                if (depth === 0) {
+                  jsonStr = content.slice(startIdx, i + 1);
+                  break;
+                }
+              }
+            }
+          }
+        }
       }
       if (!jsonStr.trim()) {
         return { jsonStr: '', error: '天道未返回有效 JSON 数据，原始响应：' + content.slice(0, 200) };
       }
 
-      // 清洗常见 LLM JSON 问题：未转义的换行符、尾部逗号
+      // 清洗常见 LLM JSON 问题：markdown 标记、尾部逗号、字符串内未转义换行
       jsonStr = jsonStr.replace(/```json\s*|\s*```/g, '').trim();
       jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
       let fixed = '', inStr = false, esc = false;
@@ -13772,9 +13793,9 @@ ${discipleLines || '无'}
         '道祖': 99999
       };
 
-      function getDiscipleCount() {
+      window.getDiscipleCount = function() {
         return DISCIPLE_STATUS_COUNT[document.getElementById('c-status').value] || 0;
-      }
+      };
 
       function randomDisciple(index) {
         const isMale = Math.random() > 0.5;
