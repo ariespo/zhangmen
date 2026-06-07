@@ -1420,9 +1420,9 @@
     }
     /* z-0.5: 仙侠背景图 */
     .nebula-img {
-      background: url('1780764884612.png') center/cover no-repeat;
-      filter: brightness(0.4) saturate(0.8);
-      opacity: 0.6;
+      background: url('https://pub-0f03753252fb439e966a538d805f20ef.r2.dev/docs/1780766954734.png') center/cover no-repeat;
+      filter: brightness(0.45) saturate(0.8);
+      opacity: 0.5;
     }
 
     /* z-1: 星云光晕 */
@@ -1474,11 +1474,12 @@
       letter-spacing: clamp(12px, 2vw, 24px);
       color: var(--mythic-gold);
       text-shadow:
-        0 0 30px rgba(0,0,0,0.8),
-        0 0 60px rgba(0,0,0,0.5),
-        0 0 40px rgba(184,155,107,0.4),
-        0 0 80px rgba(184,155,107,0.15),
-        0 2px 8px rgba(0,0,0,0.9);
+        0 0 20px rgba(0,0,0,0.9),
+        0 0 50px rgba(0,0,0,0.7),
+        0 0 80px rgba(0,0,0,0.5),
+        0 0 40px rgba(184,155,107,0.5),
+        0 0 100px rgba(184,155,107,0.2),
+        0 2px 10px rgba(0,0,0,1);
       opacity: 0;
       font-weight: 400;
       white-space: nowrap;
@@ -1542,6 +1543,7 @@
       transition: all 0.4s ease;
       position: relative;
       overflow: hidden;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.8);
     }
     .title-btn::before {
       content: '';
@@ -13181,7 +13183,7 @@ ${discipleLines || '无'}
 
       // === 初始状态 ===
       gsap.set([
-        '.nebula-bg', '.nebula-glow', '.nebula-core',
+        '.nebula-bg', '.nebula-img', '.nebula-glow', '.nebula-core',
         '#opening-title', '#opening-subtitle', '#title-menu', '#nebula-divider'
       ], { autoAlpha: 0 });
       gsap.set('.particle', { autoAlpha: 0, scale: 0 });
@@ -13205,6 +13207,13 @@ ${discipleLines || '无'}
         { autoAlpha: 0 },
         { autoAlpha: 1, duration: 1.2 },
         0.3
+      );
+
+      // 0.35s: 背景图同步淡入
+      act1.fromTo(".nebula-img",
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 1.5, ease: "power2.out" },
+        0.35
       );
 
       // 0.5s: 星云光晕从中心扩散
@@ -13392,9 +13401,11 @@ ${discipleLines || '无'}
 
       // === 鼠标视差 ===
       var xToBg = gsap.quickTo(".nebula-bg", "x", { duration: 1, ease: "power3" });
+      var xToImg = gsap.quickTo(".nebula-img", "x", { duration: 0.9, ease: "power3" });
       var xToGlow = gsap.quickTo(".nebula-glow", "x", { duration: 0.8, ease: "power3" });
       var xToParticles = gsap.quickTo(".nebula-particles, .nebula-converge", "x", { duration: 0.6, ease: "power3" });
       var yToBg = gsap.quickTo(".nebula-bg", "y", { duration: 1, ease: "power3" });
+      var yToImg = gsap.quickTo(".nebula-img", "y", { duration: 0.9, ease: "power3" });
       var yToGlow = gsap.quickTo(".nebula-glow", "y", { duration: 0.8, ease: "power3" });
       var yToParticles = gsap.quickTo(".nebula-particles, .nebula-converge", "y", { duration: 0.6, ease: "power3" });
 
@@ -13403,7 +13414,8 @@ ${discipleLines || '无'}
         var cy = window.innerHeight / 2;
         var dx = (e.clientX - cx) / cx;
         var dy = (e.clientY - cy) / cy;
-        xToBg(dx * 8);  yToBg(dy * 5);
+        xToBg(dx * 5);  yToBg(dy * 3);
+        xToImg(dx * 12);  yToImg(dy * 8);
         xToGlow(dx * 15); yToGlow(dy * 10);
         xToParticles(dx * 25); yToParticles(dy * 18);
       });
@@ -13436,7 +13448,7 @@ ${discipleLines || '无'}
         var mm = gsap.matchMedia();
         mm.add("(prefers-reduced-motion: reduce)", function() {
           gsap.set([
-            ".nebula-bg", ".nebula-glow", ".particle", ".nebula-core",
+            ".nebula-bg", ".nebula-img", ".nebula-glow", ".particle", ".nebula-core",
             "#opening-title", "#opening-subtitle", "#title-menu", "#nebula-divider"
           ], { autoAlpha: 1, x: 0, y: 0, scale: 1, rotationX: 0, rotationY: 0, filter: "blur(0px)" });
           if (window._nebulaMasterTl) window._nebulaMasterTl.kill();
