@@ -11753,7 +11753,11 @@ ${discipleLines || '无'}
         str = str.replace(/,\s*([}\]])/g, '$1');
         // 修复单引号（LLM 有时会用单引号）
         str = fixSingleQuotes(str);
-        // 修复字符串中的非法控制字符和换行
+
+        // 第一遍：修复未闭合的字符串（行内开启引号但换行前未闭合）
+        str = fixUnclosedStrings(str);
+
+        // 第二遍：修复字符串中的非法控制字符和换行
         let fixed = '', inStr = false, esc = false;
         for (let i = 0; i < str.length; i++) {
           const c = str[i];
@@ -11783,6 +11787,65 @@ ${discipleLines || '无'}
           fixed += c;
         }
         return fixed;
+      }
+
+      // 修复 LLM 生成的未闭合字符串：引号开启后在换行前未闭合
+      function fixUnclosedStrings(str) {
+        const lines = str.split('\n');
+        let result = [];
+        let inStr = false;
+        let esc = false;
+
+        for (let li = 0; li < lines.length; li++) {
+          let line = lines[li];
+          let lineResult = '';
+
+          for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (esc) {
+              lineResult += c;
+              esc = false;
+              continue;
+            }
+            if (c === '\\') {
+              lineResult += c;
+              esc = true;
+              continue;
+            }
+            if (c === '"') {
+              inStr = !inStr;
+              lineResult += c;
+              continue;
+            }
+            lineResult += c;
+          }
+
+          // 行结束时如果字符串未闭合，尝试修复
+          if (inStr) {
+            // 检查下一行是否以 JSON 结构标记开头（说明当前字符串应该在此结束）
+            const nextLine = li + 1 < lines.length ? lines[li + 1].trim() : '';
+            const structuralChars = [',', ']', '}', '"'];
+            const startsStructural = structuralChars.some(ch => nextLine.startsWith(ch));
+
+            if (startsStructural || !nextLine) {
+              // 当前字符串应该在这里结束：添加闭合引号
+              lineResult += '"';
+              inStr = false;
+            } else {
+              // 字符串跨行继续：把换行替换为空格
+              lineResult += ' ';
+            }
+          }
+
+          result.push(lineResult);
+        }
+
+        // 如果最后一行字符串仍未闭合，强制闭合
+        if (inStr && result.length > 0) {
+          result[result.length - 1] += '"';
+        }
+
+        return result.join('\n');
       }
 
       function fixSingleQuotes(str) {
