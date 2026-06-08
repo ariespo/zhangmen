@@ -12016,7 +12016,7 @@ ${discipleLines || '无'}
 
       if (data.realm) {
         card.querySelector('.d-realm').value = data.realm;
-        const maxAge = DISCIPLE_REALM_LIFESPAN[data.realm] || 150;
+        const maxAge = (window.DISCIPLE_REALM_LIFESPAN || {})[data.realm] || 150;
         const ageInput = card.querySelector('.d-age');
         ageInput.max = maxAge;
       }
@@ -14091,7 +14091,7 @@ ${discipleLines || '无'}
       const DISCIPLE_APPEARANCE = ['俊朗','英武','清秀','冷峻','儒雅','粗犷','温润','邪魅','普通','魁梧'];
       const MALE_NAMES = ['林青羽','陈墨','顾长风','陆无尘','叶无殇','萧寒','楚云飞','赵无痕','周子瑜','李玄天'];
       const FEMALE_NAMES = ['苏晚晴','慕容雪','柳如烟','白芷','沈清秋','凤九歌','洛神','夜琉璃','花千骨','沐清歌'];
-      const DISCIPLE_REALM_LIFESPAN = {
+      window.DISCIPLE_REALM_LIFESPAN = {
         '练气期前期': 150, '练气期中期': 150, '练气期后期': 150,
         '筑基期前期': 300, '筑基期中期': 300, '筑基期后期': 300,
         '金丹期前期': 600, '金丹期中期': 600, '金丹期后期': 600,
