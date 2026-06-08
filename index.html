@@ -11645,61 +11645,102 @@ ${discipleLines || '无'}
      * @returns {object} { jsonStr: string, error?: string }
      */
     function extractAndCleanJson(content, expectArray) {
+      if (!content || !content.trim()) {
+        return { jsonStr: '', error: '天道返回内容为空' };
+      }
+
+      // 策略1：直接尝试解析整个 trimmed 内容
+      const trimmed = content.trim();
+      try {
+        JSON.parse(trimmed);
+        return { jsonStr: trimmed };
+      } catch (_) {}
+
+      // 策略2：提取 markdown 代码块
       let jsonStr = '';
       const codeMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (codeMatch) {
-        jsonStr = codeMatch[1];
-      } else {
-        // 使用括号深度匹配找到第一个完整的 JSON 对象或数组
-        const objIdx = content.indexOf('{');
-        const arrIdx = content.indexOf('[');
-        var startIdx = -1;
-        if (expectArray) {
-          startIdx = arrIdx !== -1 ? arrIdx : objIdx;
-        } else {
-          startIdx = objIdx !== -1 ? objIdx : arrIdx;
+        jsonStr = codeMatch[1].trim();
+        try {
+          JSON.parse(jsonStr);
+          return { jsonStr: jsonStr };
+        } catch (_) {}
+      }
+
+      // 策略3：使用括号深度匹配找到第一个完整的 JSON 对象或数组
+      // 从字符串开头向后扫描，找到第一个可作为 JSON 起点的 { 或 [
+      const candidates = [];
+      let inString = false;
+      let escaped = false;
+      for (let i = 0; i < content.length; i++) {
+        const c = content[i];
+        if (escaped) { escaped = false; continue; }
+        if (c === '\\') { escaped = true; continue; }
+        if (c === '"') { inString = !inString; continue; }
+        if (!inString && (c === '{' || c === '[')) {
+          candidates.push({ char: c, idx: i });
         }
-        if (startIdx !== -1) {
-          let depth = 0;
-          let inString = false;
-          let escaped = false;
-          var startChar = content[startIdx];
-          var endChar = startChar === '{' ? '}' : ']';
-          for (let i = startIdx; i < content.length; i++) {
-            const c = content[i];
-            if (escaped) { escaped = false; continue; }
-            if (c === '\\') { escaped = true; continue; }
-            if (c === '"' && !escaped) { inString = !inString; continue; }
-            if (!inString) {
-              if (c === startChar) depth++;
-              else if (c === endChar) {
-                depth--;
-                if (depth === 0) {
-                  jsonStr = content.slice(startIdx, i + 1);
-                  break;
+      }
+
+      // 按偏好排序候选
+      if (expectArray) {
+        candidates.sort((a, b) => (a.char === '[' ? -1 : 1) - (b.char === '[' ? -1 : 1));
+      } else {
+        candidates.sort((a, b) => (a.char === '{' ? -1 : 1) - (b.char === '{' ? -1 : 1));
+      }
+
+      for (const cand of candidates) {
+        const startIdx = cand.idx;
+        const startChar = cand.char;
+        const endChar = startChar === '{' ? '}' : ']';
+        let depth = 0;
+        let sInStr = false;
+        let sEsc = false;
+        for (let i = startIdx; i < content.length; i++) {
+          const c = content[i];
+          if (sEsc) { sEsc = false; continue; }
+          if (c === '\\') { sEsc = true; continue; }
+          if (c === '"' && !sEsc) { sInStr = !sInStr; continue; }
+          if (!sInStr) {
+            if (c === startChar) depth++;
+            else if (c === endChar) {
+              depth--;
+              if (depth === 0) {
+                const candidate = content.slice(startIdx, i + 1);
+                try {
+                  JSON.parse(candidate);
+                  return { jsonStr: candidate };
+                } catch (_) {
+                  // 解析失败，尝试清洗后再解析
+                  const cleaned = cleanJsonStr(candidate);
+                  try {
+                    JSON.parse(cleaned);
+                    return { jsonStr: cleaned };
+                  } catch (_) {}
                 }
+                break; // 找到匹配但无法解析，尝试下一个候选
               }
             }
           }
         }
       }
-      if (!jsonStr.trim()) {
-        return { jsonStr: '', error: '天道未返回有效 JSON 数据，原始响应：' + content.slice(0, 200) };
-      }
 
-      // 清洗常见 LLM JSON 问题：markdown 标记、尾部逗号、字符串内未转义换行
-      jsonStr = jsonStr.replace(/```json\s*|\s*```/g, '').trim();
-      jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
-      let fixed = '', inStr = false, esc = false;
-      for (let i = 0; i < jsonStr.length; i++) {
-        const c = jsonStr[i];
-        if (esc) { fixed += c; esc = false; continue; }
-        if (c === '\\') { fixed += c; esc = true; continue; }
-        if (c === '"') { inStr = !inStr; fixed += c; continue; }
-        if (inStr && (c === '\n' || c === '\r')) { fixed += '\\n'; continue; }
-        fixed += c;
+      return { jsonStr: '', error: '天道未返回有效 JSON 数据，原始响应：' + content.slice(0, 300) };
+
+      function cleanJsonStr(str) {
+        str = str.replace(/```json\s*|\s*```/g, '').trim();
+        str = str.replace(/,\s*([}\]])/g, '$1');
+        let fixed = '', inStr = false, esc = false;
+        for (let i = 0; i < str.length; i++) {
+          const c = str[i];
+          if (esc) { fixed += c; esc = false; continue; }
+          if (c === '\\') { fixed += c; esc = true; continue; }
+          if (c === '"') { inStr = !inStr; fixed += c; continue; }
+          if (inStr && (c === '\n' || c === '\r')) { fixed += '\\n'; continue; }
+          fixed += c;
+        }
+        return fixed;
       }
-      return { jsonStr: fixed };
     }
 
     async function deducePlayer() {
@@ -11984,6 +12025,7 @@ ${discipleLines || '无'}
       } catch (e) {
         console.error('[DeduceDisciples] failed:', e);
         console.error('[DeduceDisciples] raw content:', content);
+        console.error('[DeduceDisciples] extract result:', typeof result !== 'undefined' ? result : 'N/A');
         alert('推演失败：' + (e.message || '请检查 API 配置'));
       } finally {
         btn.textContent = originalText;
