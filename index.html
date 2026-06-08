@@ -11644,26 +11644,35 @@ ${discipleLines || '无'}
      * @param {string} content - LLM 原始返回文本
      * @returns {object} { jsonStr: string, error?: string }
      */
-    function extractAndCleanJson(content) {
+    function extractAndCleanJson(content, expectArray) {
       let jsonStr = '';
-      const codeMatch = content.match(/```json\s*([\s\S]*?)```/);
+      const codeMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (codeMatch) {
         jsonStr = codeMatch[1];
       } else {
-        // 使用括号深度匹配找到第一个完整的 JSON 对象
-        const startIdx = content.indexOf('{');
+        // 使用括号深度匹配找到第一个完整的 JSON 对象或数组
+        const objIdx = content.indexOf('{');
+        const arrIdx = content.indexOf('[');
+        var startIdx = -1;
+        if (expectArray) {
+          startIdx = arrIdx !== -1 ? arrIdx : objIdx;
+        } else {
+          startIdx = objIdx !== -1 ? objIdx : arrIdx;
+        }
         if (startIdx !== -1) {
           let depth = 0;
           let inString = false;
           let escaped = false;
+          var startChar = content[startIdx];
+          var endChar = startChar === '{' ? '}' : ']';
           for (let i = startIdx; i < content.length; i++) {
             const c = content[i];
             if (escaped) { escaped = false; continue; }
             if (c === '\\') { escaped = true; continue; }
             if (c === '"' && !escaped) { inString = !inString; continue; }
             if (!inString) {
-              if (c === '{') depth++;
-              else if (c === '}') {
+              if (c === startChar) depth++;
+              else if (c === endChar) {
                 depth--;
                 if (depth === 0) {
                   jsonStr = content.slice(startIdx, i + 1);
@@ -11946,33 +11955,11 @@ ${discipleLines || '无'}
         const data = await response.json();
         content = data.choices?.[0]?.message?.content || '';
 
-        // 尝试提取 JSON 数组（支持直接数组或包裹在代码块中）
-        let jsonStr = '';
-        const codeMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (codeMatch) {
-          jsonStr = codeMatch[1];
-        } else {
-          const arrayMatch = content.match(/\[[\s\S]*\]/);
-          if (arrayMatch) jsonStr = arrayMatch[0];
-        }
-        if (!jsonStr.trim()) {
-          throw new Error('天道未返回有效 JSON 数组，原始响应：' + content.slice(0, 200));
-        }
+        // 使用 extractAndCleanJson 提取 JSON 数组
+        const result = extractAndCleanJson(content, true);
+        if (result.error) throw new Error(result.error);
 
-        // 清洗
-        jsonStr = jsonStr.replace(/```json\s*|\s*```/g, '').trim();
-        jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
-        let fixed = '', inStr = false, esc = false;
-        for (let i = 0; i < jsonStr.length; i++) {
-          const c = jsonStr[i];
-          if (esc) { fixed += c; esc = false; continue; }
-          if (c === '\\') { fixed += c; esc = true; continue; }
-          if (c === '"') { inStr = !inStr; fixed += c; continue; }
-          if (inStr && (c === '\n' || c === '\r')) { fixed += '\\n'; continue; }
-          fixed += c;
-        }
-
-        const disciplesData = JSON.parse(fixed);
+        const disciplesData = JSON.parse(result.jsonStr);
         if (!Array.isArray(disciplesData)) {
           throw new Error('天道返回的数据不是数组格式');
         }
@@ -14214,10 +14201,13 @@ ${discipleLines || '无'}
           updateStepUI();
           // 创建页入场动效
           if (typeof gsap !== 'undefined') {
-            gsap.fromTo("#creation-page .form-field, #creation-page .creation-section",
-              { autoAlpha: 0, y: 15 },
-              { autoAlpha: 1, y: 0, duration: 0.4, stagger: 0.08, ease: "power2.out", delay: 0.15 }
-            );
+            var creationTargets = gsap.utils.toArray("#creation-page .creation-step.active .form-group, #creation-page .creation-step.active .radio-group, #creation-page .creation-step.active .select-row, #creation-page .creation-step.active .tag-group");
+            if (creationTargets.length > 0) {
+              gsap.fromTo(creationTargets,
+                { autoAlpha: 0, y: 15 },
+                { autoAlpha: 1, y: 0, duration: 0.4, stagger: 0.06, ease: "power2.out", delay: 0.15 }
+              );
+            }
           }
         }
       };
