@@ -1447,6 +1447,18 @@
     .particle-gold {
       background: radial-gradient(circle, rgba(200,168,110,0.9) 0%, transparent 70%);
     }
+    .particle-glow {
+      background: radial-gradient(circle, rgba(110,207,207,0.5) 0%, rgba(110,207,207,0.1) 40%, transparent 70%);
+      filter: blur(1px);
+    }
+    .particle-ember {
+      background: radial-gradient(circle, rgba(200,168,110,0.7) 0%, transparent 70%);
+    }
+    .particle-star {
+      background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(110,207,207,0.4) 30%, transparent 70%);
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      border-radius: 0;
+    }
 
     /* z-4: 核心光球 */
     .nebula-core {
@@ -1588,6 +1600,43 @@
       border-color: rgba(184,155,107,0.6);
       color: #e8f4f0;
     }
+
+    /* 标题页设置按钮 */
+    .title-settings-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 40px;
+      height: 40px;
+      background: transparent;
+      border: 1px solid rgba(184,155,107,0.25);
+      border-radius: 8px;
+      color: rgba(168,230,230,0.6);
+      cursor: pointer;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s ease;
+      padding: 0;
+    }
+    .title-settings-btn svg {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.6s ease;
+    }
+    .title-settings-btn:hover {
+      border-color: rgba(184,155,107,0.6);
+      color: var(--mythic-gold);
+      background: rgba(184,155,107,0.08);
+    }
+    .title-settings-btn:hover svg {
+      transform: rotate(90deg);
+    }
+    .title-settings-btn:active {
+      transform: scale(0.95);
+    }
+
     .title-bg-glow {
       display: none;
     }
@@ -5260,6 +5309,14 @@
 
     <!-- z-1: 星云光晕 -->
     <div class="nebula-layer nebula-glow"></div>
+
+    <!-- 设置按钮 -->
+    <button class="title-settings-btn" id="title-settings-btn" onclick="openGameSettings()" title="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+    </button>
 
     <!-- z-2: 环境粒子容器 -->
     <div class="nebula-layer nebula-particles" id="ambient-particles"></div>
@@ -13151,6 +13208,67 @@ ${discipleLines || '无'}
         return particles;
       }
 
+      // 创建光晕粒子（大而柔和）
+      function createGlowParticles(count) {
+        var container = document.getElementById('ambient-particles');
+        if (!container) return [];
+        var particles = [];
+        for (var i = 0; i < count; i++) {
+          var p = document.createElement('div');
+          p.className = 'particle particle-glow';
+          var size = Math.random() * 8 + 4;
+          p.style.width = size + 'px';
+          p.style.height = size + 'px';
+          p.style.left = Math.random() * 100 + '%';
+          p.style.top = Math.random() * 100 + '%';
+          p.style.opacity = Math.random() * 0.3 + 0.05;
+          container.appendChild(p);
+          particles.push(p);
+        }
+        return particles;
+      }
+
+      // 创建火星粒子（从底部向上飘）
+      function createEmberParticles(count) {
+        var container = document.getElementById('converge-particles');
+        if (!container) return [];
+        var particles = [];
+        for (var i = 0; i < count; i++) {
+          var p = document.createElement('div');
+          p.className = 'particle particle-ember';
+          var size = Math.random() * 3 + 1;
+          p.style.width = size + 'px';
+          p.style.height = size + 'px';
+          p.style.left = Math.random() * 100 + '%';
+          p.style.top = 100 + Math.random() * 20 + '%';
+          container.appendChild(p);
+          particles.push(p);
+        }
+        return particles;
+      }
+
+      // 创建星形粒子（标题周围闪烁）
+      function createStarParticles(count) {
+        var container = document.getElementById('ambient-particles');
+        if (!container) return [];
+        var particles = [];
+        for (var i = 0; i < count; i++) {
+          var p = document.createElement('div');
+          p.className = 'particle particle-star';
+          var size = Math.random() * 4 + 2;
+          p.style.width = size + 'px';
+          p.style.height = size + 'px';
+          // 在标题周围分布
+          var angle = Math.random() * Math.PI * 2;
+          var dist = 20 + Math.random() * 40;
+          p.style.left = 50 + Math.cos(angle) * dist + '%';
+          p.style.top = 45 + Math.sin(angle) * dist * 0.6 + '%';
+          container.appendChild(p);
+          particles.push(p);
+        }
+        return particles;
+      }
+
       // 创建汇聚粒子
       function createConvergeParticles(count) {
         var container = document.getElementById('converge-particles');
@@ -13196,8 +13314,11 @@ ${discipleLines || '无'}
       }
 
       // 创建粒子
-      createAmbientParticles(80);
-      createConvergeParticles(40);
+      createAmbientParticles(120);
+      createGlowParticles(20);
+      createEmberParticles(30);
+      createStarParticles(15);
+      createConvergeParticles(50);
 
       // 拆分文字
       var titleChars = splitTextToSpans('#opening-title');
@@ -13206,7 +13327,8 @@ ${discipleLines || '无'}
       // === 初始状态 ===
       gsap.set([
         '.nebula-bg', '.nebula-img', '.nebula-glow', '.nebula-core',
-        '#opening-title', '#opening-subtitle', '#title-menu', '#nebula-divider'
+        '#opening-title', '#opening-subtitle', '#title-menu', '#nebula-divider',
+        '#title-settings-btn'
       ], { autoAlpha: 0 });
       gsap.set('.particle', { autoAlpha: 0, scale: 0 });
 
@@ -13253,6 +13375,24 @@ ${discipleLines || '无'}
         stagger: { amount: 1, from: "random" },
         ease: "power2.out"
       }, 0.8);
+
+      // 0.9s: 光晕粒子淡入
+      act1.to(".particle-glow", {
+        autoAlpha: function(i) { return Math.random() * 0.25 + 0.08; },
+        scale: 1,
+        duration: 1.5,
+        stagger: { amount: 1.2, from: "random" },
+        ease: "power2.out"
+      }, 0.9);
+
+      // 1.0s: 星形粒子淡入
+      act1.to(".particle-star", {
+        autoAlpha: function(i) { return Math.random() * 0.5 + 0.3; },
+        scale: 1,
+        duration: 1,
+        stagger: { amount: 0.8, from: "center" },
+        ease: "power2.out"
+      }, 1.0);
 
       masterTl.add(act1, 0);
 
@@ -13382,17 +13522,68 @@ ${discipleLines || '无'}
         0.8
       );
 
+      // 设置按钮淡入
+      act3.fromTo("#title-settings-btn",
+        { autoAlpha: 0, rotation: -90 },
+        { autoAlpha: 1, rotation: 0, duration: 0.6, ease: "back.out(1.7)" },
+        1.0
+      );
+
       masterTl.add(act3, "titleComplete");
 
       // === 环境循环动画 ===
       function startAmbientLoops() {
-        // 粒子呼吸
+        // 环境粒子呼吸 + 缓慢漂移
         gsap.to(".particle-ambient", {
           opacity: function() { return Math.random() * 0.3 + 0.15; },
           scale: function() { return Math.random() * 0.4 + 0.8; },
+          x: function() { return (Math.random() - 0.5) * 30; },
+          y: function() { return (Math.random() - 0.5) * 20; },
+          duration: function() { return Math.random() * 4 + 3; },
+          stagger: {
+            amount: 5,
+            from: "random",
+            repeat: -1,
+            yoyo: true
+          },
+          ease: "sine.inOut"
+        });
+
+        // 光晕粒子缓慢脉动
+        gsap.to(".particle-glow", {
+          opacity: function() { return Math.random() * 0.2 + 0.05; },
+          scale: function() { return Math.random() * 0.5 + 0.7; },
+          duration: function() { return Math.random() * 5 + 4; },
+          stagger: {
+            amount: 6,
+            from: "random",
+            repeat: -1,
+            yoyo: true
+          },
+          ease: "sine.inOut"
+        });
+
+        // 火星粒子向上漂浮
+        gsap.to(".particle-ember", {
+          y: "-=80vh",
+          opacity: 0,
+          duration: function() { return Math.random() * 8 + 6; },
+          stagger: {
+            amount: 5,
+            from: "random",
+            repeat: -1
+          },
+          ease: "none"
+        });
+
+        // 星形粒子闪烁旋转
+        gsap.to(".particle-star", {
+          rotation: 360,
+          scale: function() { return Math.random() * 0.5 + 0.5; },
+          opacity: function() { return Math.random() * 0.4 + 0.2; },
           duration: function() { return Math.random() * 3 + 2; },
           stagger: {
-            amount: 4,
+            amount: 3,
             from: "random",
             repeat: -1,
             yoyo: true
@@ -13471,8 +13662,9 @@ ${discipleLines || '无'}
         mm.add("(prefers-reduced-motion: reduce)", function() {
           gsap.set([
             ".nebula-bg", ".nebula-img", ".nebula-glow", ".particle", ".nebula-core",
-            "#opening-title", "#opening-subtitle", "#title-menu", "#nebula-divider"
-          ], { autoAlpha: 1, x: 0, y: 0, scale: 1, rotationX: 0, rotationY: 0, filter: "blur(0px)" });
+            "#opening-title", "#opening-subtitle", "#title-menu", "#nebula-divider",
+            "#title-settings-btn"
+          ], { autoAlpha: 1, x: 0, y: 0, scale: 1, rotationX: 0, rotationY: 0, rotation: 0, filter: "blur(0px)" });
           if (window._nebulaMasterTl) window._nebulaMasterTl.kill();
           return function() {};
         });
