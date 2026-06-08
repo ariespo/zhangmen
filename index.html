@@ -12140,17 +12140,35 @@ ${discipleLines || '无'}
           fillDiscipleCard(i, disciplesData[i]);
         }
 
-        // 显示预览
-        const preview = document.getElementById('c-disciples-ai-preview');
-        preview.innerHTML = `
-          <div style="color:rgba(168,230,230,0.6);font-size:12px;margin-bottom:4px">天道已根据描述完成推演，共生成 ${fillCount} 名弟子</div>
-          ${disciplesData.slice(0, count).map((d, i) => `
-            <div style="font-size:13px;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-border)">
-              <span style="color:var(--jade-glow)">${i + 1}. ${escapeHtml(d.name || '未命名')}</span> · ${escapeHtml(d.gender || '')} · ${escapeHtml(d.realm || '')} · ${escapeHtml(d.talent || '')}
-            </div>
-          `).join('')}
-        `;
-        document.getElementById('c-disciples-ai-preview-area').style.display = 'block';
+        // 显示预览（若元素不存在则动态创建）
+        let preview = document.getElementById('c-disciples-ai-preview');
+        let previewArea = document.getElementById('c-disciples-ai-preview-area');
+        if (!previewArea) {
+          previewArea = document.createElement('div');
+          previewArea.className = 'form-group full-width';
+          previewArea.id = 'c-disciples-ai-preview-area';
+          previewArea.style.cssText = 'margin-bottom:16px';
+          previewArea.innerHTML = '<label>推演结果预览</label>';
+          preview = document.createElement('div');
+          preview.id = 'c-disciples-ai-preview';
+          preview.style.cssText = 'background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:8px;padding:12px;font-size:13px;line-height:1.7';
+          previewArea.appendChild(preview);
+          const container = document.getElementById('disciples-container');
+          if (container && container.parentNode) {
+            container.parentNode.insertBefore(previewArea, container);
+          }
+        }
+        if (preview) {
+          preview.innerHTML = `
+            <div style="color:rgba(168,230,230,0.6);font-size:12px;margin-bottom:4px">天道已根据描述完成推演，共生成 ${fillCount} 名弟子</div>
+            ${disciplesData.slice(0, count).map((d, i) => `
+              <div style="font-size:13px;margin-top:6px;padding-top:6px;border-top:1px solid var(--glass-border)">
+                <span style="color:var(--jade-glow)">${i + 1}. ${escapeHtml(d.name || '未命名')}</span> · ${escapeHtml(d.gender || '')} · ${escapeHtml(d.realm || '')} · ${escapeHtml(d.talent || '')}
+              </div>
+            `).join('')}
+          `;
+        }
+        if (previewArea) previewArea.style.display = 'block';
       } catch (e) {
         console.error('[DeduceDisciples] failed:', e);
         console.error('[DeduceDisciples] raw content:', content);
