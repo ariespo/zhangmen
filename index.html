@@ -11649,31 +11649,35 @@ ${discipleLines || '无'}
         return { jsonStr: '', error: '天道返回内容为空' };
       }
 
-      // 策略1：直接尝试解析整个 trimmed 内容
-      const trimmed = content.trim();
+      // 预处理：移除 BOM、零宽字符、以及常见的 LLM 格式前缀
+      let cleanedContent = content
+        .replace(/^\uFEFF/, '')           // BOM
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')  // 零宽字符
+        .replace(/^\s*(?:json|JSON)?\s*/, '')   // 可能的 "json" 前缀
+        .trim();
+
+      // 策略1：直接尝试解析整个内容
       try {
-        JSON.parse(trimmed);
-        return { jsonStr: trimmed };
+        JSON.parse(cleanedContent);
+        return { jsonStr: cleanedContent };
       } catch (_) {}
 
       // 策略2：提取 markdown 代码块
-      let jsonStr = '';
-      const codeMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const codeMatch = cleanedContent.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (codeMatch) {
-        jsonStr = codeMatch[1].trim();
+        const block = codeMatch[1].trim();
         try {
-          JSON.parse(jsonStr);
-          return { jsonStr: jsonStr };
+          JSON.parse(block);
+          return { jsonStr: block };
         } catch (_) {}
       }
 
       // 策略3：使用括号深度匹配找到第一个完整的 JSON 对象或数组
-      // 从字符串开头向后扫描，找到第一个可作为 JSON 起点的 { 或 [
       const candidates = [];
       let inString = false;
       let escaped = false;
-      for (let i = 0; i < content.length; i++) {
-        const c = content[i];
+      for (let i = 0; i < cleanedContent.length; i++) {
+        const c = cleanedContent[i];
         if (escaped) { escaped = false; continue; }
         if (c === '\\') { escaped = true; continue; }
         if (c === '"') { inString = !inString; continue; }
@@ -11682,7 +11686,6 @@ ${discipleLines || '无'}
         }
       }
 
-      // 按偏好排序候选
       if (expectArray) {
         candidates.sort((a, b) => (a.char === '[' ? -1 : 1) - (b.char === '[' ? -1 : 1));
       } else {
@@ -11696,8 +11699,8 @@ ${discipleLines || '无'}
         let depth = 0;
         let sInStr = false;
         let sEsc = false;
-        for (let i = startIdx; i < content.length; i++) {
-          const c = content[i];
+        for (let i = startIdx; i < cleanedContent.length; i++) {
+          const c = cleanedContent[i];
           if (sEsc) { sEsc = false; continue; }
           if (c === '\\') { sEsc = true; continue; }
           if (c === '"' && !sEsc) { sInStr = !sInStr; continue; }
@@ -11706,40 +11709,103 @@ ${discipleLines || '无'}
             else if (c === endChar) {
               depth--;
               if (depth === 0) {
-                const candidate = content.slice(startIdx, i + 1);
-                try {
-                  JSON.parse(candidate);
-                  return { jsonStr: candidate };
-                } catch (_) {
-                  // 解析失败，尝试清洗后再解析
-                  const cleaned = cleanJsonStr(candidate);
-                  try {
-                    JSON.parse(cleaned);
-                    return { jsonStr: cleaned };
-                  } catch (_) {}
-                }
-                break; // 找到匹配但无法解析，尝试下一个候选
+                const candidate = cleanedContent.slice(startIdx, i + 1);
+                const result = tryParseJson(candidate);
+                if (result) return result;
+                break;
               }
             }
           }
         }
       }
 
-      return { jsonStr: '', error: '天道未返回有效 JSON 数据，原始响应：' + content.slice(0, 300) };
+      // 策略4：尝试对整个内容进行强力清洗
+      const aggressivelyCleaned = cleanJsonStr(cleanedContent);
+      try {
+        JSON.parse(aggressivelyCleaned);
+        return { jsonStr: aggressivelyCleaned };
+      } catch (_) {}
+
+      return {
+        jsonStr: '',
+        error: '天道未返回有效 JSON 数据。原始响应前300字：' + content.slice(0, 300)
+      };
+
+      function tryParseJson(str) {
+        try {
+          JSON.parse(str);
+          return { jsonStr: str };
+        } catch (_) {
+          const cleaned = cleanJsonStr(str);
+          try {
+            JSON.parse(cleaned);
+            return { jsonStr: cleaned };
+          } catch (_) {
+            return null;
+          }
+        }
+      }
 
       function cleanJsonStr(str) {
+        // 移除 markdown 代码块标记
         str = str.replace(/```json\s*|\s*```/g, '').trim();
+        // 修复尾随逗号
         str = str.replace(/,\s*([}\]])/g, '$1');
+        // 修复单引号（LLM 有时会用单引号）
+        str = fixSingleQuotes(str);
+        // 修复字符串中的非法控制字符和换行
         let fixed = '', inStr = false, esc = false;
         for (let i = 0; i < str.length; i++) {
           const c = str[i];
-          if (esc) { fixed += c; esc = false; continue; }
-          if (c === '\\') { fixed += c; esc = true; continue; }
-          if (c === '"') { inStr = !inStr; fixed += c; continue; }
-          if (inStr && (c === '\n' || c === '\r')) { fixed += '\\n'; continue; }
+          const code = c.charCodeAt(0);
+          if (esc) {
+            fixed += c;
+            esc = false;
+            continue;
+          }
+          if (c === '\\') {
+            fixed += c;
+            esc = true;
+            continue;
+          }
+          if (c === '"') {
+            inStr = !inStr;
+            fixed += c;
+            continue;
+          }
+          if (inStr) {
+            // 字符串内部：转义换行和回车，移除其他控制字符
+            if (c === '\n') { fixed += '\\n'; continue; }
+            if (c === '\r') { fixed += '\\r'; continue; }
+            if (c === '\t') { fixed += '\\t'; continue; }
+            if (code < 0x20) { continue; } // 移除其他控制字符
+          }
           fixed += c;
         }
         return fixed;
+      }
+
+      function fixSingleQuotes(str) {
+        let result = '', inStr = false, esc = false, strChar = null;
+        for (let i = 0; i < str.length; i++) {
+          const c = str[i];
+          if (esc) { result += c; esc = false; continue; }
+          if (c === '\\') { result += c; esc = true; continue; }
+          if (!inStr && (c === '"' || c === "'")) {
+            inStr = true;
+            strChar = c;
+            result += '"';
+            continue;
+          }
+          if (inStr && c === strChar) {
+            inStr = false;
+            strChar = null;
+            result += '"';
+            continue;
+          }
+          result += c;
+        }
+        return result;
       }
     }
 
@@ -12025,7 +12091,7 @@ ${discipleLines || '无'}
       } catch (e) {
         console.error('[DeduceDisciples] failed:', e);
         console.error('[DeduceDisciples] raw content:', content);
-        console.error('[DeduceDisciples] extract result:', typeof result !== 'undefined' ? result : 'N/A');
+        console.error('[DeduceDisciples] content charCodes:', [...content].slice(0, 50).map(c => c.charCodeAt(0).toString(16)));
         alert('推演失败：' + (e.message || '请检查 API 配置'));
       } finally {
         btn.textContent = originalText;
@@ -12098,6 +12164,7 @@ ${discipleLines || '无'}
       } catch (e) {
         console.error('[DeduceDisciple] failed:', e);
         console.error('[DeduceDisciple] raw content:', content);
+        console.error('[DeduceDisciple] content charCodes:', [...content].slice(0, 50).map(c => c.charCodeAt(0).toString(16)));
         alert('推演失败：' + (e.message || '请检查 API 配置'));
       } finally {
         btn.textContent = originalText;
