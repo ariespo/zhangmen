@@ -1601,42 +1601,6 @@
       color: #e8f4f0;
     }
 
-    /* 标题页设置按钮 */
-    .title-settings-btn {
-      position: absolute;
-      top: 24px;
-      right: 24px;
-      width: 40px;
-      height: 40px;
-      background: transparent;
-      border: 1px solid rgba(184,155,107,0.25);
-      border-radius: 8px;
-      color: rgba(168,230,230,0.6);
-      cursor: pointer;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.4s ease;
-      padding: 0;
-    }
-    .title-settings-btn svg {
-      width: 20px;
-      height: 20px;
-      transition: transform 0.6s ease;
-    }
-    .title-settings-btn:hover {
-      border-color: rgba(184,155,107,0.6);
-      color: var(--mythic-gold);
-      background: rgba(184,155,107,0.08);
-    }
-    .title-settings-btn:hover svg {
-      transform: rotate(90deg);
-    }
-    .title-settings-btn:active {
-      transform: scale(0.95);
-    }
-
     .title-bg-glow {
       display: none;
     }
@@ -5310,14 +5274,6 @@
     <!-- z-1: 星云光晕 -->
     <div class="nebula-layer nebula-glow"></div>
 
-    <!-- 设置按钮 -->
-    <button class="title-settings-btn" id="title-settings-btn" onclick="openGameSettings()" title="设置">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
-      </svg>
-    </button>
-
     <!-- z-2: 环境粒子容器 -->
     <div class="nebula-layer nebula-particles" id="ambient-particles"></div>
 
@@ -5338,6 +5294,7 @@
     <div class="nebula-layer nebula-menu" id="title-menu">
       <button class="title-btn primary" id="btn-new-game" onclick="startNewGame()">开始新游戏</button>
       <button class="title-btn" id="btn-load-game" onclick="loadGame()">读取游戏</button>
+      <button class="title-btn" id="btn-settings" onclick="openGameSettings()">进行设置</button>
     </div>
   </div>
 
@@ -13327,8 +13284,7 @@ ${discipleLines || '无'}
       // === 初始状态 ===
       gsap.set([
         '.nebula-bg', '.nebula-img', '.nebula-glow', '.nebula-core',
-        '#opening-title', '#opening-subtitle', '#title-menu', '#nebula-divider',
-        '#title-settings-btn'
+        '#opening-title', '#opening-subtitle', '#title-menu', '#nebula-divider'
       ], { autoAlpha: 0 });
       gsap.set('.particle', { autoAlpha: 0, scale: 0 });
 
@@ -13522,13 +13478,6 @@ ${discipleLines || '无'}
         0.8
       );
 
-      // 设置按钮淡入
-      act3.fromTo("#title-settings-btn",
-        { autoAlpha: 0, rotation: -90 },
-        { autoAlpha: 1, rotation: 0, duration: 0.6, ease: "back.out(1.7)" },
-        1.0
-      );
-
       masterTl.add(act3, "titleComplete");
 
       // === 环境循环动画 ===
@@ -13662,8 +13611,7 @@ ${discipleLines || '无'}
         mm.add("(prefers-reduced-motion: reduce)", function() {
           gsap.set([
             ".nebula-bg", ".nebula-img", ".nebula-glow", ".particle", ".nebula-core",
-            "#opening-title", "#opening-subtitle", "#title-menu", "#nebula-divider",
-            "#title-settings-btn"
+            "#opening-title", "#opening-subtitle", "#title-menu", "#nebula-divider"
           ], { autoAlpha: 1, x: 0, y: 0, scale: 1, rotationX: 0, rotationY: 0, rotation: 0, filter: "blur(0px)" });
           if (window._nebulaMasterTl) window._nebulaMasterTl.kill();
           return function() {};
