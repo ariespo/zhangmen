@@ -13863,8 +13863,8 @@ ${discipleLines || '无'}
         scope.querySelectorAll('.tag-input').forEach(input => {
           if (input._tagBound) return;
           input._tagBound = true;
-          input.addEventListener('keydown', e => {
-            if (e.key !== 'Enter') return;
+
+          function addTag() {
             const val = input.value.trim();
             if (!val) return;
             const group = input.closest('.tag-group');
@@ -13880,7 +13880,15 @@ ${discipleLines || '无'}
             tag.textContent = val;
             group.insertBefore(tag, input);
             input.value = '';
+          }
+
+          input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addTag();
+            }
           });
+          input.addEventListener('blur', addTag);
         });
       }
       bindTagInputs();
@@ -13987,9 +13995,16 @@ ${discipleLines || '无'}
         };
       }
 
+      let _lastDiscipleCount = null;
+
       function renderDisciplesUI() {
         const container = document.getElementById('disciples-container');
         const count = getDiscipleCount();
+
+        // 只有弟子数量变化时才重新渲染，避免用户输入的数据丢失
+        if (count === _lastDiscipleCount && container.children.length > 0) return;
+        _lastDiscipleCount = count;
+
         const title = container.previousElementSibling;
         if (title) title.textContent = `配置 ${count} 名弟子`;
 
