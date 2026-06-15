@@ -6590,6 +6590,7 @@
     </div>
   </div>
 
+  <script src="./sillytavern/skill-utils.js"></script>
   <script>
     // ====== BACKGROUND CANVAS ======
     const canvas = document.getElementById('bg-canvas');
@@ -11215,7 +11216,8 @@ ${discipleLines || '无'}
     function renderSkills() {
       const grid = document.getElementById('skill-grid');
       grid.innerHTML = '';
-      const skills = window.gameStateManager?.state?.library || [];
+      const rawSkills = window.gameStateManager?.state?.library || [];
+      const skills = deduplicateSkills(rawSkills);
       const filtered = skills.filter(s => {
         const style = getSkillStyle(s);
         const typeMatch = currentSkillTypeFilter === 'all' || s.type === currentSkillTypeFilter;
